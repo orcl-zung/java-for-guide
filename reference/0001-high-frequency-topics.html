@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>速查手册 · 5-10年 Java 高级/架构师高频考点</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js"></script>
+<script src="../assets/nav.js"></script>
+</head>
+<body>
+<div class="page">
+
+  <div class="kicker">Java Offer 突围战 · 参考手册 01</div>
+  <h1>高频考点速查手册</h1>
+  <p class="subtitle">5-10 年 Java 高级开发 / 架构师面试考点全景。按模块组织，每条含<strong>频率星级</strong>与<strong>考点钩子</strong>（面试官真正在考察什么 + 预判追问链）。绿色"你有实战"标记 = 可主动引导话题的得分区。</p>
+  <div class="meta-badges">
+    <span class="badge red">★★★ 每场必考</span>
+    <span class="badge gold">★★☆ 高频</span>
+    <span class="badge">★☆☆ 中频</span>
+    <span class="badge green">你有实战 = 得分区</span>
+    <span class="badge">数据基线 2026-08</span>
+  </div>
+
+  <div class="callout">
+    <span class="ttl">用法（间隔重复）</span>
+    不要通读。每天随机抽 10 条，<strong>遮住钩子只看问题，口头作答 60 秒</strong>，再对照钩子补漏。答不出的标个日期，三天后再抽。这是"检索练习"，比反复看记忆效率高数倍。来源：牛客 2026 面试官真题汇总、JavaGuide、几百份面经分析（清单见 RESOURCES.md）。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ==================== 一、Java 基础与集合 ==================== -->
+  <section>
+    <h2><span class="no">模块一</span>Java 基础与集合</h2>
+    <div class="qlist">
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">HashMap 底层原理与扩容机制？</span></div>
+        <p class="q-hook">追问链：为什么容量是 2 的幂（hash &amp; n-1）→ 为什么树化阈值是 8 / 退化是 6（泊松分布）→ 1.8 为什么改尾插法（1.7 头插扩容成环死循环）→ 负载因子 0.75 是空间与时间的折中。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">ConcurrentHashMap 1.7 与 1.8 的区别？</span></div>
+        <p class="q-hook">分段锁 Segment → CAS + synchronized 锁桶头节点。追问：size() 怎么实现的（baseCount + CounterCell 分散计数）→ 为什么 key/value 不允许 null（二义性无法区分"不存在"与"存了null"）。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">hashCode 与 equals 的约定？</span></div>
+        <p class="q-hook">equals 相等则 hashCode 必须相等；反之不成立。追问：只重写 equals 不重写 hashCode 会怎样（HashMap 里"丢对象"）。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">String 为什么设计成不可变？</span></div>
+        <p class="q-hook">字符串常量池复用 / hashCode 可缓存 / 线程安全 / 安全性（防类加载路径被改）。追问：String / StringBuilder / StringBuffer 使用场景。</p></div>
+    </div>
+  </section>
+
+  <!-- ==================== 二、并发编程 ==================== -->
+  <section>
+    <h2><span class="no">模块二</span>并发编程 <span class="badge green" style="vertical-align:middle">简历写了"精通"——三层追问是标配</span></h2>
+    <div class="qlist">
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">synchronized 底层原理与锁升级？</span></div>
+        <p class="q-hook">对象头 Mark Word → 无锁→偏向锁→轻量级→重量级。追问：和 ReentrantLock 区别（中断/超时/公平/条件变量）→ 锁消除与锁粗化（JIT 优化）。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">volatile 的作用？能保证原子性吗？</span></div>
+        <p class="q-hook">可见性 + 禁止指令重排（内存屏障），不保证原子性。追问：i++ 为什么不行 → happens-before 规则能说出几条 → MESI 缓存一致性协议。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">AQS 原理？</span></div>
+        <p class="q-hook">volatile state + CLH 变体双向队列 + 独占/共享模式。追问：ReentrantLock 加锁流程 → 公平与非公平的区别（非公平先 CAS 抢一次）→ CountDownLatch/Semaphore 怎么基于 AQS。<span class="you">简历技能点</span></p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">线程池七大参数与执行流程？参数怎么配？</span></div>
+        <p class="q-hook">core→queue→max→reject 顺序（易错：不是满了先开到 max）。追问：IO 密集 vs CPU 密集怎么算 → 4 种拒绝策略怎么选 → <b>你项目里怎么配的、怎么监控的</b>。<span class="you">你有实战：线程池任务堆积连锁 OOM</span></p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">ThreadLocal 原理与内存泄漏？</span></div>
+        <p class="q-hook">Thread 里的 ThreadLocalMap，key 弱引用 value 强引用。追问：为什么线程池场景必须 finally remove → InheritableThreadLocal 的问题（TTL）。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">CAS 原理与 ABA 问题？</span></div>
+        <p class="q-hook">Unsafe compareAndSwap（CPU 指令）→ ABA 用 AtomicStampedReference（版本号）→ 自旋的代价（空转烧 CPU，正好接你的自旋锁实战）。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">死锁的四个必要条件？怎么排查？</span></div>
+        <p class="q-hook">互斥/持有等待/不可剥夺/循环等待；破坏任一即可。排查：jstack 看 "Found one Java-level deadlock" 或 arthas thread -b。<span class="you">你有实战：锁表死锁问题修复</span></p></div>
+    </div>
+  </section>
+
+  <!-- ==================== 三、JVM ==================== -->
+  <section>
+    <h2><span class="no">模块三</span>JVM</h2>
+    <div class="qlist">
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">JVM 运行时内存模型？</span></div>
+        <p class="q-hook">堆 / 虚拟机栈 / 本地方法栈 / 方法区(元空间) / 程序计数器。追问：对象一定在堆上吗（逃逸分析→栈上分配/标量替换）→ 1.7→1.8 方法区变化（永久代→元空间，为什么用本地内存）。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">线上 OOM 怎么排查？（场景题）</span></div>
+        <p class="q-hook">先看是哪类 OOM（heap/直接内存/元空间/线程数）→ -XX:+HeapDumpOnOutOfMemoryError 拿 dump → MAT 看支配树找最大对象 → 定位到代码。<span class="you">你有王牌故事：线程池任务堆积→连锁反应 OOM（网络抖动触发）</span></p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">常用垃圾收集器与选择？</span></div>
+        <p class="q-hook">CMS（低停顿、内存碎片）→ G1（Region 化、可预测停顿）→ ZGC（亚毫秒）。追问：G1 的三色标记与漏标问题（原始快照 SATB）/ 记忆集。JD 高频词是"JVM 调优实战"——要能讲出你真实设过的参数。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">类加载过程与双亲委派？</span></div>
+        <p class="q-hook">加载→验证→准备→解析→初始化；双亲委派防重复加载与核心类篡改。追问：哪些场景打破它（SPI/Tomcat 隔离/热部署）。</p></div>
+    </div>
+  </section>
+
+  <!-- ==================== 四、MySQL ==================== -->
+  <section>
+    <h2><span class="no">模块四</span>MySQL <span class="badge green" style="vertical-align:middle">面试官原话：一定结合项目问索引设计</span></h2>
+    <div class="qlist">
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">为什么用 B+ 树？</span></div>
+        <p class="q-hook">vs B 树（非叶子不存数据→扇出更大、树更矮）→ vs 哈希（不支持范围）→ vs 跳表（层高 log 级但磁盘 IO 是块读取）。追问：一棵 3 层 B+ 树能存多少行（约 2000 万的推导）。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">聚簇索引 / 回表 / 覆盖索引？</span></div>
+        <p class="q-hook">二级索引叶子存主键→需要回表；查询列都在索引里就"覆盖"免回表。追问：为什么推荐自增主键（页写满顺序插入，UUID 导致页分裂）。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">最左前缀原则与索引失效场景？</span></div>
+        <p class="q-hook">失效：函数计算 / 隐式类型转换（字符串列传数字）/ 前导 % / OR 连接非索引列 / 不满足最左前缀。追问：联合索引 (a,b,c) 里 where b=? 走不走索引。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">一条 SQL 很慢，怎么排查？（场景题）</span></div>
+        <p class="q-hook">慢查询日志定位 → explain 看 type（至少 range）/ key / rows / Extra（Using filesort / temporary）→ 优化路径：加索引/改写/拆查询/缓存/归档。<span class="you">你有实战：慢 SQL 集中整改（复杂 SQL 拆分+索引调整+缓存）</span></p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">事务隔离级别与 MVCC？</span></div>
+        <p class="q-hook">RR 为 MySQL 默认；MVCC = undo log 版本链 + ReadView。追问：RR 怎么解决幻读（快照读靠 MVCC、当前读靠临键锁）→ RR 下先快照读再当前读仍可能幻读。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">行锁 / 间隙锁 / 临键锁？</span></div>
+        <p class="q-hook">RR 级别下：记录锁+间隙锁=临键锁，锁的是索引区间。追问：update 没走索引会怎样（锁全部扫描行）。<span class="you">你有实战：锁表死锁问题</span></p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">分库分表怎么做？什么时候做？</span></div>
+        <p class="q-hook">先垂直后水平；分片键选择（高频查询维度）；带来的问题：跨分片查询/分布式事务/全局 ID。追问：不加分表的替代方案（归档/读写分离/冷热分离）。<span class="you">你有实战：月百万级数据归档方案</span></p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">redo log / undo log / binlog？</span></div>
+        <p class="q-hook">redo 保证持久性（crash safe）、undo 保证原子性与 MVCC、binlog 用于复制与恢复。追问：两阶段提交（prepare→写 binlog→commit）为什么需要。</p></div>
+    </div>
+  </section>
+
+  <!-- ==================== 五、Redis ==================== -->
+  <section>
+    <h2><span class="no">模块五</span>Redis</h2>
+    <div class="qlist">
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">Redis 为什么快？</span></div>
+        <p class="q-hook">纯内存 + 单线程无锁竞争 + IO 多路复用（epoll）+ 高效数据结构。追问：6.0 为什么又引入多线程（网络 IO 并行，命令执行仍单线程）。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">缓存穿透 / 击穿 / 雪崩？</span></div>
+        <p class="q-hook">穿透（不存在的 key→布隆过滤器/空值缓存）、击穿（热 key 过期→互斥锁/逻辑过期）、雪崩（大量同时过期→随机 TTL/多级缓存/限流）。三兄弟必须一口气顺溜讲完。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">缓存与数据库一致性怎么保证？</span></div>
+        <p class="q-hook">Cache Aside（先更库再删缓存）+ 为什么是删不是改 → 不一致窗口 → 延迟双删 → 终极方案订阅 binlog（Canal）异步删。<span class="you">你有实战：Hash 存系统参数、List 存支付凭证、Set 防重</span></p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">分布式锁怎么实现？Redisson 原理？</span></div>
+        <p class="q-hook">SET NX EX + 唯一值 + Lua 释放 → 过期续期问题 → Redisson 看门狗 → 主从切换锁丢失 → RedLock 及其争议（Martin Kleppmann vs antirez 之争，说出这个直接加分）。<span class="you">你有实战：Redisson 锁防重复发放/单柜单用户下单</span></p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">核心数据结构与使用场景？</span></div>
+        <p class="q-hook">底层编码：ziplist/listpack、skiplist（ZSet 为什么用跳表不是红黑树）、intset。场景：点赞/排行榜/签到/购物车/延迟队列。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">持久化与高可用？</span></div>
+        <p class="q-hook">RDB 快照 vs AOF 追加 → 混合持久化；主从复制原理（全量 RDB + 增量 buffer）→ 哨兵（选脑）→ Cluster（16384 槽、gossip）。追问：脑裂怎么发生怎么防（min-slaves-to-write）。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">大 key / 热 key 问题？</span></div>
+        <p class="q-hook">大 key：拆分/异步删除 UNLINK；热 key：本地缓存/随机后缀打散。追问：怎么发现（redis-cli --bigkeys / monitor 抓热点）。</p></div>
+    </div>
+  </section>
+
+  <!-- ==================== 六、消息队列 ==================== -->
+  <section>
+    <h2><span class="no">模块六</span>消息队列 <span class="badge green" style="vertical-align:middle">你的王牌战场：四次扣费事故</span></h2>
+    <div class="qlist">
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">如何保证消息不丢失？</span></div>
+        <p class="q-hook">三环节：生产者（confirm/事务/重投）→ broker（同步刷盘/主从同步复制）→ 消费者（手动 ack，处理完再 ack）。<span class="you">你有实战：RabbitMQ manual-ack、nack 错 channel 导致连接泄漏的排障</span></p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">如何保证幂等消费？</span></div>
+        <p class="q-hook">MQ 只能 at-least-once，幂等必须业务侧做：唯一业务键 + 唯一索引 / 状态机流转 / CAS 更新 / 去重表。<span class="you">王牌故事：支付回调无幂等→同一订单扣四次钱；修复=CAS+防重表</span></p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">顺序消息怎么保证？</span></div>
+        <p class="q-hook">局部顺序：同一业务键 hash 到同一队列 + 单线程消费。追问：消费失败重试会不会乱序、扩队列数怎么办。<span class="you">你有实战：RocketMQ 顺序消息保障交易流程</span></p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">消息积压怎么处理？</span></div>
+        <p class="q-hook">紧急扩容消费者（队列数不够先扩队列再搬运）→ 定位消费慢的根因（慢 SQL/下游限流）→ 事后：监控告警+容量规划。<span class="you">你有实战：简历明写积压解决方案</span></p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">事务消息原理？</span></div>
+        <p class="q-hook">半消息 + 本地事务 + 回查机制，解决"本地事务与发消息的原子性"。<span class="you">你有实战：RocketMQ 保证积分/订单最终一致性</span></p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">RocketMQ / RabbitMQ / Kafka 怎么选？</span></div>
+        <p class="q-hook">Kafka：日志流/超高吞吐/批量；RocketMQ：业务消息/事务消息/延迟级别；RabbitMQ：低延迟路由灵活/吞吐一般。<b>你两个都用过，面试讲"按场景选型"的迁移视角</b>。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">延迟消息实现？</span></div>
+        <p class="q-hook">RocketMQ 18 个延迟级别 / 死信队列+重试 / 时间轮（Netty HashedWheelTimer）/ Redis ZSet 轮询。场景：订单超时关单。</p></div>
+    </div>
+  </section>
+
+  <!-- ==================== 七、分布式与微服务 ==================== -->
+  <section>
+    <h2><span class="no">模块七</span>分布式与微服务</h2>
+    <div class="qlist">
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">CAP 与 BASE？</span></div>
+        <p class="q-hook">网络分区必然存在，CP/AP 是取舍不是选择题；BASE = 基本可用+软状态+最终一致。追问：Nacos 怎么同时支持 AP/CP（临时实例 AP、持久实例 CP）。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">分布式事务方案对比？</span></div>
+        <p class="q-hook">2PC（阻塞）/ TCC（业务侵入）/ 本地消息表 / 事务消息 / SAGA（长事务补偿）。落点：钱相关的强一致 vs 可补偿的最终一致怎么选。<span class="you">你有实战：RocketMQ 最终一致性（积分扣减+订单创建）</span></p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">注册中心原理？Nacos 心跳机制？</span></div>
+        <p class="q-hook">服务注册/发现/健康检查（临时实例心跳 5s/15s 下线/30s 剔除）→ 推拉结合（UDP 推 + 定时拉）。<span class="you">你有实战</span></p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">网关层做了什么？Gateway 原理？</span></div>
+        <p class="q-hook">路由/鉴权/限流/灰度；Spring Cloud Gateway = Route + Predicate + Filter，基于 Netty + Reactor。追问：为什么网关用 WebFlux 而不是 MVC。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">限流算法与 Sentinel？</span></div>
+        <p class="q-hook">计数器（临界突刺）→ 滑动窗口 → 漏桶（恒速）→ 令牌桶（允许突发）；Sentinel 滑动窗口 + 熔断降级规则 + 集群流控。<span class="you">你有实战：Sentinel 接口限流保护</span></p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">分布式 ID 方案？</span></div>
+        <p class="q-hook">UUID（无序）→ 数据库号段（批量取）→ 雪花（时钟回拨问题及解法）→ 美团 Leaf/百度 uid-generator。高频追问：雪花为什么是 64 位、时钟回拨怎么办。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">链路追踪原理？</span></div>
+        <p class="q-hook">OpenTracing 语义：TraceId/SpanId/ParentId；SkyWalking = Java Agent 字节码增强 + 无侵入。追问：跨线程/跨 MQ 怎么传递 traceId。<span class="you">你有实战：power-bank 部署了 SkyWalking</span></p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">你对微服务拆分的理解？DDD 怎么落地？</span></div>
+        <p class="q-hook">按业务能力/限界上下文拆，不是按技术层拆；拆小了分布式事务和运维成本爆炸。<b>高级答法（你的重构立项书）</b>："我们接手的系统拆了服务但共用一个库——披着微服务外衣的单体，我的重构是先确立每个域的单一数据主人再解循环依赖"。<span class="you">你有实战：DDD 营销平台 + 重构立项</span></p></div>
+    </div>
+  </section>
+
+  <!-- ==================== 八、系统设计 ==================== -->
+  <section>
+    <h2><span class="no">模块八</span>系统设计题 <span class="badge red" style="vertical-align:middle">三面主战场 · 每题 15 分钟画图 + 讲权衡</span></h2>
+    <div class="qlist">
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">设计一个秒杀系统</span></div>
+        <p class="q-hook">三板斧：前端静态化+CDN 挡流量 → Redis 预扣库存（Lua 原子扣减）→ MQ 异步下单削峰 → DB 乐观锁兜底。讲清"为什么 DB 不能碰流量"。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">设计一个短链系统</span></div>
+        <p class="q-hook">发号器（号段/雪花）+ 62 进制编码 + Redis 缓存 + 302/301 选择（301 减少请求但无法统计）。追问：如何防重、如何统计点击。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">库存防超卖怎么做？</span></div>
+        <p class="q-hook">三层：Redis Lua 预扣（原子）→ MQ 串行化 → DB `stock &gt; 0` 条件更新（最终防线）。对比悲观锁/乐观锁/队列串行的吞吐差异。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">把你的充电宝租借系统讲一遍（必考！）</span></div>
+        <p class="q-hook">扫码→下单→指令下发→弹宝→计费→归还→支付扣款。要点：设备状态机、TCP 长连接指令可达性（重试+回执+超时对账）、多支付渠道幂等、按秒计费精度。<span class="you">你的主场：把 pay-dup 与 drive 路由方案讲进去</span></p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">设计一个 RPC 框架</span></div>
+        <p class="q-hook">动态代理屏蔽网络 + 序列化（hessian/protobuf 对比）+ 注册发现 + 负载均衡 + 集群容错。类比 Dubbo 分层。<span class="you">可映射：你做过跨服务调用链路治理</span></p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">设计 IM / 海量长连接网关</span></div>
+        <p class="q-hook">接入层（长连接+心跳）无状态化、路由层记录"连接在哪台机器"（注册表/一致性哈希）、消息投递可靠性（ACK+离线消息+顺序）。<span class="you">你有实战：drive 单点→多实例路由方案就是这道题的缩小版</span></p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">设计一个计费/广告投放系统</span></div>
+        <p class="q-hook">实时计费（小时级统计+预算控制）+ 日结对账 + 授信额度（余额+授信双水位）+ 超限自动暂停投放。<span class="you">你有实战：广告系统完整计费规则</span></p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">订单超时未支付自动关闭</span></div>
+        <p class="q-hook">方案对比：定时轮询（简单但延迟粗）→ 延迟消息（RocketMQ）→ Redis 过期监听（不可靠）→ 时间轮。落点：关单与支付回调的竞态怎么防。</p></div>
+    </div>
+  </section>
+
+  <!-- ==================== 九、线上排查 ==================== -->
+  <section>
+    <h2><span class="no">模块九</span>线上场景排查题 <span class="badge red" style="vertical-align:middle">高级岗分水岭：区分"背题的"和"修过线上事故的"</span></h2>
+    <div class="qlist">
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">服务器 CPU 100% 怎么办？</span></div>
+        <p class="q-hook">top 找进程 → top -Hp 找线程 → printf '%x' 转十六进制 → jstack 抓栈。先分类：us 高（业务循环/GC）、sy 高（上下文切换/锁竞争）、wa 高（IO 等待）。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">接口突然变慢，怎么定位？</span></div>
+        <p class="q-hook">先看监控圈定范围（全接口 or 单接口）→ 链路追踪找慢在哪一跳 → 分类：慢 SQL / 下游 RPC / GC 停顿 / 线程池打满 / 锁竞争。<span class="you">你有实战：慢响应接口优化</span></p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">消息堆积风暴怎么处理？（你的独门故事）</span></div>
+        <p class="q-hook">完整链路：RabbitMQ manual-ack 用错 channel → 消息永远 unacked → 连接泄漏 → 重投风暴 → 服务雪崩。修复：正确 ack + 幂等消费。<span class="you">你的王牌：完整时间线+根因+修复都在你文档里</span></p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">频繁 Full GC 怎么排查？</span></div>
+        <p class="q-hook">jstat -gcutil 看频率 → GC 日志看回收效果（回收前老年代占用）→ 回收无效=内存泄漏（dump+MAT）/ 回收有效=流量或缓存大对象。追问：大对象直接进老年代（-XX:PretenureSizeThreshold）。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">两笔数据不一致，怎么查怎么修？</span></div>
+        <p class="q-hook">先对账（定时任务 diff）→ 按时间线找分叉点（binlog/日志）→ 判断是丢失还是重复 → 修复脚本+防复发（幂等/事务边界）。<span class="you">你有实战：支付对账体系</span></p></div>
+    </div>
+  </section>
+
+  <!-- ==================== 十、AI 工程化 ==================== -->
+  <section>
+    <h2><span class="no">模块十</span>AI 工程化 <span class="badge red" style="vertical-align:middle">2026 热点 · 加分项性价比之王</span></h2>
+    <div class="qlist">
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">RAG 系统架构？</span></div>
+        <p class="q-hook">离线：文档→切片→Embedding→向量库；在线：query→向量化→召回（向量+关键词混合检索）→重排（MMR 去冗余）→拼 Prompt→LLM。追问：切片策略怎么定 / 效果怎么评估（召回率+答案质量）。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">Agent 的核心组件？</span></div>
+        <p class="q-hook">Planning（任务分解/反思）+ Memory（短期对话/长期向量库）+ Tools（函数调用/API）+ Action（执行与解析）。追问：幻觉怎么抑制（RAG 接地+校验+拒答机制）、多轮上下文怎么维护。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">MCP / Skill 协议是什么，和 Function Calling 什么关系？</span></div>
+        <p class="q-hook">Function Calling 是模型能力；MCP 是工具接入的标准化协议（Server 提供工具/资源，Client 即宿主应用）。能讲清分层即可超越大多数候选人。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">LLM 应用的工程挑战（后端视角）</span></div>
+        <p class="q-hook">TTFT 首字延迟（流式 SSE/缓存高频问题/小模型路由）、降级（多供应商/兜底文案）、Prompt 注入防护（输入隔离/权限最小化）、Prompt 版本管理与 AB、敏感数据脱敏与私有化部署。<b>这题答得好 = 证明你是"工程师"不是"调包侠"</b>。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">Java 技术栈怎么接 AI？</span></div>
+        <p class="q-hook">Spring AI（ChatClient/Embedding/VectorStore 抽象）或 LangChain4j + 国产模型 API（DeepSeek/通义）+ SSE 流式输出。W3 我们落一个可写上简历的小 Demo。</p></div>
+    </div>
+  </section>
+
+  <!-- ==================== 十一、项目深挖 ==================== -->
+  <section>
+    <h2><span class="no">模块十一</span>项目深挖题清单 <span class="badge red" style="vertical-align:middle">二面 · 挂率最高 · 全部要按 STAR + 数字准备</span></h2>
+    <div class="qlist">
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">介绍你最有成就感的项目（90 秒版 + 5 分钟版）</span></div>
+        <p class="q-hook">结构：业务背景一句 → 我的角色 → 技术挑战 → 关键决策与取舍 → 量化结果。练到脱口而出，两个版本。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">项目 QPS 多少？瓶颈在哪？怎么知道的？</span></div>
+        <p class="q-hook">数字必须自洽：QPS/RT/机器数/资源占用要能对上。你说得出 TPS 500/QPS 1000，就要答得出"为什么瓶颈是它"（压测？监控？推算？）。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">为什么选 RocketMQ 不选 Kafka？</span></div>
+        <p class="q-hook">选型题标准答法：场景（业务消息 vs 日志流）+ 你需要的特性（事务消息/延迟级别/顺序）+ 团队熟悉度。展示"选型是权衡不是信仰"。</p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">如果重新设计这个系统，你会改什么？</span></div>
+        <p class="q-hook">考反思能力。<span class="you">你有现成答案：重构立项书里的三阶段（止血→安全网→结构解耦）就是这道题的最佳答案范本</span></p></div>
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">"四次扣费"具体怎么发生的？你怎么定位的？</span></div>
+        <p class="q-hook">预备 5 分钟完整叙事：现象→排查路径（日志/MQ 控制台）→根因（at-least-once + 无幂等）→修复（CAS+防重）→防复发（对账+告警）。这是你最高级的故事，讲好了直接和竞争者拉开身位。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">你怎么做 CodeReview？团队几个人？怎么带人？</span></div>
+        <p class="q-hook">准备 2-3 个真实 CR 案例（抓过什么类型的 bug）+ 怎么定规范（编码标准/技术规范落地）。架构师 JD 高频："指导初级工程师"。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">DDD 在你们项目怎么落地的？</span></div>
+        <p class="q-hook">说得出：限界上下文怎么划、防腐层在哪、聚合根怎么设计、DDD 的代价（代码量/学习成本）。反模式也要知道（为 DDD 而 DDD）。</p></div>
+    </div>
+  </section>
+
+  <!-- ==================== 十二、HR面与反问 ==================== -->
+  <section>
+    <h2><span class="no">模块十二</span>HR 面 · 反问 · 加分项</h2>
+    <div class="qlist">
+      <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">为什么离开上家公司？（被裁话术）</span></div>
+        <p class="q-hook">一句话带过融资问题→不抱怨→立刻转"这段时间的系统性准备"。观察者效应：你的平静自信比解释内容更重要。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">期望薪资？</span></div>
+        <p class="q-hook">锚定市场（深圳高级/架构 25-40K）：报区间上限留谈判空间，"我了解到这个岗位市场区间是 X-Y，结合我六年的分布式与出海项目经验，我期望在 Y 附近"。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">你有什么要问我的？（反问）</span></div>
+        <p class="q-hook">三个高质量反问：① 这个岗位未来半年最需要解决的核心问题是什么 ② 团队规模与技术栈演进方向 ③ 我入职后第一个季度的成功标准是什么。不要问薪资假期（HR 面再谈）。</p></div>
+      <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">面试加分项清单（2026）</span></div>
+        <p class="q-hook">技术博客（可快速攒 2-3 篇：四次扣费复盘就是现成素材）/ 读过中间件源码（AQS、Dubbo SPI 讲得出细节）/ GitHub 项目 / AI 相关经验（W3 落地）。来源：牛客面试官原话。</p></div>
+    </div>
+  </section>
+
+  <hr class="rule">
+  <p class="src">考点来源：牛客【2026 Java 后端面试真题汇总（含 AI 工程方向）】（一线面试官整理）· JavaGuide（javaguide.cn）· 知乎【Java 高频面试题总结 2025 版】（几百份面经分析）· 猎聘/BOSS直聘/滴滴/腾讯真实 JD · 完整链接见 <code>RESOURCES.md</code>。<br>
+  "你有实战"标记依据：本人简历与 power-bank 项目文档（doc/pay-duplicate-and-no-dispense-analysis.md 等）。</p>
+
+  <div class="lesson-nav no-print">
+    <a class="primary" href="../lessons/0001-interview-battle-map.html">← 回到第 1 课：面试作战地图</a>
+    <a href="../index.html">🏠 课程主页</a>
+    <a href="https://javaguide.cn/" target="_blank">JavaGuide 主站 ↗</a>
+  </div>
+
+  <footer class="site">
+    <span>Java Offer 突围战 · 参考手册 01 / 高频考点速查</span>
+    <span>打印出来贴在桌边 · 每天抽 10 条自测</span>
+  </footer>
+</div>
+</body>
+</html>

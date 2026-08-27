@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 1 课 · 面试作战地图</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js"></script>
+<script src="../assets/nav.js"></script>
+</head>
+<body>
+<div class="page">
+
+  <div class="kicker">Java Offer 突围战 · 第 1 课</div>
+  <h1>面试作战地图</h1>
+  <p class="subtitle">市场在考什么、你手里有什么、差在哪里、三周怎么打——一张图看清整场战役。</p>
+  <div class="meta-badges">
+    <span class="badge red">数据基线 2026-08-25</span>
+    <span class="badge">猎聘 / BOSS直聘 / 智联 JD</span>
+    <span class="badge">牛客 2026 真题（面试官视角）</span>
+    <span class="badge">JavaGuide 2026 路线</span>
+    <span class="badge gold">目标：深圳 25-40K</span>
+  </div>
+
+  <hr class="rule">
+
+  <!-- ==================== 一、市场在考什么 ==================== -->
+  <section>
+    <h2><span class="no">第一部分 · 情报</span>5-10 年 Java 高级 / 架构师，市场在考什么</h2>
+    <p class="lead">以下每一条都来自真实 JD 与一线面经的原文摘录，不是猜测。</p>
+
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>考察维度</th><th>JD / 面经原文高频表述</th><th>来源</th><th>热度</th></tr></thead>
+      <tbody>
+        <tr><td><b>分布式实战</b></td><td>"5 年以上 Java 开发经验，<b>3 年以上分布式系统实战</b>"</td><td>猎聘·深圳高级Java</td><td><span class="stars">★★★</span></td></tr>
+        <tr><td><b>JVM + 并发 + NIO</b></td><td>"精通 <b>JVM 调优</b>、多线程编程及 NIO 框架（Netty）"</td><td>猎聘 / 滴滴社招</td><td><span class="stars">★★★</span></td></tr>
+        <tr><td><b>MySQL 深度</b></td><td>"熟悉 <b>MySQL 分库分表</b>"、"优秀的 SQL 编写及调优能力"</td><td>猎聘 / BOSS直聘</td><td><span class="stars">★★★</span></td></tr>
+        <tr><td><b>高并发架构</b></td><td>"设计高并发、分布式、高可扩展、高安全的 Java 微服务系统架构"</td><td>BOSS直聘</td><td><span class="stars">★★★</span></td></tr>
+        <tr><td><b>架构治理与带教</b></td><td>"架构文档、调优规范、<b>故障治理手册</b>，指导初级工程师"</td><td>腾讯招聘</td><td><span class="stars">★★</span></td></tr>
+        <tr><td><b>云原生与可观测</b></td><td>"微服务治理、容器化、CI/CD、可观测性等基础能力落地"</td><td>腾讯招聘</td><td><span class="stars">★★</span></td></tr>
+        <tr><td><b>AI 工程化</b></td><td>"有 AI 相关项目经验优先"；RAG 架构、Agent 组件、MCP 协议进高频题</td><td>牛客 2026 面经</td><td><span class="stars">★★<span class="off">★</span> ↑上升</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="callout red">
+      <span class="ttl">一线面试官原话（2026-03，月面 10+ 人的后端团队负责人）</span>
+      "跟自己简历相关的内容请务必多准备，尤其是<strong>项目经验和项目相关的基础知识</strong>。" —— 你的简历每写一个词，都是给面试官递一根拷打你的棍子。
+    </div>
+
+    <div class="callout">
+      <span class="ttl">薪资锚点（深圳，2026-08 检索）</span>
+      上市集团架构师 28-40K（猎聘）；中小公司微服务架构师 10-15K（BOSS）。跨度极大——<strong>你的准备质量直接决定落在哪一端</strong>。目标区间：25-40K。
+    </div>
+  </section>
+
+  <!-- ==================== 二、面试流程解剖 ==================== -->
+  <section>
+    <h2><span class="no">第二部分 · 战场地形</span>面试全流程解剖：每轮考什么、挂在哪</h2>
+    <div class="flow">
+      <div class="step"><b>简历筛选</b>第一道面试题就是简历本身。关键词命中 JD（JVM 调优 / 分库分表 / 高并发）+ 数字化成果。</div>
+      <div class="step"><b>一面 · 基础</b>八股：并发、集合、MySQL、Redis。每轮 1-3 道算法。挂点：<em>答案只有一层</em>。</div>
+      <div class="step hot"><b>二面 · 项目深挖</b><b>挂率最高的一轮。</b>STAR 叙事 + 数字 + 取舍。挂点：讲不出"为什么这么选"。</div>
+      <div class="step"><b>三面 · 架构</b>系统设计题（秒杀/短链/分布式ID）+ 架构判断力 + 软素质。挂点：只有结论没有权衡。</div>
+      <div class="step"><b>HR 面</b>稳定性、动机、薪资。被裁经历的话术在这里定胜负。</div>
+    </div>
+
+    <div class="callout gold">
+      <span class="ttl">被裁话术（现在就定稿，背熟）</span>
+      一句话带过 + 不抱怨 + 立刻转向："公司融资出了问题，团队整体优化。对我来说反而是一个契机——这段时间我把支付幂等、架构重构这些实战做了系统复盘，也补齐了 AI 工程化这些新东西。" 面试官真正想看的是<strong>你怎么看待这件事</strong>，不是这件事本身。
+    </div>
+  </section>
+
+  <!-- ==================== 三、你的底牌 vs 差距 ==================== -->
+  <section>
+    <h2><span class="no">第三部分 · 兵力盘点</span>你的底牌 vs 市场要求</h2>
+    <p class="lead">结论先行：<b>你的硬技能基本盘在 5-10 年候选人里属于中上</b>——真正的风险不在"不会"，而在两处：① 王牌素材没讲成故事；② 市场新增考点（AI 工程化）完全空白。</p>
+
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>模块</th><th>你的现状</th><th>判定</th><th>应对</th></tr></thead>
+      <tbody>
+        <tr><td><b>项目叙事</b></td><td>三段真实项目，其中 power-bank 有架构重构立项书（85 项问题交叉核验）、"四次扣费"幂等事故分析、设备单点→多实例路由方案——<b>架构师级叙事素材</b>，但简历上还没写 power-bank</td><td class="gap">重整</td><td>W1：简历改版 + 三张 STAR 故事卡</td></tr>
+        <tr><td><b>并发编程</b></td><td>简历写"精通"（volatile/synchronized/ReentrantLock/AQS），有 ReentrantLock+自旋解决 token 重复刷新的实战</td><td class="mid">深挖</td><td>"精通"= 必被拷打三层，按追问链准备</td></tr>
+        <tr><td><b>MySQL</b></td><td>慢 SQL 整改、索引调整实战；话费项目有"月百万级数据 + 归档"</td><td class="ok">优势</td><td>把归档实战提炼成分库分表故事</td></tr>
+        <tr><td><b>Redis</b></td><td>数据结构场景、Redisson 分布式锁、缓存一致性均有实战</td><td class="ok">优势</td><td>标准题过一遍即可，防口误</td></tr>
+        <tr><td><b>消息队列</b></td><td>RocketMQ（顺序/幂等/积压）+ RabbitMQ（power-bank 实际在用，简历没写！）+ 四次扣费事故 = <b>顶级幂等故事</b></td><td class="ok">王牌</td><td>W2 打磨成"资损防控"专题</td></tr>
+        <tr><td><b>微服务</b></td><td>Nacos/Gateway/Sentinel/SkyWalking 实战；但 power-bank 是"披着微服务外衣的单体"——重构立项书正好是你对微服务治理的深度理解</td><td class="mid">深挖</td><td>把重构叙事翻转为架构判断力证明</td></tr>
+        <tr><td><b>JVM</b></td><td>有 OOM 排查实战（线程池任务堆积连锁反应）、死锁排查</td><td class="mid">深挖</td><td>实战故事 + 内存模型/GC 标准题</td></tr>
+        <tr><td><b>Netty/NIO</b></td><td>JD 高频词；你有 IoT TCP 长连接 + MQTT + 心跳重连实战，但没用 Netty 的语言讲过</td><td class="gap">补齐</td><td>一次专题：把 IoT 经验映射到 Netty 话题</td></tr>
+        <tr><td><b>Kafka</b></td><td>JD 常见，你只有 RocketMQ</td><td class="gap">类比</td><td>一张对比表 30 分钟搞定，面试讲"迁移视角"</td></tr>
+        <tr><td><b>K8s/云原生</b></td><td>Docker + Jenkins 有基础</td><td class="gap">补齐</td><td>过概念（Pod/Service/Deployment），能聊即可</td></tr>
+        <tr><td><b>AI 工程化</b></td><td><b>空白</b>——但这是 2026 加分项里性价比最高的：RAG/Agent/MCP 概念 + 一个 Spring AI Demo 就能写上简历</td><td class="gap">速成</td><td>W3 专题 + 落一个 Demo</td></tr>
+        <tr><td><b>系统设计</b></td><td>有广告计费系统（授信额度/实时暂停投放）设计经验，未按面试题格式整理</td><td class="mid">深挖</td><td>W2-W3 专题：练 6 道高频题</td></tr>
+        <tr><td><b>算法</b></td><td>未知（自评确认）</td><td class="mid">待评</td><td>每日 1-2 道高频题，贯穿全程</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="callout green">
+      <span class="ttl">你最容易低估的一张牌：出海经验</span>
+      power-bank 是<strong>面向巴西市场</strong>的平台：多支付渠道（Stripe/Phiz/Global）、国际化、跨境业务。2026 年出海是热门赛道，这段经历自带稀缺性——记得写进简历第一屏。
+    </div>
+  </section>
+
+  <!-- ==================== 四、三周冲刺计划 ==================== -->
+  <section>
+    <h2><span class="no">第四部分 · 作战日程</span>三周冲刺计划（2026-08-25 → 09-14）</h2>
+    <p class="lead">原则：<em>边投边学，用真实面试校准复习</em>——W1 周日（8/30）就投出第一批"练手公司"，绝不等"准备好"。</p>
+
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>周次</th><th>主线</th><th>关键交付</th></tr></thead>
+      <tbody>
+        <tr><td><b>W1</b><br>8/25-8/31</td><td><b>清点弹药 + 项目叙事 + 八股主线</b>（并发 + MySQL，底子好，直接过成"追问三层"）</td><td>① 完成本课自评 → ② 简历改版（补 power-bank、出海、量化数字）→ ③ 三张 STAR 故事卡（营销平台 / 充电宝出海 / 四次扣费）→ ④ 并发+MySQL 追问链清单 → ⑤ 算法热身 7 道 → <b>8/30 投出第一批简历（3-5 家练手）</b></td></tr>
+        <tr><td><b>W2</b><br>9/1-9/7</td><td><b>核心专题 + 王牌故事</b>（Redis + MQ + JVM + 分布式理论 + 系统设计前 4 道）</td><td>"四次扣费"打磨成幂等/资损专题 + OOM 排查故事定型 + CAP/分布式事务/微服务治理（重构叙事翻转）+ 秒杀/短链/分布式ID/防超卖各画一页架构图 + 第 1 场模拟面试 + 投递提速</td></tr>
+        <tr><td><b>W3</b><br>9/8-9/14</td><td><b>冲刺收口 + 实战迭代</b>（系统设计收尾 + AI 工程化速成 + 补齐 + 全真模拟）</td><td>充电宝租借系统（必考）+ 订单超时/计费设计题 + RAG/Agent/MCP + Spring AI 小 Demo（简历加分项）+ Netty 专题/Kafka 类比表/K8s 概念/虚拟线程话题 + 全真模拟 2 场 + 谈薪话术（锚定 25-40K）→ <b>每场真实面试 24h 内复盘回炉，以战养战</b></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="callout">
+      <span class="ttl">每日节奏建议（5-7 小时有效学习）</span>
+      上午大脑最清醒 → 八股主线（2.5h，含<em>检索式自测</em>而非只看）；下午 → 项目叙事 / 系统设计输出（2h，要动笔产出物）；晚上 → 算法 1-2 道 + 当日错题回看（1h）。三周冲刺强度高，<strong>每周留半天彻底休息</strong>——节奏比爆发重要，崩了就全输了。
+    </div>
+  </section>
+
+  <!-- ==================== 五、交互自评 ==================== -->
+  <section>
+    <h2><span class="no">第五部分 · 交互演练</span>12 个战场自评：你的进攻顺序</h2>
+    <p class="lead">对每个模块按 <b>1（只记得名词）→ 5（能扛住三层追问）</b> 诚实打分。系统会按 <em>市场权重 − 你的得分</em> 实时算出最该先打的顺序。</p>
+
+    <div class="widget" id="selfassess">
+      <div class="w-title">⚔️ 战场自评表</div>
+      <div class="w-sub">数据保存在本机浏览器，下次打开自动恢复。诚实 &gt; 好看。</div>
+      <div id="rows"></div>
+      <h3 style="margin-top:18px">📊 你的进攻顺序（实时）</h3>
+      <p class="cite" id="priorHint">给所有模块打完分，这里会生成你的专属进攻顺序。</p>
+      <ol class="prio-list" id="prioList"></ol>
+      <div class="callout green" id="strengthBox" style="display:none">
+        <span class="ttl">你的强项（面试时的"主动进攻区"）</span>
+        <span id="strengthList"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 六、今天的行动 ==================== -->
+  <section>
+    <h2><span class="no">第六部分 · 今日战令</span>今天的第一个动作（15 分钟）</h2>
+    <div class="action">
+      <div class="ttl">完成上面的自评，然后把结果带回指挥部</div>
+      <p>打完分后，回到 Claude Code 终端，告诉我：<b>"我的前三项是 X / Y / Z，强项是 A 和 B。"</b> 我会据此为你定制第 2 课（大概率是简历改版或第一个项目故事卡，取决于你的自评结果）。</p>
+      <p style="margin-bottom:0">这 15 分钟决定接下来三周每一小时花在哪——<b>这是整个计划里杠杆最高的一刻钟。</b></p>
+    </div>
+  </section>
+
+  <!-- ==================== 主资源 + 提问提醒 ==================== -->
+  <section>
+    <h2><span class="no">延伸</span>本课主推荐资源 & 你的老师随时在线</h2>
+    <p><b>主资源：</b><a href="https://javaguide.cn/roadmap/java-roadmap.html" target="_blank">JavaGuide：Java 后端学习路线（2026 最新版）</a> —— 你指定的主参考 javaguide.cn 的最新路线图，注意它 2026 版已经把 <b>AI 应用开发</b>列入主线，和我们 W3 的 AI 速成安排互相印证。本课所有考点的完整清单在配套的<a href="../reference/0001-high-frequency-topics.html">《高频考点速查手册》</a>里，打印出来贴在桌边。</p>
+    <div class="callout red">
+      <span class="ttl">任何卡住的地方，直接问我</span>
+      我是你的老师，不是一套死教程。自评时有拿不准的（"我 Redis 到底算 3 分还是 4 分"）、看资料看不懂的（"AQS 的 CLH 队列到底怎么工作"）、或者想改计划的——<strong>直接在 Claude Code 里把问题打出来</strong>，这比你自己琢磨十分钟高效得多。
+    </div>
+  </section>
+
+  <div class="lesson-nav no-print">
+    <a class="primary" href="../reference/0001-high-frequency-topics.html">📋 打开配套手册：高频考点速查表 →</a>
+    <a href="../index.html">🏠 课程主页</a>
+    <a href="https://javaguide.cn/" target="_blank">JavaGuide 主站 ↗</a>
+  </div>
+
+  <footer class="site">
+    <span>Java Offer 突围战 · 第 1 课 / 面试作战地图</span>
+    <span>数据基线 2026-08-25 · 下一课由你的自评结果决定</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var MODULES = [
+    { id: "proj",  name: "项目深挖叙事（STAR + 数字）",           hint: "二面挂率最高；你有三次真实项目 + 架构重构立项书", w: 5 },
+    { id: "conc",  name: "Java 并发编程（锁 / AQS / 线程池）",     hint: "简历写了“精通”，必被拷打三层", w: 5 },
+    { id: "mysql", name: "MySQL（索引 / 事务 / 慢SQL排查）",       hint: "必考，且一定会结合你的项目场景", w: 5 },
+    { id: "redis", name: "Redis（分布式锁 / 一致性 / 三兄弟）",    hint: "穿透 / 击穿 / 雪崩 + Redisson 实战", w: 5 },
+    { id: "sysdes",name: "系统设计题（秒杀 / 短链 / 分布式ID）",   hint: "三面主战场，15 分钟画图 + 权衡", w: 5 },
+    { id: "trouble",name: "线上场景排查（CPU 100% / OOM / 死锁）", hint: "高级岗分水岭；你有 OOM 与死锁实战", w: 4 },
+    { id: "mq",    name: "消息队列（RocketMQ / RabbitMQ 幂等）",   hint: "四次扣费事故 = 你的王牌故事", w: 4 },
+    { id: "jvm",   name: "JVM（内存模型 / GC / 调优实战）",        hint: "JD 高频“JVM 调优实战”", w: 4 },
+    { id: "spring",name: "Spring / 微服务原理（IoC / AOP / Nacos）", hint: "读过部分源码是你的加分项", w: 4 },
+    { id: "dist",  name: "分布式理论（CAP / 一致性 / 分布式事务）", hint: "架构师面必问", w: 4 },
+    { id: "ai",    name: "AI 工程化（RAG / Agent / MCP）",         hint: "2026 热点加分项，从 0 到能聊只需一周", w: 4 },
+    { id: "algo",  name: "算法（LeetCode 高频 简单+中等）",        hint: "每轮面试 1-3 道，手感比深度重要", w: 3 }
+  ];
+  var KEY = "java-offer-selfassess-v1";
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+
+  var rowsEl = document.getElementById("rows");
+  MODULES.forEach(function (m) {
+    var row = document.createElement("div");
+    row.className = "rate-row";
+    var dots = "";
+    for (var v = 1; v <= 5; v++) {
+      var checked = saved[m.id] === v ? " checked" : "";
+      dots += '<label><input type="radio" name="' + m.id + '" value="' + v + '"' + checked + '><span>' + v + '</span></label>';
+    }
+    row.innerHTML =
+      '<div class="r-name">' + m.name + '<small>' + m.hint + '</small></div>' +
+      '<div class="dots">' + dots + '</div>';
+    rowsEl.appendChild(row);
+  });
+
+  function compute() {
+    var scores = {};
+    var done = 0;
+    MODULES.forEach(function (m) {
+      var sel = rowsEl.querySelector('input[name="' + m.id + '"]:checked');
+      if (sel) { scores[m.id] = +sel.value; done++; }
+    });
+    try { localStorage.setItem(KEY, JSON.stringify(scores)); } catch (e) {}
+
+    var listEl = document.getElementById("prioList");
+    var hintEl = document.getElementById("priorHint");
+    listEl.innerHTML = "";
+
+    if (done === 0) { hintEl.textContent = "给所有模块打完分，这里会生成你的专属进攻顺序。"; return; }
+    hintEl.textContent = done < MODULES.length
+      ? "已评 " + done + "/" + MODULES.length + " 个模块——先评完再看顺序更准。"
+      : "全部评完。红色前三项就是你接下来 7 天的主攻方向：";
+
+    var ranked = MODULES.map(function (m) {
+      var s = scores[m.id] || 3;
+      return { name: m.name, w: m.w, s: s, urgency: m.w * 2 - s };
+    }).sort(function (a, b) { return b.urgency - a.urgency || a.s - b.s; });
+
+    ranked.forEach(function (r, i) {
+      var li = document.createElement("li");
+      if (i < 3) li.className = "top";
+      li.innerHTML = '<span class="rank">#' + (i + 1) + '</span><span>' + r.name + '</span>' +
+        '<span class="delta">自评 ' + r.s + '/5 · 市场权重 ' + r.w + '</span>';
+      listEl.appendChild(li);
+    });
+
+    var strengths = MODULES.filter(function (m) { return scores[m.id] >= 4; })
+      .sort(function (a, b) { return scores[b.id] - scores[a.id]; })
+      .map(function (m) { return m.name.split("（")[0]; });
+    var box = document.getElementById("strengthBox");
+    if (strengths.length) {
+      box.style.display = "";
+      document.getElementById("strengthList").textContent =
+        strengths.join("、") + " —— 面试中主动把话题往这里引，这是你的得分区。";
+    } else {
+      box.style.display = "none";
+    }
+  }
+
+  rowsEl.addEventListener("change", compute);
+  compute();
+})();
+</script>
+</body>
+</html>

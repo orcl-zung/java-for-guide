@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 2 课 · MySQL 追问链</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js"></script>
+<script src="../assets/nav.js"></script>
+</head>
+<body>
+<div class="page">
+
+  <div class="kicker">Java Offer 突围战 · 第 2 课 · W1 八股主线</div>
+  <h1>MySQL 追问链</h1>
+  <p class="subtitle">六条链，每条 = 一层答案 + 预判的二三层追问。目标不是"学会 MySQL"，是把你已有的实战接到面试的拷问管线上。</p>
+  <div class="meta-badges">
+    <span class="badge red">自评 1 → 目标 4</span>
+    <span class="badge">8/27 - 8/28 · 两天</span>
+    <span class="badge">市场权重 ★★★（必考 + 必结合项目）</span>
+    <span class="badge gold">方法：检索式自测，不是看</span>
+  </div>
+
+  <hr class="rule">
+
+  <!-- ==================== 一、怎么啃这课 ==================== -->
+  <section>
+    <h2><span class="no">第一部分 · 方法</span>这课怎么用（先看这个，否则白学）</h2>
+    <p class="lead">你的 MySQL 自评是 1，但档案里有慢 SQL 集中整改、锁表死锁、月百万级归档的实战——<b>缺的不是知识，是"被追问时的调取用速度"</b>。所以这课的用法是检索式自测，不是阅读：</p>
+    <div class="flow">
+      <div class="step"><b>① 盖住答案讲 30 秒</b>每条链只看题干，<b>出声讲</b>（不是脑子里过——脑子里觉得会，嘴上全卡壳）。</div>
+      <div class="step"><b>② 翻开对答案</b>讲错或讲不出的那一层，标记。标记的链才是今天的主角。</div>
+      <div class="step"><b>③ 晚上回看错链</b>只看标记的，每条再讲一遍。讲顺了才睡。</div>
+      <div class="step hot"><b>④ 明天二次过堂</b>六条全过完一遍后，能讲满三层的去页面底部打勾——六勾齐了，回第 1 课把 MySQL 自评从 1 改成 3+。</div>
+    </div>
+    <div class="callout">
+      <span class="ttl">为什么必须出声</span>
+      面试是口语考试。同样的内容，"看懂了"和"能在 30 秒内结构清楚地讲出来"之间隔着三次练习。这课的每一层答案都按"可以直接说出口"的篇幅写的——照这个密度练。
+    </div>
+  </section>
+
+  <!-- ==================== 二、六条追问链 ==================== -->
+  <section>
+    <h2><span class="no">第二部分 · 正课</span>六条追问链</h2>
+    <p class="lead">点击展开。先看题 → 盖住 → 出声讲 → 再对答案。<b>黄色"你的实战锚点"</b>是讲完标准答案后主动带出来的加分动作。</p>
+
+    <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 1 · MySQL 索引为什么用 B+ 树，不用哈希 / 红黑树 / B 树？</span></summary>
+      <p class="q-hook"><b>一层：</b>哈希索引只支持等值查询，范围、排序、模糊全废；红黑树是二叉树，数据量大了树太高，每层一次磁盘 IO 扛不住；B 树非叶子节点也存数据，单页能放的索引项少；B+ 树非叶子只存"键 + 页指针"，单页扇出大 → 树矮胖（千万级只要 3 层），且叶子节点是双向链表，天然支持范围查询和排序。</p>
+      <p class="q-hook"><b>追问①：3 层 B+ 树到底能存多少行？算给我看。</b><br>页大小 16K；非叶子页一个"键 + 指针"约 14 字节（bigint 8B + 指针 6B），单页扇出约 1170；叶子页按每行 1K 算存 16 行 → 1170 × 1170 × 16 ≈ <b>两千两百万行</b>。且根节点常驻内存，实际磁盘 IO 只有 1-2 次。——能算出这个数字的人，全场面试不超过三个。</p>
+      <p class="q-hook"><b>追问②：为什么所有规范都强制自增主键？用 UUID 会怎样？</b><br>聚簇索引按主键组织数据页：自增 = 顺序追加，页写满才分裂；UUID 随机插入 → 频繁页分裂 + 页内碎片 + 随机 IO。且二级索引叶子存的是主键值，UUID 36 字节会让<b>每一棵二级索引</b>都跟着变大。</p>
+      <p class="q-hook"><b>追问③：联合索引 (a,b,c)，where b=? 走不走索引？where a=? and b&gt;? and c=? 呢？</b><br>前者不走——索引内部是先按 a 排、a 相同再按 b 排，没有 a，b 在整棵树里无序，只能全扫（MySQL 5.6+ 可能走 ICP 索引下推做引擎层过滤，但那不是"用索引定位"）。后者：c 用不上——b 是范围条件，b 之后 c 无序。<b>口诀：范围之后全断。</b></p>
+    </details>
+
+    <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 2 · 什么是回表？怎么避免？</span></summary>
+      <p class="q-hook"><b>一层：</b>二级索引的叶子节点只存"索引列 + 主键值"。查到之后还要拿主键去聚簇索引把整行捞出来——这一趟额外的查找叫回表。</p>
+      <p class="q-hook"><b>追问①：什么是覆盖索引？</b><br>查询要的所有列都在索引里，不用回表，explain 的 Extra 显示 <b>Using index</b>。实战动作：高频查询把返回列设计进联合索引。但补一句权衡：索引越宽，写入维护成本和回表收益要一起算——这句话出口，面试官知道你不是背书的。</p>
+      <p class="q-hook"><b>追问②：select count(*) 走什么索引？InnoDB 为什么不缓存总行数？</b><br>优化器会选<b>最小的那棵二级索引</b>扫（页数少、更便宜）。不缓存行数是因为 MVCC——同一时刻不同事务"可见的行数"不一样，缓存没有定义。对比：MyISAM 没事务，所以可以缓存。</p>
+      <p class="q-hook"><span class="you">你的实战锚点：话费充值平台 TPS 500 的订单查询——哪些查询走覆盖索引、哪些必须回表，讲链 3 整改故事时顺手带上。</span></p>
+    </details>
+
+    <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 3 · 线上接口慢了，怀疑是 SQL，你的排查路径？</span></summary>
+      <p class="q-hook"><b>一层：</b>四步走：① 慢查询日志（long_query_time）+ 监控定位到具体 SQL；② <b>explain</b> 看执行计划——type 至少到 range（ALL = 全表扫描，立刻报警）、key 是实际走的索引、rows 是扫描行数、Extra 警惕 Using filesort / Using temporary；③ 对症下药：缺索引补索引、改写 SQL（拆复杂 JOIN / 覆盖索引 / 延迟关联）、热点上缓存；④ 验证：对比优化前后 rows 和耗时，灰度观察。<b>"定位 → 量化 → 对症 → 验证"这八个字是骨架，先说骨架再展开。</b></p>
+      <p class="q-hook"><b>追问①：深分页 limit 1000000, 10 为什么慢？怎么优化？</b><br>要扫出前 100 万 + 10 行再丢掉前 100 万。两种改法：游标式 <code>where id &gt; 上页最大id limit 10</code>（聚簇索引范围扫，最快）；或延迟关联——先用覆盖索引只查出 10 个 id，再回表取整行。</p>
+      <p class="q-hook"><b>追问②：明明有索引，explain 却没走，有哪些可能？</b><br>失效清单一口气背：列上做函数或运算；隐式类型转换（varchar 列传了数字）；like 前导 %；OR 两边不都有索引；不满足最左前缀；优化器估算全表反而更快（表太小 / 回表比例太高）。最后一项的解法：<code>analyze table</code> 更新统计信息，或 <code>force index</code> 强制验证。</p>
+      <p class="q-hook"><span class="you">你的实战锚点（王牌，讲完链路主动带）："我在嘉立创做过一轮慢 SQL 集中整改——复杂 SQL 拆分 + 索引调整 + 热点上缓存。"今晚把这个故事的三件事各回忆一个具体例子：哪张表、什么现象、改完快了多少。</span></p>
+    </details>
+
+    <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 4 · 四个隔离级别？InnoDB 默认哪个？MVCC 怎么实现的？</span></summary>
+      <p class="q-hook"><b>一层：</b>读未提交 / 读已提交 / 可重复读 / 串行化，分别对应脏读、不可重复读、幻读三个问题。InnoDB 默认 <b>RR（可重复读）</b>。</p>
+      <p class="q-hook"><b>追问①：MVCC 怎么实现 RR？</b><br>每行有两个隐藏列：最近修改它的事务 id（trx_id）和回滚指针（roll_pointer），沿指针在 undo log 里串出<b>版本链</b>。事务第一次快照读时生成 <b>ReadView</b>（当前活跃事务列表 + 高低水位），沿版本链找"对本事务可见"的那个版本。关键差异：<b>RC 每条快照读都新建 ReadView，RR 复用第一次的</b>——这就是"可重复读"三个字的实现。</p>
+      <p class="q-hook"><b>追问②：RR 到底解没解决幻读？</b><br>分两种读答：<b>快照读</b>靠 MVCC 解决；<b>当前读</b>（update / delete / select for update）靠 next-key lock 解决。陷阱题：先快照读、再当前读，仍可能看到别的事务新插入的行——因为当前读读的是最新版本。能主动讲出这个陷阱，RR 这题就封顶了。</p>
+      <p class="q-hook"><b>追问③：为什么很多大厂规范反而强制 RC + row 格式 binlog？</b><br>RC 下基本没有间隙锁 → 并发度更高、死锁概率更低；主从一致性由 row 格式 binlog 兜底。RR 的间隙锁很大程度是 statement 格式 binlog 时代的历史包袱。这一层答出来 = 你理解设计动机，不只是背行为。</p>
+    </details>
+
+    <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 5 · InnoDB 的行锁有哪几种？死锁怎么排查？</span></summary>
+      <p class="q-hook"><b>一层：</b>记录锁（锁单行）、间隙锁（锁开区间，防插入）、<b>next-key lock</b>（记录 + 间隙，左开右闭，RR 的默认加锁单位）、插入意向锁；表级还有意向锁（IS/IX）和 MDL 元数据锁。最核心一句：<b>行锁锁的是索引记录，不是物理行</b>——没走索引就没有行锁可言。</p>
+      <p class="q-hook"><b>追问①：update 没走索引会发生什么？</b><br>无法用索引定位行 → 全表扫描 → 扫到的每一行都加 next-key lock，间隙全锁 → <b>效果等于锁全表</b>。生产上"一个 update 拖垮整张表"的经典事故就是这么来的。</p>
+      <p class="q-hook"><b>追问②：死锁怎么排查？</b><br><code>show engine innodb status</code> 看 LATEST DETECTED DEADLOCK：两个事务各持有什么锁、在等什么锁，画成环就是死锁。高频成因：加锁顺序不一致（A 锁 1→2，B 锁 2→1）；唯一索引并发 insert 冲突；间隙锁范围重叠。预防四招：固定加锁顺序、缩短事务、降级隔离级别、热点行拆分。</p>
+      <p class="q-hook"><b>追问③（唯一索引专项）：唯一索引和普通索引加锁有什么区别？</b><br>等值查询命中唯一索引时，next-key lock <b>退化为记录锁</b>（不用防"相同的值再插一个"）；普通索引不退化，间隙照锁。所以唯一索引并发更高——这也是"能用唯一索引就别用普通索引"的底层原因。</p>
+      <p class="q-hook"><span class="you">你的实战锚点（双份）：① 你排查过锁表死锁——今晚花 30 秒回忆：哪张表、什么业务并发、怎么定位、最后怎么改的；② 四次扣费的修复用了防重表 + 唯一约束，被问唯一索引时主动勾连："我们做支付幂等就是靠唯一索引兜底的。"</span></p>
+    </details>
+
+    <details class="q-item f2">
+      <summary><span class="stars">★★☆</span> <span class="q-text">链 6 · 一条 update 在 InnoDB 里完整走一遍？表太大了怎么办？</span></summary>
+      <p class="q-hook"><b>一层：</b>加载数据页进 buffer pool → 写 undo log（回滚 + MVCC 版本链）→ 改内存页 → 写 redo log（prepare 状态）→ 写 binlog → redo log 置 commit。三大日志分工：<b>undo 保原子性和 MVCC，redo 保持久性（WAL：先写日志再写盘），binlog 管主从复制和数据恢复</b>。</p>
+      <p class="q-hook"><b>追问①：redo 为什么要两阶段提交？</b><br>为了让 redo 和 binlog 逻辑一致。崩溃恢复时：redo 已 prepare 且 binlog 完整 → 提交；否则回滚。没有两阶段，就可能主库提交了但从库没收到 binlog——主从不一致。</p>
+      <p class="q-hook"><b>追问②：表多大该分库分表？</b><br>先给标尺（阿里规约：单表 500 万行或 2GB 考虑分表，实际看查询响应），<b>再给"不分的替代方案"——这才是分层答案</b>：索引优化 → 读写分离 → 冷热分离 / 历史归档 → 缓存。真要分：先垂直（按业务域拆）后水平（按分片键拆），分片键选最高频的查询维度。分完的新问题三连：<b>全局 ID、跨分片查询、分布式事务</b>——这三个词一出口，面试官就知道你真想过。</p>
+      <p class="q-hook"><span class="you">你的实战锚点（必带）：话费项目月百万级数据归档方案——"我们没有一上来就分表，先做的历史归档 + 冷热分离，用最低成本解决了查询变慢。"这就是追问②里"替代方案"那层的活证据。</span></p>
+    </details>
+  </section>
+
+  <!-- ==================== 三、链 1 地基：45 讲深挖 ==================== -->
+  <section>
+    <h2><span class="no">第三部分 · 地基</span>链 1 地基：SQL 是怎么被执行的（《MySQL 实战 45 讲》第 1 / 2 / 4 讲）</h2>
+    <p class="lead">六条链的答案为什么长这样？因为 MySQL 就是这么跑的。这一节是链 1 / 3 / 4 / 6 共同的地基——看懂执行流程，后面每条链的"为什么"会自己长出来。对照<a href="https://jums.gitbook.io/mysql-shi-zhan-45-jiang" target="_blank">《MySQL 实战 45 讲》（林晓斌）</a>第 1、2、4 讲。</p>
+
+    <h3>① 一条查询语句的执行：先记住两层架构</h3>
+    <p>MySQL 分 <b>Server 层</b>（连接器、查询缓存、分析器、优化器、执行器——跨引擎功能全在这层）和<b>存储引擎层</b>（插件式，5.5.5 起默认 InnoDB）。<b>不同引擎共用一个 Server 层</b>——这是理解"为什么有两份日志"的钥匙。</p>
+    <div class="flow">
+      <div class="step"><b>① 连接器</b>建连、认证、<b>缓存权限</b>（改权限对已有连接不生效）。长连接吃内存：临时内存绑在连接上，断开才释放 → 5.7+ 用 <code>mysql_reset_connection</code>。空闲超 <code>wait_timeout</code>（默认 8h）被断。</div>
+      <div class="step"><b>② 查询缓存（8.0 已整块删除）</b>key = SQL 原文，value = 结果。<b>一个更新让整张表缓存全失效</b>——命中率太低，所以 8.0 删了。面试问"为什么删"就答这句。</div>
+      <div class="step"><b>③ 分析器</b>词法分析（认出 select / T / ID 各是什么）→ 语法分析（合不合法）→ 语义分析（列和表存不存在——<code>Unknown column 'k'</code> 报在这步）。</div>
+      <div class="step"><b>④ 优化器</b>多索引<b>选哪个</b>、多表 join <b>定连接顺序</b>。逻辑等价的方案效率天差地别，优化器负责挑。</div>
+      <div class="step"><b>⑤ 执行器</b>先校验表级权限 → 调引擎接口逐行取数（无索引全表扫；有索引调"取第一行 / 下一行"接口）。慢日志的 <code>rows_examined</code> 在这里累加——链 3 的 explain 从这接。</div>
+    </div>
+    <div class="callout gold">
+      <span class="ttl">30 秒面试版（背骨架，出声练）</span>
+      "MySQL 分 Server 层和引擎层。查询过五个组件：连接器管认证和权限缓存；8.0 之前有查询缓存，因为任何更新都让整表缓存失效，被整块删了；分析器做词法、语法、语义分析；优化器选索引、定 join 顺序；执行器校验表权限后调引擎接口逐行取数。"
+    </div>
+
+    <h3>② 一条更新语句的执行：多出两份日志 + 两阶段提交</h3>
+    <p>前半程与查询相同，区别在引擎层。以 <code>update T set c=c+1 where ID=2</code> 为例，执行器与 InnoDB 配合五步：</p>
+    <div class="flow">
+      <div class="step"><b>1 · 取行</b>数据页不在内存，先从磁盘读入 buffer pool。</div>
+      <div class="step"><b>2 · 改内存</b>执行器算出新值，调引擎接口写入。</div>
+      <div class="step"><b>3 · 写 redo log（prepare）</b>引擎先记日志——WAL：先写日志再写磁盘，此刻更新即算完成。</div>
+      <div class="step"><b>4 · 写 binlog</b>执行器生成 binlog 并落盘。</div>
+      <div class="step"><b>5 · 提交（redo 置 commit）</b>prepare → binlog → commit，这三步就是<b>两阶段提交</b>。</div>
+    </div>
+    <p>WAL 的类比（45 讲原文）：redo log 是掌柜手边的<b>粉板</b>（赊账先记粉板，快），磁盘数据页是<b>账本</b>（空闲时再誊）。异常重启按粉板恢复 = <b>crash-safe</b>。redo log 固定大小循环写：<code>write pos</code> 写位置、<code>checkpoint</code> 擦除位置，写满必须停下推进 checkpoint——这就是 redo log 不能无限大的原因。</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>维度</th><th>redo log</th><th>binlog</th></tr></thead>
+      <tbody>
+        <tr><td><b>层级</b></td><td>InnoDB 引擎特有</td><td>Server 层，所有引擎通用</td></tr>
+        <tr><td><b>内容</b></td><td>物理日志："哪个数据页做了什么修改"</td><td>逻辑日志：原始语句 / 行变更</td></tr>
+        <tr><td><b>写法</b></td><td>固定大小、循环写（会用完）</td><td>追加写，写满换文件，不覆盖</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>为什么有两份？</b>历史原因：早期 MyISAM 没有 crash-safe 能力，binlog 只能归档；InnoDB 以插件形式进来时自带 redo log，两套并存至今。</p>
+    <p><b>两阶段提交为什么必须？</b>反证法（设 c 从 0 改 1，写完第一个日志就崩溃）：先 redo 后 binlog → 主库恢复 c=1，但 binlog 没这条，用"全量备份 + binlog 重放"搭出的从库 c=0；先 binlog 后 redo → 主库回滚 c=0，但从库重放后 c=1。两种都主从不一致。所以崩溃恢复的判定是：<b>redo 为 prepare 且对应 binlog 完整 → 提交，否则回滚</b>。配套"双 1"参数：<code>innodb_flush_log_at_trx_commit=1</code>、<code>sync_binlog=1</code>。</p>
+    <div class="callout gold">
+      <span class="ttl">30 秒面试版（背骨架，出声练）</span>
+      "更新前半程同查询。到引擎层：取行、改内存、写 redo log 置 prepare；执行器写 binlog；提交时 redo 置 commit——这就是两阶段提交。redo 是引擎层物理日志、循环写，保 crash-safe；binlog 是 Server 层逻辑日志、追加写，保主从复制和归档。两阶段提交保证崩溃恢复时两份日志逻辑一致，否则主从会岔。"
+    </div>
+    <div class="callout">
+      <span class="ttl">undo log 在哪？</span>
+      第 2 讲没展开（45 讲放在事务章）。按链 6 的分工记：<b>undo 保原子性 + MVCC 版本链，redo 保持久性，binlog 管复制和恢复</b>。
+    </div>
+
+    <h3>③ B+ 树 / 哈希 / 红黑树 / B 树大比对：先讲推理链，再上结论</h3>
+    <p>45 讲第 4 讲的精华不是结论，是<b>推理路径</b>——面试照这个讲，比背结论高一档：</p>
+    <ol>
+      <li>数据库索引的目标函数不是"比较次数少"，是<b>"磁盘 IO 次数少"</b>（机械盘一次随机读约 10ms，IO 次数就是命）。</li>
+      <li>树高 ≈ IO 次数 → 树必须矮 → <b>必须 N 叉，不能二叉</b>（100 万节点的二叉树高 20 = 20 次随机 IO，不可接受）。N 由页大小决定：InnoDB 一页 16K，N ≈ 1200。</li>
+      <li>N 叉树的两个变体：B 树每个节点都存数据 → 扇出小 → 树更高；B+ 树非叶子只存键 → 扇出拉满 → 更矮，且叶子间链表让范围查询顺着走。</li>
+      <li>所以结论不是"B+ 树最好"，而是<b>"按访问模式选结构"</b>——这才是架构师口径。</li>
+    </ol>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>结构</th><th>等值查询</th><th>范围 / 排序</th><th>树高 / IO</th><th>致命伤</th><th>真实用途</th></tr></thead>
+      <tbody>
+        <tr><td><b>哈希表</b></td><td>O(1) 最快</td><td>全废（无序，区间 = 全扫）</td><td>—</td><td>只支持等值</td><td>Redis / Memcached；InnoDB 自适应哈希索引</td></tr>
+        <tr><td><b>红黑树</b></td><td>O(log N)</td><td>中序遍历可行但慢</td><td>log₂(100万) ≈ 20</td><td>为内存设计：每节点只存一键，吃不满 16K 磁盘页；二叉 → 树高 = IO 次数</td><td>Java TreeMap、HashMap 树化、epoll——纯内存结构</td></tr>
+        <tr><td><b>B 树</b></td><td>O(log N)，运气好非叶子提前命中</td><td>中序回溯，不顺</td><td>较高</td><td>非叶子存数据 → 扇出小 → 树更高；范围查询弱</td><td>现代主流数据库已很少用纯 B 树</td></tr>
+        <tr><td><b>B+ 树</b></td><td>O(log N)，稳定到叶子</td><td><b>叶子双向链表，范围最强</b></td><td><b>3-4 层</b></td><td>写入有页分裂成本</td><td>InnoDB：聚簇索引叶子存整行，二级索引叶子存主键 → 回表（接链 2）</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout green">
+      <span class="ttl">两个容量口径都要会（防追问）</span>
+      45 讲口径：N ≈ 1200，树高 4 → 1200³ ≈ <b>17 亿个键</b>，根节点常驻内存，十亿行的表最多 3 次磁盘 IO。链 1 口径：1170 × 1170 × 16（叶子页每行 1K）≈ <b>2200 万行</b>。两个都对、假设不同：前者算"能定位多少个键"，后者算"聚簇索引能装多少行"。面试任选其一，<b>但把假设说出口</b>——能分清口径的人，面试官立刻知道你不是背的。
+    </div>
+  </section>
+
+  <!-- ==================== 四、面试官会把 MySQL 往你项目引 ==================== -->
+  <section>
+    <h2><span class="no">第四部分 · 结合项目</span>面试官一定会把 MySQL 往你的项目上引</h2>
+    <p class="lead">一线面试官原话："项目相关的基础知识是深挖重灾区。"三条引线提前埋好，被问到就往链上挂：</p>
+    <ul>
+      <li><b>话费充值（TPS 500 / QPS 1000）</b>→ 订单表索引怎么设计的 → 挂链 1、链 2；月百万数据怎么归档 → 挂链 6。</li>
+      <li><b>充电宝四次扣费</b>→ 幂等怎么做 → 防重表唯一约束兜底 → 挂链 5 的唯一索引专项。</li>
+      <li><b>嘉立创营销平台</b>→ 积分流水大表查询变慢 → 挂链 3 的慢 SQL 整改实战。</li>
+    </ul>
+    <div class="callout green">
+      <span class="ttl">主动权的打法</span>
+      面试官问完任何一条链，讲完标准答案后补一句带项目的话（"我们当时积分流水表就是这么慢下来的……"）。<b>你把话题引进自己的主场，面试官就不用费心找偏题拷你了。</b>
+    </div>
+  </section>
+
+  <!-- ==================== 五、两天作战安排 ==================== -->
+  <section>
+    <h2><span class="no">第五部分 · 今日战令</span>两天安排（8/27 - 8/28）</h2>
+    <div class="action">
+      <div class="ttl">今天 8/27（周四）</div>
+      <p><b>上午 2.5h：</b>链 1-3 索引三连，检索式自测（讲 → 对 → 标记）。<b>下午产出物 2h：</b>① 手绘三层 B+ 树容量计算过程（写到能默画）；② explain 字段速记表一张纸（type 七档 / key / rows / Extra 四个警戒值）。<b>晚上 1h：</b>算法 1 道 + 标记链重讲。</p>
+    </div>
+    <div class="action">
+      <div class="ttl">明天 8/28（周五）</div>
+      <p><b>上午 2.5h：</b>链 4-6（事务 MVCC / 锁与死锁 / 日志与分库分表）。<b>下午产出物 2h：</b>把"慢 SQL 整改"和"锁表死锁"各写 150 字场景毛坯（现象 → 定位 → 根因 → 修复 → 数字），这是 W3 STAR 卡的零件。<b>晚上 1h：</b>算法 1 道 + 六条链全过一遍，去下面打勾。<b>周五晚我发你第 3 课《简历改版实战》，周六日照做。</b></p>
+    </div>
+  </section>
+
+  <!-- ==================== 六、过关自测 ==================== -->
+  <section>
+    <h2><span class="no">第六部分 · 过关</span>六条链，你能扛住几层？</h2>
+    <div class="widget" id="mysqlcheck">
+      <div class="w-title">✅ 过关自测</div>
+      <div class="w-sub">合上答案能<b>出声</b>讲满三层才打勾。数据存在本机浏览器。打印本页前请先手动展开全部六条链。</div>
+      <div id="checks"></div>
+      <h3 style="margin-top:16px" id="checkSummary">0 / 6</h3>
+      <div class="callout green" id="passBox" style="display:none">
+        <span class="ttl">MySQL 过关</span>
+        回到<a href="0001-interview-battle-map.html">第 1 课的自评表</a>，把 MySQL 从 1 改成 3——这是你冲刺路上第一次改写基线。 Redis 课（8/31）见。
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 延伸资源 ==================== -->
+  <section>
+    <h2><span class="no">延伸</span>主资源</h2>
+    <p><b>主资源：</b><a href="https://jums.gitbook.io/mysql-shi-zhan-45-jiang" target="_blank">《MySQL 实战 45 讲》笔记版（林晓斌）</a>——你指定的深挖参考，第 1 / 2 / 4 讲对应本课"地基"一节；<a href="https://javaguide.cn/mysql/mysql-index.html" target="_blank">JavaGuide · MySQL 篇</a>（索引 / 事务 / 日志全覆盖）；<a href="https://xiaolincoding.com/mysql/" target="_blank">小林 coding · 图解 MySQL</a>（配图最清楚，MVCC 和锁看这里）。配套的<a href="../reference/0001-high-frequency-topics.html">《高频考点速查手册》模块四</a>是本课的速记版。</p>
+    <div class="callout red">
+      <span class="ttl">任何一层讲不顺，直接问我</span>
+      比如"ReadView 的可见性判断规则到底是什么"——在 Claude Code 里打出来，我给你拆到讲顺为止。这比你卡着搜十分钟博客高效。
+    </div>
+  </section>
+
+  <div class="lesson-nav no-print">
+    <a class="primary" href="../reference/0001-high-frequency-topics.html">📋 对照速查手册 · 模块四 →</a>
+    <a href="0001-interview-battle-map.html">← 第 1 课 · 作战地图</a>
+    <a href="../index.html">🏠 课程主页</a>
+  </div>
+
+  <footer class="site">
+    <span>Java Offer 突围战 · 第 2 课 / MySQL 追问链</span>
+    <span>自评 1 → 目标 4 · 2026-08-27</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var CHAINS = [
+    { id: "btree",   name: "链 1 · B+ 树索引（容量计算 / 自增主键 / 最左前缀）" },
+    { id: "cover",   name: "链 2 · 回表与覆盖索引（Using index / count(*)）" },
+    { id: "slowsql", name: "链 3 · 慢 SQL 排查（explain / 深分页 / 索引失效）" },
+    { id: "mvcc",    name: "链 4 · 事务与 MVCC（ReadView / 幻读 / RC vs RR）" },
+    { id: "locks",   name: "链 5 · 锁与死锁（next-key lock / 死锁排查 / 唯一索引）" },
+    { id: "logs",    name: "链 6 · 三大日志与分库分表（两阶段提交 / 归档替代）" }
+  ];
+  var KEY = "java-offer-mysql-chains-v1";
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+
+  var box = document.getElementById("checks");
+  CHAINS.forEach(function (c) {
+    var row = document.createElement("div");
+    row.className = "rate-row";
+    var checked = saved[c.id] ? " checked" : "";
+    row.innerHTML =
+      '<div class="r-name">' + c.name + '</div>' +
+      '<div class="dots"><label><input type="checkbox" data-id="' + c.id + '"' + checked + '><span>✓</span></label></div>';
+    box.appendChild(row);
+  });
+
+  function compute() {
+    var done = 0;
+    var state = {};
+    box.querySelectorAll("input[type=checkbox]").forEach(function (cb) {
+      state[cb.getAttribute("data-id")] = cb.checked;
+      if (cb.checked) done++;
+    });
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    document.getElementById("checkSummary").textContent =
+      done + " / 6" + (done > 0 && done < 6 ? " —— 还差 " + (6 - done) + " 条，今晚先攻标记的" : "");
+    document.getElementById("passBox").style.display = done === 6 ? "" : "none";
+  }
+  box.addEventListener("change", compute);
+  compute();
+})();
+</script>
+</body>
+</html>
