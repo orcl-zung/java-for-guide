@@ -12,7 +12,8 @@
   var NAV = [
     { title: "W1 · 清点弹药", items: [
       { n: "0001", t: "面试作战地图", h: "lessons/0001-interview-battle-map.html" },
-      { n: "0002", t: "MySQL 追问链", h: "lessons/0002-mysql-follow-up-chains.html" }
+      { n: "0002", t: "MySQL 追问链", h: "lessons/0002-mysql-follow-up-chains.html" },
+      { n: "0003", t: "简历改版实战", h: "lessons/0003-resume-rework.html" }
     ]},
     { title: "参考手册", items: [
       { n: "", t: "高频考点速查", h: "reference/0001-high-frequency-topics.html" }

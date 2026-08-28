@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 3 课 · 简历改版实战</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js"></script>
+<script src="../assets/nav.js"></script>
+<style>
+  pre.draft {
+    white-space: pre-wrap; word-break: break-word;
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; font-size: 13px; line-height: 1.75; margin: 12px 0;
+    font-family: var(--mono); color: var(--ink);
+  }
+  pre.draft .slot { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="kicker">Java Offer 突围战 · 第 3 课 · W1 周末实战</div>
+  <h1>简历改版实战</h1>
+  <p class="subtitle">8/29 - 8/30 执行，8/30 晚 8 点投出第一批。本课基于你原简历全文（3 页）与 power-bank 全项目代码盘点的交叉结论——每一条改写都有代码证据背书。</p>
+  <div class="meta-badges">
+    <span class="badge red">诊断基于简历原文 + 代码实勘</span>
+    <span class="badge">目标：2 页 · 8/30 晚投出 3-5 家练手</span>
+    <span class="badge gold">简历每写一个词 = 递给面试官一根棍子</span>
+  </div>
+
+  <hr class="rule">
+
+  <!-- ==================== 一、诊断 ==================== -->
+  <section>
+    <h2><span class="no">第一部分 · 诊断</span>你现在这份简历的 6 个硬伤（按杀伤力排序）</h2>
+
+    <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">① Ingoo 八个月经历完全缺席（最致命）</span></div>
+      <p class="q-hook">简历时间线停在嘉立创 2025.10——HR 第一眼看到的就是"空窗 10 个月"。而你手里握着的是：<b>Java 17 + Spring Boot 3.2 + Spring Cloud Alibaba 2023 最新栈、Stripe/Mercado Pago 出海支付、Netty 设备网关、从 0 到 1 可观测体系</b>——2026 年 JD 最想要的词全在里面，一个字没写。出海（巴西）经历自带稀缺性，必须放第一屏。</p></div>
+
+    <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">② 技能栈停在"Java 8 时代"表述</span></div>
+      <p class="q-hook">原技能栏 12 条里：无 Netty、无 RabbitMQ、无 Spring Boot 3 / Java 17、无 SkyWalking、无支付、无可观测深度（只有"熟悉 Docker 常用命令"）。对标 8/25 检索的 JD 高频词——<b>JVM 调优实战、高并发架构、微服务治理、容器化 CI/CD、可观测性——一半命中率为零</b>。筛选简历的是关键词匹配，不是文学欣赏。</p></div>
+
+    <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">③ 嘉立创"架构师职责"模板化，无实锤</span></div>
+      <p class="q-hook">原 P1 的"管控人员开发进度 / 制定技术规范 / 主导难点攻关"是模板话术，零数字零技术细节。面试官必追："带几个人？规范推行效果？"——答不出直接翻车。<b>原则：每句职责都要么有数字、要么有技术机制、要么删。</b></p></div>
+
+    <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">④ 嘉立创段零量化数字</span></div>
+      <p class="q-hook">品沃段反而有（1000 台 / 数万单 / TPS 500）——说明你有数字意识，只是嘉立创没整理。本课附"填空清单"，能回忆起的填，回忆不起的删整句，<b>不许编</b>。</p></div>
+
+    <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">⑤ 笔误与拼写减分</span></div>
+      <p class="q-hook">Redission（×2，正确是 Redisson）、"积分口见"（应为扣减）、"后段技术规范"（后端）。简历是严谨性的第一份证据，这类笔误在高级岗筛选里是硬伤。改版全文已修正。</p></div>
+
+    <div class="q-item f1"><div class="q-line"><span class="stars">★☆☆</span><span class="q-text">⑥ 3 页篇幅</span></div>
+      <p class="q-hook">6 年经验 2 页封顶。power-bank 加入后必须压缩品沃两个项目（各留 2-3 条），目标正好 2 页。</p></div>
+  </section>
+
+  <!-- ==================== 二、原则 ==================== -->
+  <section>
+    <h2><span class="no">第二部分 · 原则</span>三条改版原则 + JD 关键词对标</h2>
+    <ul>
+      <li><b>原则一 · 关键词对标：</b>筛选是关键词游戏。下表每个 JD 高频词，新简历必须至少命中一次（已按落点标好）。</li>
+      <li><b>原则二 · Bullet 公式：</b><code>动词开头 + 技术机制 + 数字/结果</code>。每条一两行，机制讲清"怎么做的"，数字证明"做的效果"。</li>
+      <li><b>原则三 · 每个词都是棍子：</b>只写能扛住三层追问的内容。写"精通并发"就要能讲 AQS 三层；写"渐进式重构"就要能讲特征测试。扛不住的，改成"熟悉/了解"或删。</li>
+    </ul>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>JD 高频词（8/25 检索）</th><th>新简历落点</th></tr></thead>
+      <tbody>
+        <tr><td>JVM 调优实战</td><td>技能①（OOM 排查治理实战）+ 品沃话费③</td></tr>
+        <tr><td>高并发架构</td><td>TPS 500/QPS 1000 + 支付回调快收慢办 + Netty 网关</td></tr>
+        <tr><td>微服务治理</td><td>技能③ + Ingoo（10+ 模块 SCA 2023）+ 渐进式重构</td></tr>
+        <tr><td>MySQL 深度 / 分库分表</td><td>技能④（慢 SQL 整改 + 月百万归档）——<b>诚实策略：写归档实战，面试讲"为什么不上分表"的取舍</b></td></tr>
+        <tr><td>容器化 CI/CD</td><td>技能⑦（Docker + Jenkins + 自研滚动发布/回滚）</td></tr>
+        <tr><td>可观测性</td><td>Ingoo⑤（全栈从 0 到 1）——<b>你最大的差异化优势</b></td></tr>
+        <tr><td>分布式实战 3 年+</td><td>三段项目全分布式 + RocketMQ/RabbitMQ 双栈</td></tr>
+        <tr><td>AI 工程化（加分项）</td><td><b>本周末不加</b>（W3 速成 + Demo 落地后再加一行，防止现在被拷打）</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout gold">
+      <span class="ttl">时间线与被裁处理</span>
+      工作经历三段倒序，Ingoo 写 2025.11 - 2026.08；<b>简历上不写离职原因</b>（8 月底离职 9 月初投递，几乎无缝）。被裁话术只在 HR 面口头用（第 1 课已定稿）。投递文件名：<code>钟浩-Java高级开发-6年-深圳.pdf</code>。
+    </div>
+  </section>
+
+  <!-- ==================== 三、新简历全文 ==================== -->
+  <section>
+    <h2><span class="no">第三部分 · 新简历全文</span>可直接复制（⬜ 为待填数字）</h2>
+    <p class="lead">以下每一条都有 power-bank 代码证据背书（证据档案见 learning-records/0004）。⬜ 标记的数字<b>凭记忆/监控记录填，没有就删掉该短语</b>。</p>
+
+    <h3>① 专业技能（整段替换原 12 条）</h3>
+    <pre class="draft">1. Java 基础扎实，精通并发编程（volatile / synchronized / ReentrantLock / AQS / 线程池），
+   有线上"线程池任务堆积连锁反应引发 OOM"的完整排查与治理经验；掌握 JVM 内存模型与 GC 机制，具备调优实战能力。
+2. 熟练运用设计模式（策略、责任链、代理、模板方法）与设计原则构建可复用代码——多支付渠道
+   统一网关即"策略模式 + 工厂自动注册"的生产落地。
+3. 熟练使用 Spring Boot 3.x / Spring Cloud Alibaba（Nacos、Gateway）/ MyBatis-Plus，
+   深入理解 IoC、AOP，读过 Spring 部分源码并运用于实际业务。
+4. MySQL：熟练运用索引、事务机制，具备慢 SQL 集中整改实战（复杂 SQL 拆分 / 索引调整 / 热点缓存）
+   与月百万级数据归档方案；Redis + Redisson：分布式锁注解（SpEL）、延迟队列、多级缓存、
+   滑动窗口限流均有生产级组件沉淀。
+5. 消息队列双栈：RocketMQ（事务消息、顺序消息、幂等、积压治理）+ RabbitMQ（手动 ACK、
+   24h TTL + 死信交换机、消费端 CAS 幂等），理解两者选型差异。
+6. 高并发与网络编程：Netty 自定义私有协议长连接网关（粘包拆包 / 心跳空闲检测 / 多实例路由
+   方案设计）；Nginx 负载均衡与反向代理。
+7. 可观测性与 DevOps：从 0 到 1 落地 Prometheus + Grafana + Alertmanager + ELK + Tempo +
+   SkyWalking 全链路可观测体系，业务侧 Micrometer 自定义指标埋点；Docker + Jenkins 自动化
+   部署，自研滚动发布 / 回滚脚本。
+8. 出海实战（稀缺）：主导巴西市场共享充电宝后端——Stripe / Mercado Pago(Pix) / Phiz /
+   GlobalPay 多支付渠道接入、巴西 NFe 电子发票对接、中英葡三语 i18n 与多时区处理。</pre>
+
+    <h3>② 项目一（主打，新写）：Ingoo 共享充电宝出海平台</h3>
+    <pre class="draft">Ingoo 共享充电宝出海平台（巴西市场）            2025.11 - 2026.08
+角色：后端核心开发
+技术栈：Java 17 / Spring Boot 3.2 / Spring Cloud Alibaba 2023 / MySQL / Redis + Redisson /
+       RabbitMQ / Netty / Nacos / Sa-Token / SkyWalking
+项目描述：面向巴西市场的共享充电宝 SaaS 平台，覆盖设备接入 - 租借 - 计费 - 支付 - 广告 -
+         代理商分账全链路，10+ 微服务模块，3 节点生产集群。
+
+1. 多支付渠道网关：设计策略模式 + 工厂自动注册的统一支付编排层，接入 Stripe、Mercado Pago
+   （Pix 收单 + Payouts 代付）、Phiz、GlobalPay 四渠道及余额支付；渠道 / 费率 / 回调配置
+   全部落库配置化，新渠道接入成本由 ⬜ 人日降至 ⬜ 人日。
+2. 支付回调可靠性（资损防控）：将 webhook 处理重构为"验签 → 落通知流水 → 投递 MQ → 秒级
+   应答"的快收慢办架构（10 条业务队列统一 24h TTL + 死信交换机 + 手动 ACK），消费端以 DB
+   条件更新（CAS）实现幂等而非分布式锁，消除 webhook 重投导致的重复扣费；配套独立死信
+   消费者与分钟级支付结果主动对账兜底，上线后 0 资损。
+3. 广告计费引擎：设计钱包 + 授信双资金池的三级计费体系（日结 / 月结 / 小时级资金扫描），
+   FOR UPDATE 行锁 + Redisson 分布式锁双保险、失败账单自动补扣、余额不足自动暂停投放、
+   充值后自动恢复，支撑 ⬜ 广告主资金结算零差错。
+4. Netty 设备长连接网关：实现自定义私有协议（长度前缀 + JSON + 帧尾）的设备接入（心跳
+   空闲检测、超时断连、指令分派）；主导设备多实例路由方案（对比并否决 MQ 广播 / Redis
+   Stream 方案，确定"统一入口 + Redis 归属路由 + 实例内转"路径），一期设备状态共享缓存
+   已上线，支撑 ⬜ 台设备接入。
+5. 可观测体系从 0 到 1：落地 Prometheus + Grafana + Alertmanager + ELK + Tempo +
+   SkyWalking，自研告警桥接服务（告警分级 @人、自动拼装 Grafana / Kibana / Trace 跳转
+   链接）；支付域自定义 Micrometer 指标（成功率 / 回调延迟 / 死信量），关键故障平均发现
+   时间由 ⬜ 降至 ⬜。
+6. 工程治理与渐进式重构：沉淀 @DistributeLock 注解（SpEL key）、Redisson 延迟队列框架、
+   Caffeine + Redis 多级缓存（按堆内存自适应上限）、敏感数据加解密 AOP 等通用组件；主导
+   优惠券体系渐进式重构（特征测试锁定旧行为 → 升级 / 校验 / 回滚三件套 SQL → 灰度切换，
+   30-40 人天，22+ 项定向验证通过）。</pre>
+
+    <h3>③ 项目二（压缩改写）：嘉立创 · 用户增长与互动营销平台</h3>
+    <pre class="draft">用户增长与互动营销平台                        2023.03 - 2025.10
+角色：核心开发，负责核心模块技术方案设计、线上问题攻坚与 CodeReview
+技术栈：Spring Cloud Alibaba / MySQL / Redis / RocketMQ / XXL-Job / Sentinel / Prometheus + Grafana
+
+1. DDD 领域驱动从 0 到 1：任务中心（签到 / 新手引导 / 消费返利）+ 积分商城 + 可配置化活动
+   系统，RocketMQ 事务消息保障积分扣减与订单创建最终一致性，XXL-Job 驱动任务重置。
+2. Redisson 分布式锁保障高并发奖励发放幂等，异步化改造提升大促期间吞吐能力。
+3. 慢 SQL 集中整改专项：复杂 SQL 拆分 + 索引调整 + 热点缓存，核心接口 P99 由 ⬜ 降至 ⬜。
+4. Sentinel 接口限流 + Prometheus / Grafana 全链路监控告警，制定线上问题处理预案。</pre>
+    <p class="cite">原 P1 的模板化"架构师职责"段（管控进度/制定规范/主导攻关）整段删除——无实锤支撑，必被追问。</p>
+
+    <h3>④ 项目三（合并压缩）：品沃 · 话费充值 + IoT 智能货柜</h3>
+    <pre class="draft">话费充值交易平台（推单 / 配单）                2019.06 - 2023.01
+角色：技术负责人（主导业务与数据库设计）
+1. 对接渠道商（推单）与运营商（配单）双系统 + 第三方渠道接口，支撑月初月末峰值 TPS 500 /
+   QPS 1000。
+2. 主干业务（渠道推单 / 商户回调）与核心业务（记账 / 失败重试）异步批量拆分，提升并发吞吐；
+   ReentrantLock + 自旋解决 refresh token 重复刷新。
+3. 月百万级流水数据归档 + 锁表死锁治理；网络抖动引发线程池任务堆积连锁 OOM 的完整排查复盘。
+
+IoT 智能无人零售终端云平台（宝厢智能货柜）
+1. 1000+ 台设备、日均订单数万：MQTT 设备通信（心跳 / 断线重连 / 远程控制）、Redisson 锁
+   保障单柜单用户下单、RocketMQ 顺序消息保障交易有序。
+2. 订单 / 库存 / 补货策略 / 微信支付宝对接；XXL-Job 每日对账；Nginx 负载均衡。</pre>
+    <p class="cite">原"Redis Hash 存参数 / List 存凭证 / Set 防重"一条删除——技能栏 Redis 深度已足够，项目里留机制不留琐碎。</p>
+  </section>
+
+  <!-- ==================== 四、防拷打对照表 ==================== -->
+  <section>
+    <h2><span class="no">第四部分 · 防拷打</span>每条 Bullet 的预判追问与弹药库</h2>
+    <p class="lead">写进简历的每句话，面试官都会顺着往下钻三层。提前把"棍子"变成"钓饵"——你主动把话题引向准备好的纵深。</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>简历 Bullet</th><th>预判追问</th><th>你的弹药</th></tr></thead>
+      <tbody>
+        <tr><td>策略 + 工厂支付网关</td><td>为什么策略模式不用 if-else？新增渠道改哪里？</td><td>W2 Spring 课：List 注入自动注册的 IoC 细节；PayChannelStrategyFactory 源码</td></tr>
+        <tr><td>CAS 幂等替代分布式锁</td><td>为什么不用锁？消息重复投递怎么办？ack 时机？</td><td>W3 MQ 课 + 四次扣费复盘文档（王牌故事）</td></tr>
+        <tr><td>双资金池计费 + 双锁</td><td>两把锁会不会死锁？为什么 FOR UPDATE？</td><td>MySQL 链 5（锁与死锁）+ 广告系统.md 计费规则</td></tr>
+        <tr><td>Netty 私有协议网关</td><td>粘包拆包怎么处理？为什么长度前缀？心跳参数怎么定？</td><td>W3 Netty 专题 + HgzhServer 源码（8192 帧上限 / 180s 读空闲）</td></tr>
+        <tr><td>多实例路由方案</td><td>为什么否决 MQ 广播 / Redis Stream？</td><td>Drive 多实例方案.md——现成的取舍叙事（约束条件段是金句）</td></tr>
+        <tr><td>渐进式重构</td><td>怎么保证不改坏？回滚怎么做？</td><td>85 项对抗评审 + 特征测试 + 三件套 SQL + verification.md</td></tr>
+        <tr><td>可观测体系</td><td>指标怎么设计的？告警风暴怎么治？</td><td>监控告警方案.md（告警分级 / 三链接跳转 / 企微桥接）</td></tr>
+        <tr><td>精通并发 / JVM</td><td>AQS 三层拷打 / 线程池参数 / OOM 全过程</td><td>W2 并发课 + JVM 课（9/2-9/4、9/7-9/8 排期）</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout red">
+      <span class="ttl">三条诚实红线（面试自毁点，背下来）</span>
+      ① <b>多实例路由</b>：只说"方案已评审定稿、一期设备状态共享缓存已上线"——HTTP 内转还没上线，绝不可以说"已完整落地"；② <b>分库分表</b>：没做过就说没做过，主动讲"月百万级我们选了归档而非分表"的取舍（这恰是 MySQL 链 6 的分层答案）；③ <b>数字</b>：所有 ⬜ 填的数字必须能说出处（监控截图 / 报表），说不出的一律删。
+    </div>
+  </section>
+
+  <!-- ==================== 五、周末排程 ==================== -->
+  <section>
+    <h2><span class="no">第五部分 · 战令</span>周末两天的执行排程 + 投递战术</h2>
+    <div class="action">
+      <div class="ttl">今天 8/29（周六）· 3 小时</div>
+      <p>① 按第三部分模板拼装新简历（Word/飞书均可，先内容后排版）；② 填 ⬜ 数字——填不出的标记待定；③ 对照防拷打表自问自答一轮，答不上的 bullet 要么补弹药要么降级措辞（"主导"→"参与"）。</p>
+    </div>
+    <div class="action">
+      <div class="ttl">明天 8/30（周日）· 3 小时 + 晚 8 点投递</div>
+      <p>上午：排版定稿（2 页，PDF，文件名规范），笔误终检（Redission/后段这类细节用 Ctrl+F 扫一遍）；下午休整。晚上 8 点前投出<b> 3-5 家练手</b>：选<b>不是最想去的</b>（流程快的中小厂），目的是校准简历命中率与面试节奏。投递前 5 分钟过一遍牛客该公司面经。BOSS 打招呼模板："6 年 Java，最近在做出海支付系统（多渠道接入 + 资损防控），JD 里 MySQL 调优 / 微服务治理和我的实战比较匹配，方便发一份完整简历吗？"</p>
+    </div>
+    <div class="callout green">
+      <span class="ttl">投递后立刻触发</span>
+      收到第一个面试邀约 → 当天回 Claude Code 报公司名，24 小时内插队做该公司押题与对应 STAR 卡（不等 9/13 排期）。练手面试的每一道题都是情报——记下来，变成新课。
+    </div>
+  </section>
+
+  <!-- ==================== 六、数字填空清单 ==================== -->
+  <section>
+    <h2><span class="no">第六部分 · 填空</span>数字填空清单（诚实原则）</h2>
+    <div class="widget" id="numfill">
+      <div class="w-title">🔢 待填数字（填完打勾）</div>
+      <div class="w-sub">凭记忆 / 监控记录 / 报表填。想不起来的，把简历里对应短语删掉——没有数字的 bullet 宁可短，不可编。数据存在本机浏览器。</div>
+      <div id="checks"></div>
+      <h3 style="margin-top:16px" id="sum">0 / 8</h3>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">延伸</span>主资源</h2>
+    <p><b>证据档案：</b>power-bank 全项目亮点盘点（技术栈版本表、逐模块证据路径、量级数字来源）已存入 <a href="../learning-records/0004-power-bank-audit-and-resume-baseline.md">learning-records/0004</a>——面试前翻它回忆细节。<b>投递情报：</b><a href="https://www.nowcoder.com/" target="_blank">牛客面经区</a>按公司检索（RESOURCES.md 已收录）。</p>
+    <div class="callout red">
+      <span class="ttl">数字想不起来？直接问我</span>
+      在 Claude Code 里说"帮我回忆 XX 的量级"——我会回到 power-bank 代码和文档里帮你找证据（配置参数、监控方案里的线索）。找不到的就删，不猜。
+    </div>
+  </section>
+
+  <div class="lesson-nav no-print">
+    <a class="primary" href="../index.html">🏠 课程主页（Roadmap）</a>
+    <a href="0002-mysql-follow-up-chains.html">← 第 2 课 · MySQL 追问链</a>
+    <a href="../reference/0001-high-frequency-topics.html">📋 高频考点手册</a>
+  </div>
+
+  <footer class="site">
+    <span>Java Offer 突围战 · 第 3 课 / 简历改版实战</span>
+    <span>基于简历原文 + power-bank 代码实勘 · 2026-08-29</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var ITEMS = [
+    "设备接入量（台）与在线率 → Ingoo④",
+    "日均订单量 / 日支付笔数 → 项目描述",
+    "新渠道接入成本（人日 前→后）→ Ingoo①",
+    "广告主数量 / 日账单条数 → Ingoo③",
+    "0 资损运行时长（月）→ Ingoo②",
+    "关键故障平均发现时间（前→后）→ Ingoo⑤",
+    "慢 SQL 整改：接口数与 P99 改善 → 嘉立创③",
+    "嘉立创活动量级（QPS / 参与人数）→ 可选"
+  ];
+  var KEY = "java-offer-resume-numbers-v1";
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  var box = document.getElementById("checks");
+  ITEMS.forEach(function (t, i) {
+    var row = document.createElement("div");
+    row.className = "rate-row";
+    var checked = saved[i] ? " checked" : "";
+    row.innerHTML = '<div class="r-name">' + t + '</div>' +
+      '<div class="dots"><label><input type="checkbox" data-i="' + i + '"' + checked + '><span>✓</span></label></div>';
+    box.appendChild(row);
+  });
+  function compute() {
+    var done = 0, state = {};
+    box.querySelectorAll("input[type=checkbox]").forEach(function (cb) {
+      state[cb.getAttribute("data-i")] = cb.checked;
+      if (cb.checked) done++;
+    });
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    document.getElementById("sum").textContent = done + " / 8" + (done === 8 ? " —— 齐了，定稿投出去" : "");
+  }
+  box.addEventListener("change", compute);
+  compute();
+})();
+</script>
+</body>
+</html>
