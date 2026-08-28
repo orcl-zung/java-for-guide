@@ -10,6 +10,9 @@
   仓库首页有"AI 智能面试辅助平台 + RAG 知识库"实战项目（Spring Boot 4.0 + Java 21 + Spring AI 2.0）。用于：AI 加分项的参考项目选型。
 - [小林 coding — 图解 MySQL / 图解网络](https://xiaolincoding.com/)
   图解系列，B+ 树/索引/事务/锁/网络原理讲解质量极高。用于：MySQL 与计算机网络专题的第一参考。
+  - [为什么 MySQL 采用 B+ 树作为索引？](https://xiaolincoding.com/mysql/index/why_index_chose_bpuls_tree.html)：二分 → 二叉查找树 → AVL/红黑树 → B 树 → B+ 树的动图推导链，与第 2 课链 1 推理链一一对应（2026-08-28 验证可访问）。
+- [美团技术团队：MySQL 索引原理及慢查询优化](https://tech.meituan.com/2014/06/30/mysql-index.html)
+  2014 年常青文。磁盘 IO 与预读（"页"概念的原文版）、树高公式 h=㏒(m+1)N（链 1 容量计算的原版）、建索引五大原则、带 explain 执行计划的真实慢查询案例——直接喂养链 3（2026-08-28 验证可访问）。
 - [《MySQL 实战 45 讲》笔记版（林晓斌专栏，GitBook 镜像）](https://jums.gitbook.io/mysql-shi-zhan-45-jiang)
   用户 2026-08-27 指定的深挖参考。第 1 讲（查询执行五组件）、第 2 讲（更新执行 + redo/binlog + 两阶段提交）、第 4 讲（索引模型对比）已沉淀为第 2 课"链 1 地基"一节。
 - [牛客：【面经分享】2026 Java 后端开发面试真题汇总（含 AI 工程方向）](https://www.nowcoder.com/discuss/864594486704291840)
