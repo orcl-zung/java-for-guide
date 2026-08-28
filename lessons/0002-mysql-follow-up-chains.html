@@ -51,6 +51,7 @@
       <p class="q-hook"><b>追问①：3 层 B+ 树到底能存多少行？算给我看。</b><br>页大小 16K；非叶子页一个"键 + 指针"约 14 字节（bigint 8B + 指针 6B），单页扇出约 1170；叶子页按每行 1K 算存 16 行 → 1170 × 1170 × 16 ≈ <b>两千两百万行</b>。且根节点常驻内存，实际磁盘 IO 只有 1-2 次。——能算出这个数字的人，全场面试不超过三个。</p>
       <p class="q-hook"><b>追问②：为什么所有规范都强制自增主键？用 UUID 会怎样？</b><br>一句话：聚簇索引的数据按主键顺序存放，<b>插入位置由主键决定</b>。自增 = 永远追加到最右页：写满就申请新页、旧页不动、写盘是顺序写。UUID = 插进中间的随机页，引发<b>三步灾难</b>：<b>① 页分裂</b>——目标页满了要劈：申请新页、搬走一半行、改链表、父页加指针（父页满了级联再劈）；<b>② 页碎片</b>——一个满页变两个半满页，长期下来叶子页平均只装五六成满：表膨胀、范围扫描读更多页、buffer pool 一半装空气；<b>③ 随机 IO</b>——目标页随机 → 大概率不在 buffer pool，先随机读进内存再随机写回；磁盘层面从文件末尾追加写变成散布全文件的随机写。外加扇出那一刀：UUID 36 字节 → 扇出从 ~1170 掉到 ~390（见地基节），树更高；且二级索引叶子存主键值，<b>每一棵二级索引</b>都跟着变大。<em>再追一层（防身）：非唯一二级索引的随机写入，InnoDB 有 change buffer 缓解——修改先缓存，页被读进内存时再合并（45 讲第 9 讲）。</em></p>
       <p class="q-hook"><b>追问③：联合索引 (a,b,c)，where b=? 走不走索引？where a=? and b&gt;? and c=? 呢？</b><br>前者不走——索引内部是先按 a 排、a 相同再按 b 排，没有 a，b 在整棵树里无序，只能全扫（MySQL 5.6+ 可能走 ICP 索引下推做引擎层过滤，但那不是"用索引定位"）。后者：c 用不上——b 是范围条件，b 之后 c 无序。<b>口诀：范围之后全断。</b></p>
+      <p class="q-hook"><b>追问④：自增主键暴露出去，竞品不就能算出你的业务量吗？</b><br>这叫<b>德国坦克问题</b>——竞品隔一周下两单，订单号一减就是你这周的单量。正解不是"不用自增主键"，而是<b>分层：自增主键当里子，业务编号当面子</b>。① 物理主键照旧自增 bigint（阿里规约强制：表必备 id unsigned bigint、单表自增）——吃满聚簇索引收益，且永不离开数据库；② 对外暴露的业务编号用"全局唯一 + 趋势递增 + 不含业务量"的方案：雪花 ID / 有序 UUID（8.0 的 <code>uuid_to_bin(@uuid, true)</code>）/ 淘宝式"时间 + 去重字段 + 用户尾号"（真实订单号 19 位、前 14 位单调递增）；③ 小系统偷懒路线：内部自增 + 出站混淆（Feistel 加密 / Hashids）。面试组合拳：<b>"自增主键只做物理主键，对外业务编号趋势递增但不含业务量——前者保 B+ 树插入性能，后者防德国坦克问题。"</b></p>
     </details>
 
     <details class="q-item f3">
@@ -69,6 +70,23 @@
       <p class="q-hook"><b>追问①：什么是覆盖索引？</b><br>查询要的所有列都在索引里，不用回表，explain 的 Extra 显示 <b>Using index</b>。实战动作：高频查询把返回列设计进联合索引。但补一句权衡：索引越宽，写入维护成本和回表收益要一起算——这句话出口，面试官知道你不是背书的。</p>
       <p class="q-hook"><b>追问②：select count(*) 走什么索引？InnoDB 为什么不缓存总行数？</b><br>优化器会选<b>最小的那棵二级索引</b>扫（页数少、更便宜）。不缓存行数是因为 MVCC——同一时刻不同事务"可见的行数"不一样，缓存没有定义。对比：MyISAM 没事务，所以可以缓存。</p>
       <p class="q-hook"><span class="you">你的实战锚点：话费充值平台 TPS 500 的订单查询——哪些查询走覆盖索引、哪些必须回表，讲链 3 整改故事时顺手带上。</span></p>
+    </details>
+
+    <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 2 补充 · 业务键不暴露后，C 端查询是不是必然回表？</span></summary>
+      <p class="q-hook"><b>先纠一个概念：</b>覆盖索引 ≠ "走主键查询"。它的定义是<b>"SELECT 的列全在你用的那棵索引里 → 免回表"</b>，和用哪个键查无关——<code>select status, amount from orders where order_no=?</code> 配上索引 (order_no, status, amount) 照样覆盖。</p>
+      <p class="q-hook"><b>单行回表的成本账：</b><code>select * where order_no=?</code> 确实回表，但多走的聚簇树 3 层里根和第二层常驻 buffer pool，实际多约 1 次页访问 ≈ 微秒级——用微秒换业务量不泄露，全行业都这么选。<b>回表真正的灾难是范围查询命中几万行、每行回表一次</b>（随机 IO 风暴）——这也是优化器"回表比例太高干脆全表扫"的原因。</p>
+      <p class="q-hook"><b>按查询形态分开处理：</b>① 详情页（where order_no=? 单行）——接受回表，没人优化这个；② 列表页（C 端"我的订单"，条件其实是 user_id）——联合索引把"过滤列 + 展示列"包进去（如 user_id, status, amount, create_time），覆盖索引免回表；③ 极端场景——趋势递增的业务号直接当聚簇主键（淘宝订单号形态），业务键查询 = 聚簇查询零回表，代价是业务字段与物理存储耦合。</p>
+      <p class="q-hook"><b>30 秒面试版：</b>"物理主键自增但不外露，对外业务编号走唯一二级索引。单行查询回表是微秒级，可忽略；列表查询用覆盖索引把展示列包进索引，免回表；极端场景才把趋势递增的业务号当聚簇主键。"</p>
+    </details>
+
+    <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 2 补充 · JOIN 一定会回表吗？小表驱动大表是什么原理？</span></summary>
+      <p class="q-hook"><b>JOIN 里的回表发生在哪：</b>JOIN = 嵌套循环（NLJ），驱动表每行 → 去被驱动表查一次。被驱动表用<b>主键</b>关联（eq_ref）= 直接走聚簇索引拿整行，没有回表概念；用<b>二级索引</b>关联时，判定规则和单表一样——要的列在索引里就覆盖，不在才回表。JOIN 里写 select * 是自杀行为。</p>
+      <p class="q-hook"><b>小表驱动大表（成本公式）：</b>总成本 ≈ 驱动表过滤后行数 × 被驱动表单次查询成本。被驱动表关联字段有索引时，单次成本是一次 3 层树查找、与表多大无关，所以让<b>过滤后行数少</b>的表当驱动——注意是"过滤后行数少"，不是物理表小：1000 万行的表过滤到 100 行，它就是"小表"。</p>
+      <p class="q-hook"><b>没索引时规则不变、原因变了：</b>无索引走 BNL——驱动表装进 join buffer，扫被驱动表在内存逐行比对，小表当驱动是为了 buffer 装得下（装不下要分段重扫大表）；8.0.18+ 等值 JOIN 默认 Hash Join，同样是小表进内存建哈希。<b>有索引为循环次数，无索引为内存占用，别混着背。</b></p>
+      <p class="q-hook"><b>真要回整行时的四层武器：</b>① <b>MRR / BKA</b>（5.6+）：二级索引查出一批主键先排序再回表，随机 IO 变近似顺序 IO——次数没变，每次都便宜；② <b>延迟关联</b>（链 3 深分页同款）：先覆盖索引翻页拿 ID，再回表取这一页详情——回表次数从 N 压到一页大小；③ 执行顺序：小表驱动 + Hash Join；④ <b>架构层</b>：要 join 四张表、每张十几列还带模糊搜的列表查询，正确答案是搬出 MySQL（ES / 读模型），不是硬刚。</p>
+      <p class="q-hook"><b>谁决定驱动顺序：</b>优化器按统计信息自动选，explain 第一行就是驱动表；选错了（统计过期常见）先 <code>analyze table</code>，还不行用 <code>straight_join</code> 强制（慎用，写死不自适应）。口诀收拢：<b>回表优化只有两条路——减少回表次数，或让每次回表更便宜；都走不通，说明这个查询不该在 OLTP 里跑。</b></p>
     </details>
 
     <details class="q-item f3">
@@ -222,7 +240,7 @@
   <!-- ==================== 延伸资源 ==================== -->
   <section>
     <h2><span class="no">延伸</span>主资源</h2>
-    <p><b>主资源：</b><a href="https://jums.gitbook.io/mysql-shi-zhan-45-jiang" target="_blank">《MySQL 实战 45 讲》笔记版（林晓斌）</a>——你指定的深挖参考，第 1 / 2 / 4 讲对应本课"地基"一节；<a href="https://javaguide.cn/mysql/mysql-index.html" target="_blank">JavaGuide · MySQL 篇</a>（索引 / 事务 / 日志全覆盖）；<a href="https://xiaolincoding.com/mysql/" target="_blank">小林 coding · 图解 MySQL</a>（配图最清楚，MVCC 和锁看这里）。配套的<a href="../reference/0001-high-frequency-topics.html">《高频考点速查手册》模块四</a>是本课的速记版。</p>
+    <p><b>主资源：</b><a href="https://jums.gitbook.io/mysql-shi-zhan-45-jiang" target="_blank">《MySQL 实战 45 讲》笔记版（林晓斌）</a>——你指定的深挖参考，第 1 / 2 / 4 讲对应本课"地基"一节，第 5 / 9 / 10 讲对应链 1 / 2 / 3，第 34 / 35 讲对应 JOIN 补充块；<a href="https://javaguide.cn/mysql/mysql-index.html" target="_blank">JavaGuide · MySQL 篇</a>（索引 / 事务 / 日志全覆盖）；<a href="https://xiaolincoding.com/mysql/" target="_blank">小林 coding · 图解 MySQL</a>（配图最清楚，MVCC 和锁看这里）。配套的<a href="../reference/0001-high-frequency-topics.html">《高频考点速查手册》模块四</a>是本课的速记版。</p>
     <div class="callout red">
       <span class="ttl">任何一层讲不顺，直接问我</span>
       比如"ReadView 的可见性判断规则到底是什么"——在 Claude Code 里打出来，我给你拆到讲顺为止。这比你卡着搜十分钟博客高效。
