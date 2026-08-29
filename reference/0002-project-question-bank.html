@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>参考手册 02 · 项目追问应答手册</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js"></script>
+<script src="../assets/nav.js"></script>
+<style>
+  .script { border-left: 3px solid var(--green); background: var(--green-soft); border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 8px 0; font-size: 13.5px; line-height: 1.8; }
+  .script b.say { color: var(--green); font-family: var(--mono); font-size: 11px; letter-spacing: .1em; display: block; margin-bottom: 4px; }
+  .anchor { border-left: 3px solid var(--gold); background: var(--gold-soft); border-radius: 0 8px 8px 0; padding: 8px 14px; margin: 8px 0; font-size: 13px; }
+  .anchor b { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; display: block; color: var(--gold); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="kicker">Java Offer 突围战 · 参考手册 02 · 面试前必过</div>
+  <h1>项目追问应答手册</h1>
+  <p class="subtitle">四段项目 × 高频追问 × 可直接说出口的应答脚本。这是你的"谈资本体"——第 3 课的防拷打表是索引，这里每格都填满了。</p>
+  <div class="meta-badges">
+    <span class="badge red">二面项目深挖 = 挂率最高的一轮</span>
+    <span class="badge">用法：盖住脚本，看追问出声作答</span>
+    <span class="badge gold">🟨 回忆锚点 = 需要你补的亲历细节</span>
+  </div>
+
+  <div class="callout">
+    <span class="ttl">三个使用纪律</span>
+    ① 每个"应答脚本"都是<b>口语密度</b>——照这个长度练，出声讲，不是默读；② 脚本里的机制部分是实勘/原文背书的，<b>🟨 回忆锚点</b>是你的亲历细节，回帖补给我，我更新进手册；③ 手册不追求全——面试官问到手册外的，用文末的"接不住话术"诚实处理，回来告诉我，当场补录。
+  </div>
+
+  <hr class="rule">
+
+  <!-- ==================== 一、Ingoo ==================== -->
+  <section>
+    <h2><span class="no">项目一</span>Ingoo 共享充电宝出海平台（2025.11 - 2026.08）</h2>
+
+    <div class="callout gold">
+      <span class="ttl">30 秒开场白（"介绍一下这个项目"必用）</span>
+      "Ingoo 是面向巴西市场的共享充电宝 SaaS 平台，链路从设备接入、租借计费、多渠道支付到广告变现和代理商分账，10+ 个微服务，技术栈是 Java 17 + Spring Boot 3.2 + Spring Cloud Alibaba 2023。我是后端核心开发，主要负责两块资金链路——支付回调可靠性和广告计费引擎，另外设备长连接网关和整套可观测体系也深度参与。设备在巴西多个城市投放，🟨（补：投放规模/城市数）。"
+    </div>
+
+    <div class="qlist">
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">支付渠道怎么设计的？新增一个渠道要改哪里？</span></summary>
+      <div class="script"><b class="say">应答脚本</b>策略模式。PayChannelStrategy 接口统一定义下单、查询、退款、回调验签这些标准动作，有 Stripe、Mercado Pago、Phiz、GlobalPay 加余额五个实现。关键是工厂的注册方式——Spring 构造器注入 List of PayChannelStrategy，自动把所有实现收集起来按 payType 建映射。所以新增渠道就是：写一个 @Component 实现类 + 渠道配置落库，主流程一行不改。而且这几个渠道差异非常大——Stripe 走官方 SDK，Mercado Pago 是我们自封装 HTTP 还要带生产签名头，Phiz 是 RSA 加 DES3，GlobalPay 是 HmacSHA256 加 RSA——连加密体系都不一样，必须用策略隔离，if-else 会把主流程搅成浆糊。费率和 webhook 地址也是配置化的，落在渠道配置表里，后台可调。</div>
+      <p class="q-hook"><b>再追：构造器注入 List 自动注册是什么原理？</b>——Spring 的集合注入特性：一个构造器参数声明为 List&lt;PayChannelStrategy&gt;，容器会把该类型所有 bean 按顺序注入进来。这也是"面向接口编程 + IoC"落地的最典型例子。</p>
+      <p class="q-hook"><b>再追：为什么不抽象成统一支付网关服务？</b>——我们 pay 模块就是纯 client 层，渠道封装在 power-bank-pay，业务编排在 portal，两层分离；再往上抽网关就过度设计了，渠道就四个。</p>
+    </details>
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">支付回调为什么要"快收慢办"？直接处理不行吗？</span></summary>
+      <div class="script"><b class="say">应答脚本</b>不行，因为 webhook 是第三方的重试语义——你不返回 200 它就重投。如果同步做完全部处理（落库、推进状态机、发通知、调下游），一个慢查询就能把处理拖过超时，渠道开始重发，重发又进来一单，系统从"处理一次"被推成"处理 N 次"。所以入口只做四件事：验签 → 落通知流水 → 投 MQ → 返回 200，状态推进全部异步消费。落通知流水这步还有个隐藏价值：第三方回调的原报文先固化成证据链，后面排查对账全靠它。</div>
+      <p class="q-hook"><b>再追：MQ 挂了或消费失败怎么办？</b>——两层兜底：消费异常 nack 进死信队列，有独立的死信消费者加企微告警；另外有分钟级的主动对账 job，扫未终态订单直接去渠道查询接口补推进。通知流水表保证"哪怕消息丢了，证据还在"。</p>
+    </details>
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">消费端幂等为什么用 CAS 不用分布式锁？</span></summary>
+      <div class="script"><b class="say">应答脚本</b>先说前提：MQ 是 at-least-once 语义，重复投递不可避免，幂等必须业务侧兜底。我们的做法是状态机加条件更新：update 订单表 set status = SUCCESS where id = ? and status = WAIT——affected rows 等于 1 才继续做后续动作，等于 0 说明已被处理过，直接 ack 跳过。不用分布式锁有三个理由：第一，锁保护的是临界区，但这里真正要防的是"状态被迁移两次"，条件更新把并发控制直接下沉给数据库行锁，天然原子，一条 SQL 没有 third face；第二，锁自身有一堆边界——超时、续期、释放失败、Redis 主从切换丢锁，而条件更新没有这些状态；第三，状态机本身终态不回退，WAIT 只能到 SUCCESS 或 REFUND，重复消息来了 CAS 自然失败。一句话：锁是性能层的可选优化，DB 唯一约束和条件更新才是正确性层。</div>
+      <p class="q-hook"><b>再追：那发短信、通知这类非状态副作用怎么防重？</b>——前置：只有 CAS 成功的事务才执行副作用，相当于副作用挂在状态迁移后面；对外通知本身带业务号，下游可去重。</p>
+      <p class="q-hook"><b>再追：这段设计是不是从事故里学来的？</b>——是，这就是接"四次扣费"故事的钩子：历史上回调没有幂等，同一订单被处理多次造成重复扣费，修复方案就是这套"状态机 + 条件更新 + 防重"。（转王牌故事，见学习档案 0004）</p>
+    </details>
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">RabbitMQ 的可靠性配置具体怎么做的？</span></summary>
+      <div class="script"><b class="say">应答脚本</b>三段式。生产端：业务先落库、通知流水先行，再投递，消息丢了有流水兜底重发。Broker 侧：支付相关 10 条业务队列，统一配 24 小时消息 TTL——冷消息过期进死信，防止无限堆积；每条队列都绑统一死信交换机；持久化。消费端：手动 ACK，业务真正成功才 ack；异常 nack 且不重回原队列，直接进 DLQ——防止毒消息在原队列打转；消费容器并发 3 到 5、prefetch 5。prefetch 是未 ack 消息的上限，设太大消费者内存会被打爆，设太小吞吐起不来，我们回调处理是百毫秒级，5 是实测的平衡点。最后是闭环：每个消费者埋 Micrometer 指标——成功率、失败原因分布、回调处理延迟 Timer，死信量超标直接企微告警。</div>
+      <p class="q-hook"><b>再追：消息积压怎么处理？</b>——先定位消费慢在哪（指标看延迟分布），常规三板斧：扩消费者实例、临时上批量消费、跳过可补偿的消息先落库后处理；死信队列里的消息按类型重放。</p>
+    </details>
+
+    <details class="q-item f2"><summary><span class="stars">★★☆</span><span class="q-text">Stripe 预授权（押金）是怎么做的？</span></summary>
+      <div class="script"><b class="say">应答脚本</b>充电宝场景要押金，用的是 Stripe 两段式：先 auth 冻结金额（资金可用但未扣），租借结束后按实际消费 capture 扣款，差额释放。回调上监听 amount_capturable_updated 事件触发 capture；review、dispute 争议事件单独处理。这个模式的价值是把"扣多少"的决策推迟到服务完成时，用户不会因为预估额度被多扣。</div>
+    </details>
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">广告计费为什么两把锁？会不会死锁？</span></summary>
+      <div class="script"><b class="say">应答脚本</b>两把锁粒度不同。FOR UPDATE 行锁锁的是广告主的资金行，保证同一广告主的扣款串行、余额是当前读；Redisson 锁（key 粒度到广告主、60 秒）锁的是计费任务本身——多实例部署下定时任务防重入。死锁的前提是"交叉持锁形成环路"，这里两把锁的 key 都是单一维度固定顺序获取，不存在 A 持 1 等 2、B 持 2 等 1 的交叉，所以不会成环。任务设计是三级：每天 00:20 日结出账单、每月 1 号 00:30 月度对账（错峰避开零点高峰）、每小时资金扫描做实时防超支——实时费用之和超过钱包加授信余量就自动暂停全部投放并发短信，充值后每小时检查自动恢复。扣费失败还有失败账单顺序补扣，付清即停。授信低于阈值 40% 预警短信，24 小时去重防轰炸。</div>
+      <p class="q-hook"><b>再追：为什么日结在 00:20 不在 0 点？</b>——错峰：0 点是业务日切和归档任务的高峰，延后 20 分钟把资源让出来。小细节但面试官爱听。</p>
+      <p class="q-hook"><b>再追：先扣钱包还是先扣授信？</b>——先钱包后授信：钱包是真金白银，授信是平台垫资有坏账风险，消耗顺序影响平台风险敞口。</p>
+    </details>
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">Netty 私有协议怎么设计的？粘包拆包怎么处理？</span></summary>
+      <div class="script"><b class="say">应答脚本</b>帧格式是 6 位长度前缀 + JSON 报文 + \r 帧尾，帧上限 8192 字节。解码用 DelimiterBasedFrameDecoder 配合长度域切帧——TCP 是字节流没有消息边界，长度前缀让定界变成 O(1)，比纯分隔符可靠，因为 JSON 内容理论上可能和转义冲突。连接管理用 IdleStateHandler 做读空闲检测，180 秒没读到数据判空闲，连续超时就关连接——既做心跳保活又回收僵尸连接。指令按协议字段分派：注册、心跳、租借、归还、检修、日志各有 handler。服务端 SO_BACKLOG 1024，读写缓冲各 10KB。</div>
+      <p class="q-hook"><b>再追：为什么不用 MQTT 要自研协议？</b>——这是硬件厂商侧定的协议，我们做的是接入适配；但正因为经历过私有协议的解析，MQTT 那套（我在上一个 IoT 项目用过）的定界、心跳、QoS 我都能对着讲。</p>
+    </details>
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">设备多实例路由：讲讲方案和取舍（架构师题）</span></summary>
+      <div class="script"><b class="say">应答脚本</b>背景：设备长连接保存在实例本地内存，HTTP 请求经过负载均衡可能打到没持有该设备连接的实例，就报 1001 找不到设备、1003 设备已断开——其实设备在线，只是"请求和连接不在一台机器上"。约束很硬：不能上 MQ 做主链路、调用方要同步拿到指令结果比如 flowId、所有实例配置统一来自 Nacos 没法按实例差异化配置。评估了三个方案：MQ 广播——每个实例都收到、非持有者忽略，能跑但广播放大严重，而且本质上退化成了自制的分布式 RPC，否决；Redis Stream 抢占——抢占语义和"同步等结果"不匹配，也否决；最终选：统一入口地址 + Redis 记录设备归属路由（key 按渠道加设备号）+ 持有连接的实例间 HTTP 内转，保留 Controller 同步语义。落地节奏是一期先把设备状态做 Redis 共享缓存（心跳续期 TTL），内转在推进中。这个项目给我最大的训练是：路由问题本质是"本地状态"和"全局请求"的错配，解法要么状态上移（Redis）、要么请求转发（内转）。</div>
+      <p class="q-hook"><b>再追：为什么否决 MQ 广播，展开讲？</b>——广播方案每条指令全实例接收，99% 的消息是无效的；而且要处理"谁回复结果"，就变成请求-应答模式叠在发布-订阅上，等于自己造了一层 RPC，复杂度失控。方案文档里有完整的对比矩阵（Drive 多实例方案.md）。</p>
+    </details>
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">优惠券重构怎么保证不改坏？</span></summary>
+      <div class="script"><b class="say">应答脚本</b>渐进式六步：第一步先写特征测试锁定旧行为——不改任何逻辑，把老系统的对外表现用测试固化下来；第二步增量 DDL，而且是三件套：升级、校验、回滚 SQL 成对提交；第三步新代码兼容读旧数据；第四步新写入切新结构；第五步历史数据回填；第六步停旧写。并发边界全部收在数据库——幂等键用 DB 唯一约束，状态流转用条件更新，Redis 只做削峰不做正确性。原因是 Redis 的锁和 Lua 都有失效场景（主从切换、过期），DB 唯一键才是最终防线；性能不够再用缓存削，正确性永远不能押在缓存上。整个重构 30-40 人天，22 项定向验证通过，线上还配了补偿任务：每分钟批量处理过期券和超时锁，每 10 分钟做活动计数器对账，多实例下用 Redisson tryLock 选主防重。</div>
+      <p class="q-hook"><b>再追：为什么先写测试再动手？</b>——重构最大的风险是"顺手改了行为"。特征测试的价值是先拍一张"现状快照"，之后任何一步行为漂移立刻红灯。这是《重构》里"先补测试再动手"的落地，不是我发明的。</p>
+    </details>
+
+    <details class="q-item f2"><summary><span class="stars">★★☆</span><span class="q-text">可观测体系具体怎么落地的？</span></summary>
+      <div class="script"><b class="say">应答脚本</b>从 0 到 1 搭的：指标用 Micrometer + Prometheus，展示 Grafana，告警 Alertmanager，日志 ELK，链路 Tempo 加 SkyWalking 双轨。两个自研点：一是告警桥接服务——Alertmanager webhook 打到我们的 monitor 服务，做 token 鉴权、告警分级（critical 才 @人），然后自动拼装三个跳转链接：Grafana 面板、Kibana Discover（带查询条件）、Tempo trace——值班的人点一下就从告警钻到现场，不用手工拼查询；二是业务指标埋点，支付域自定义了创建量、回调成功率、回调延迟、死信量这些指标，出问题先看大盘再下钻。设计原则是"监控不是装出来的，是设计出来的"——指标跟着故障预案走，每个告警都要能回答"收到它我做什么动作"。</div>
+      <p class="q-hook"><b>再追：告警风暴怎么治？</b>——分级 + 去重 + 静默窗口：低级别告警聚合日报，critical 才实时 @人；同类告警窗口期去重。</p>
+    </details>
+
+    </div>
+  </section>
+
+  <!-- ==================== 二、嘉立创 ==================== -->
+  <section>
+    <h2><span class="no">项目二</span>嘉立创 · 用户增长与互动营销平台（2023.03 - 2025.10）</h2>
+
+    <div class="callout gold">
+      <span class="ttl">30 秒开场白</span>
+      "嘉立创的用户增长营销平台，给半导体垂直电商做拉新、留存、变现全链路，核心是'任务-奖励-消费'闭环：任务中心、积分商城、互动社区、可配置化活动。DDD 架构，Spring Cloud Alibaba + RocketMQ + XXL-Job。我是核心开发，负责任务中心、积分商城和活动系统几个核心域，从 0 到 1 做的，🟨（补：平台用户量级 / 活动峰值 QPS）。"
+    </div>
+
+    <div class="qlist">
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">RocketMQ 事务消息怎么保证积分扣减和订单创建的一致性？</span></summary>
+      <div class="script"><b class="say">应答脚本</b>半消息机制，三步：生产者先发 half 消息——到了 broker 但对消费者不可见；然后执行本地事务（订单创建、积分流水写入）；成功就 commit 半消息放行，失败就 rollback 丢弃。还有个兜底：如果本地事务结果丢了（比如 commit 网络没送达），broker 会定时回查生产者的本地事务状态，由回查接口给出 commit 或 rollback。消费侧积分扣减失败会重试，超限进死信加人工处理。为什么不用 TCC：营销场景用户能容忍秒级延迟，Try-Confirm-Cancel 三个接口的业务侵入成本太高，最终一致是性价比最高的选择。</div>
+      <div class="anchor"><b>🟨 回忆锚点（回帖补给我）</b>① 回查接口当时怎么实现的（查哪张本地事务状态表）？② 积分流水表的唯一键设计？③ 有没有真实遇到过回查被触发？</div>
+    </details>
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">Redisson 分布式锁保障奖励幂等，具体锁什么？锁失效怎么办？</span></summary>
+      <div class="script"><b class="say">应答脚本</b>锁粒度到"活动 + 用户"或发放批次号，不会锁整个活动。tryLock 拿不到锁说明有并发重复请求，直接放弃返回——快速失败比排队好，重复请求没有业务价值。锁内是"查、判、发"三步：查防重表、判断是否已发放、没发过才发放并写防重记录。锁的两个边界：一是业务执行超过锁 TTL——Redisson watchdog 默认每 10 秒续期到 30 秒，业务没跑完锁不会先掉；二是极端情况 Redis 主从切换锁丢失——所以防重表有唯一键兜底，插入冲突就回滚。和我在出海项目做支付幂等是同一个思想：<b>锁是性能层，DB 唯一约束才是正确性层</b>，两层都要有。</div>
+      <p class="q-hook"><b>再追：可重入锁和 Lua 脚本在 Redisson 里怎么实现的？</b>——hash 结构存"线程标识 + 重入计数"，加锁解锁都是 Lua 保证原子；这块 W2 并发课会按三层拷打准备。</p>
+    </details>
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">慢 SQL 整改举个具体例子？（必考，接 MySQL 链 3）</span></summary>
+      <div class="script"><b class="say">应答框架（骨架必须先说）</b>"定位 → 量化 → 对症 → 验证"四步：慢查询日志定位到具体 SQL → explain 看 type、key、rows、Extra → 对症（拆复杂 JOIN、补联合索引、覆盖索引、热点上缓存）→ 对比优化前后 rows 和耗时，灰度观察。当时是一轮集中整改，手法是复杂 SQL 拆分 + 索引调整 + 缓存三层组合。</div>
+      <div class="anchor"><b>🟨 回忆锚点（这是你 MySQL 链 3 的王牌，W2 STAR 卡必补）</b>① 印象最深的一条慢 SQL：哪张表（积分流水/任务记录？）、什么业务接口？② 现象数字：P99 多少 → 改完多少？③ 当时的索引怎么调的（补了什么联合索引）？</div>
+      <p class="q-hook"><b>联动弹药：</b>MySQL 链 3 的 explain 字段速记、深分页两种解法、索引失效清单——面试官顺这条往下钻时，你已备好三层。</p>
+    </details>
+
+    <details class="q-item f2"><summary><span class="stars">★★☆</span><span class="q-text">Sentinel 限流具体怎么配的？熔断后怎么办？</span></summary>
+      <div class="script"><b class="say">应答框架</b>限流对象是营销活动接口（大促/爆款任务瞬时流量），规则主要 QPS 阈值 + 关联限流；熔断针对慢调用比例。降级动作：非核心链路返回兜底文案或旧缓存，核心链路排队。<b>注意诚实口径：</b>出海项目我们没用 Sentinel，限流是自研 Redis 滑动窗口——被问"两个项目限流方案不一样为什么"就答"Sentinel 是组件化开箱即用，自研是因为 wanting 更轻的控制和告警联动，量级不大的场景不想引入额外控制台"。</p>
+      <div class="anchor"><b>🟨 回忆锚点</b>① 限的是哪个接口、阈值大概多少？② 熔断真实触发过吗？降级用户体验是什么？</div>
+    </details>
+
+    </div>
+  </section>
+
+  <!-- ==================== 三、品沃话费 ==================== -->
+  <section>
+    <h2><span class="no">项目三</span>品沃 · 话费充值交易平台（2019.06 - 2023.01）</h2>
+
+    <div class="callout gold">
+      <span class="ttl">30 秒开场白</span>
+      "话费充值平台，给第三方渠道商提供话费充值能力：推单系统对接渠道商、配单系统对接运营商，两边对接、中间是我们做路由分发和对账。我是技术负责人，主导业务和数据库设计。业务特点是月初月末潮汐流量，峰值 TPS 500、QPS 1000。这个项目给我最大的积累是高并发削峰和线上事故攻坚——死锁、OOM、月百万数据治理都是在这里扛下来的。"
+    </div>
+
+    <div class="qlist">
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">TPS 500 的削峰架构：主干/核心拆分具体怎么拆？</span></summary>
+      <div class="script"><b class="say">应答脚本</b>按"对延迟的容忍度"拆。主干业务是渠道推单和商户回调——第三方在同步等应答，要求毫秒级返回，所以主干只做三件事：校验、消费型数据入库或进缓存、立刻回执；核心业务是记账和失败重试——可以慢但一个都不能丢，全部异步批量处理，攒批落库。这个拆分同时解决两个问题：高峰期主干 RT 不被重逻辑拖垮；核心的重试风暴（渠道故障时堆积）被隔离在异步层，不会反向打挂接收链路。失败重试带退避和分类：渠道侧失败、余额不足、超时各自不同的处理路径。</div>
+      <p class="q-hook"><b>再追：异步批量会不会丢数据？</b>——入库优先于回执：先持久化再应答，掉电不丢；批量线程挂了数据还在表里，有扫描补偿。</p>
+    </details>
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">Redis 的 Hash/List/Set 分别为什么用那个结构？（一面高频）</span></summary>
+      <div class="script"><b class="say">应答脚本</b>按数据形态选结构。系统参数用 Hash：键值都是字段级读写，改一个参数不用整个重写，HGET 单字段 O(1)。支付凭证用 List：凭证有有效期，新凭证从一端进、消费从旧端取，天然先进先出——最老的凭证最先被用掉或淘汰，过期逻辑顺着队列头处理就行。防重复订单用 Set：判断"这个订单号见没见过"是存在性判断，SADD 返回 0 就是重复，O(1) 且语义直观。核心思路是：结构跟着访问模式走——字段级读写选 Hash，有序进出选 List，存在性判断选 Set。</div>
+      <div class="anchor"><b>🟨 回忆锚点</b>① 凭证过期后怎么补充新凭证（定时拉取还是被动触发）？② Set 防重的 key 粒度（渠道级还是全局）？</div>
+      <p class="q-hook"><b>联动弹药：</b>被追"还有什么结构"——ZSet 延迟队列（出海项目发票重试在用）、BitMap 签到（嘉立创任务中心可提）。</p>
+    </details>
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">死锁那次怎么排查的？（接 MySQL 链 5）</span></summary>
+      <div class="script"><b class="say">应答框架</b>"现象 → 取证 → 定位 → 根因 → 修复"：现象是批量 update 卡死超时；取证 show engine innodb status 看 LATEST DETECTED DEADLOCK 段，两个事务各自持有和等待的锁一目了然；把持有-等待关系画成图，成环即死锁；根因两类高频——加锁顺序不一致（A 先 1 后 2、B 先 2 后 1）或 update 没走索引导致锁范围放大；修复按根因：统一加锁顺序、给条件列补索引、缩短事务（把非必要操作挪出事务）。</div>
+      <div class="anchor"><b>🟨 回忆锚点（W2 锁专题 STAR 卡必补）</b>① 哪两张表、什么业务（推单/配单/记账？）② 根因是顺序问题还是索引问题？③ 修复后效果（死锁频率 → 0？）</div>
+    </details>
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">OOM 事故完整讲一遍（王牌故事，接 JVM 课）</span></summary>
+      <div class="script"><b class="say">应答脚本</b>这是一条事故链，不是单点故障：上游网络抖动 → 第三方接口响应变慢 → 调用方线程都 hang 在等响应 → 任务在线程池里排队堆积 → 队列无界膨胀 → 内存打满 OOM。排查：OOM 时 dump（-XX:+HeapDumpOnOutOfMemoryError 配好的话直接有文件，没有就事后复现），MAT 打开看支配树，最大对象就是堆积的任务和它们引用的上下文——证据链直接指向线程池。治理三招：队列改有界 + 明确拒绝策略（CallerRuns 或降级），调用加超时（不能无限等），重试加退避。这个事故让我对线程池参数的理解从"背八个参数"变成"每个参数都是一道防洪堤"——coreSize 决定常备力量、maxSize 决定洪峰上限、队列长度决定缓冲库容、拒绝策略决定溢出时保什么舍什么。</div>
+      <div class="anchor"><b>🟨 回忆锚点</b>① 当时的池参数大概什么配置？② dump 里看到的具体是什么对象？③ 治理后还有什么残留问题？</div>
+      <p class="q-hook"><b>联动弹药：</b>这题答完面试官大概率追线程池四参数和拒绝策略四种——W2 并发课链上正主。</p>
+    </details>
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">月百万数据：为什么归档不分表？（接 MySQL 链 6 满分答案）</span></summary>
+      <div class="script"><b class="say">应答脚本</b>先说决策依据：话费流水的查询维度很简单——按单号、按月，没有复杂的跨期多维查询；单表加好索引后近线数据的查询可控。这时候上分表，换来的全局 ID、跨分片查询、分布式事务三个新问题，比原问题更贵。所以选择归档 + 冷热分离：在线表只留近几个月，历史按月归档到归档表，归档任务低峰执行、先备份后删除，归档表保留可查。分表不是唯一解，它是一个成本收益决策——数据量到了、查询模式复杂了、别的手段穷尽了，才值得上。真到要分的时候：先垂直后水平、分片键选最高频查询维度、全局 ID 用号段或雪花。</div>
+      <p class="q-hook"><b>再追：那什么量级你会考虑分表？</b>——给标尺：经验值单表 500 万行或 2GB 起警惕，但真正的判据是"索引优化、读写分离、归档全做完之后查询响应仍不可接受"——链 6 的完整分层答案。</p>
+    </details>
+
+    <details class="q-item f2"><summary><span class="stars">★★☆</span><span class="q-text">ReentrantLock + 自旋解决 token 重复刷新，为什么用自旋？</span></summary>
+      <div class="script"><b class="say">应答框架</b>场景：并发请求同时发现 token 过期、同时去刷新，会互相覆盖或重复刷。用 ReentrantLock 保证"刷新"这个动作互斥，自旋重试是因为：刷新是毫秒级短操作，等待方 park-唤醒的上下文切换开销比原地短暂自旋更贵；拿不到锁的线程自旋片刻后再进来时，先检查"别人是不是已经刷好了"——刷好了直接用新 token，不用再刷。这是 tryLock + double-check 的组合。</div>
+      <div class="anchor"><b>🟨 回忆锚点</b>① 锁对象是什么（全局还是按渠道）？② 自旋几次、有没有上限？</div>
+    </details>
+
+    </div>
+  </section>
+
+  <!-- ==================== 四、宝厢 IoT ==================== -->
+  <section>
+    <h2><span class="no">项目四</span>品沃 · IoT 智能无人零售终端云平台（宝厢）</h2>
+
+    <div class="callout gold">
+      <span class="ttl">30 秒开场白</span>
+      "宝厢智能货柜的云平台，1000 多台设备、日均订单数万，小程序下单、云端控制货柜、支付流水对账全闭环。我负责订单、库存、货柜通信和第三方支付对接。技术上是 MQTT 做设备通信，Redisson 锁解决单柜并发，RocketMQ 顺序消息保交易有序。这段经历让我把'设备端和服务器端怎么可靠通信'这件事从头到尾做了一遍——心跳、重连、指令可达性都是真实踩坑踩出来的。"
+    </div>
+
+    <div class="qlist">
+
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">MQTT 心跳与断线重连怎么设计的？（IoT 必考）</span></summary>
+      <div class="script"><b class="say">应答脚本</b>三层保活。心跳：设备按固定间隔发心跳包，服务端记录最后活跃时间，超时未收到判定离线——在线状态全靠这个维持。重连：设备端断线后指数退避重连，避免网络恢复瞬间千万设备同时重连打挂服务端（惊群）。指令可达：下发指令带超时和重试，离线期间的指令进待发队列，设备重连上线后补发。选择 MQTT 是因为它就是为低带宽不稳定网络设计的：协议头小、有 QoS 语义、有遗嘱消息——设备异常掉线时 broker 代发遗通告离线，比等心跳超时快得多。</div>
+      <div class="anchor"><b>🟨 回忆锚点</b>① 指令用的 QoS 几级？为什么？② 惊群重连当时真的遇到过吗？</div>
+      <p class="q-hook"><b>联动弹药：</b>出海项目是 Netty 私有协议——"MQTT 和自研协议"两个经历放一起，"设备接入层"话题你就是双经验选手，W3 Netty 专题会把这个映射讲透。</p>
+    </details>
+
+    <details class="q-item f2"><summary><span class="stars">★★☆</span><span class="q-text">单柜单用户锁怎么实现？</span></summary>
+      <div class="script"><b class="say">应答脚本</b>Redisson 锁，key 粒度是柜机编号。用户发起开门/下单，先 tryLock——短 waitTime 快速失败，拿不到锁说明有人正在这个柜上交易，直接返回"设备占用中"，不排队。锁内做柜状态校验和订单创建，业务完成释放。粒度到单柜所以并发度不损失——1000 台柜就是 1000 把独立的锁，互不影响。</div>
+      <p class="q-hook"><b>再追：为什么不用数据库行锁？</b>——行锁也行但要走一次事务和数据库往返，高并发下连接池先扛不住；Redis 锁挡在前面，DB 只处理"确定是唯一买家"的请求——又是"性能层 + 正确性层"分层。</p>
+    </details>
+
+    <details class="q-item f2"><summary><span class="stars">★★☆</span><span class="q-text">顺序消息用在哪？为什么需要顺序？</span></summary>
+      <div class="script"><b class="say">应答框架</b>交易流程消息要有序：开柜、扣款、结账这些事件如果乱序消费，状态机就推错。RocketMQ 顺序消息的做法是发送时按 orderId 哈希到同一队列、消费端单线程消费该队列——局部有序（同一订单有序）而不是全局有序，全局有序代价太高没必要。</div>
+      <div class="anchor"><b>🟨 回忆锚点</b>① 具体 Topic 和消息链路？② 消费失败怎么处理（顺序消息不能乱重试）？</div>
+    </details>
+
+    </div>
+  </section>
+
+  <!-- ==================== 五、通用 ==================== -->
+  <section>
+    <h2><span class="no">保底</span>接不住的问题怎么接（诚实话术）</h2>
+    <div class="callout red">
+      <span class="ttl">三段式接不住话术</span>
+      ① 坦承 + 边界："这个细节我印象不深了，我说下我确定的部分……"；② 给方法："如果线上遇到，我的排查路径会是……"（展示思路而非知识）；③ 回收："这块我回去会把当时的记录整理出来。"——<b>绝不含糊编造</b>：面试官都是对着细节追问的行家，编一个细节会在第二问塌方，而"诚实 + 有方法论"在小厂是加分项，在大厂至少不死。被问倒的题，当天回 Claude Code 报给我，24 小时内变成手册新条目。
+    </div>
+    <div class="callout green">
+      <span class="ttl">主动权打法（贯穿全程）</span>
+      每段应答的结尾都可以挂一个钩子：答完 CAS 幂等说"这其实是从事故里学来的"（钓四次扣费）；答完归档说"分表与否是成本收益决策"（钓架构判断力）；答完 MQTT 说"出海项目我们用的是自研 Netty 协议"（钓 Netty 专题）。<b>面试官顺着你的钩子问 = 他在替你翻你的小抄。</b>
+    </div>
+  </section>
+
+  <div class="lesson-nav no-print">
+    <a class="primary" href="../lessons/0003-resume-rework.html">← 第 3 课 · 简历改版实战</a>
+    <a href="0001-high-frequency-topics.html">📋 高频考点速查</a>
+    <a href="../index.html">🏠 课程主页</a>
+  </div>
+
+  <footer class="site">
+    <span>Java Offer 突围战 · 参考手册 02 / 项目追问应答手册</span>
+    <span>Ingoo 实勘背书 · 品沃/嘉立创 亲历背书 · 2026-08-29</span>
+  </footer>
+</div>
+</body>
+</html>

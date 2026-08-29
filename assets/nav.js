@@ -16,7 +16,8 @@
       { n: "0003", t: "简历改版实战", h: "lessons/0003-resume-rework.html" }
     ]},
     { title: "参考手册", items: [
-      { n: "", t: "高频考点速查", h: "reference/0001-high-frequency-topics.html" }
+      { n: "", t: "高频考点速查", h: "reference/0001-high-frequency-topics.html" },
+      { n: "", t: "项目追问应答手册", h: "reference/0002-project-question-bank.html" }
     ]}
   ];
 
