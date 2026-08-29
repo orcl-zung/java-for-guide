@@ -36,7 +36,7 @@
 
   <!-- ==================== 一、Ingoo ==================== -->
   <section>
-    <h2><span class="no">项目一</span>Ingoo 共享充电宝出海平台（2025.11 - 2026.08）</h2>
+    <h2><span class="no">项目一</span>Ingoo 共享充电宝出海平台（2026.03 - 2026.08）</h2>
 
     <div class="callout gold">
       <span class="ttl">30 秒开场白（"介绍一下这个项目"必用）</span>
@@ -106,7 +106,12 @@
 
     <div class="callout gold">
       <span class="ttl">30 秒开场白</span>
-      "嘉立创的用户增长营销平台，给半导体垂直电商做拉新、留存、变现全链路，核心是'任务-奖励-消费'闭环：任务中心、积分商城、互动社区、可配置化活动。DDD 架构，Spring Cloud Alibaba + RocketMQ + XXL-Job。我是核心开发，负责任务中心、积分商城和活动系统几个核心域，从 0 到 1 做的，🟨（补：平台用户量级 / 活动峰值 QPS）。"
+      "嘉立创的用户增长营销平台，给半导体垂直电商做拉新、留存、变现全链路，核心是'任务-奖励-消费'闭环：任务中心、积分商城、互动社区、可配置化活动。DDD 架构，Spring Cloud Alibaba + XXL-Job。我是核心开发，负责任务中心、积分商城和活动系统几个核心域，从 0 到 1 做的，🟨（补：平台用户量级 / 活动峰值 QPS）。"
+    </div>
+
+    <div class="callout red">
+      <span class="ttl">⚠️ 本节特别纪律：项目经历源自 big-market，必须"吃透"而非"背熟"</span>
+      本项目的技术叙事基于 big-market（本地 /Users/1ea/IdeaProjects/big-market）。它的真实技术点：<b>DDD 七域</b>（activity / auth / award / credit / rebate / strategy / task）、<b>db-router 自研分库分表</b>、Redisson、xxl-job 定时补偿、Zookeeper DCC 动态配置、<b>规则树</b>（黑名单/权重/兜底节点装配）、AbstractRaffleStrategy 模板方法。<b>关键风险：big-market 主链路没有 MQ——最终一致性走 task 任务表 + xxl-job 定时补偿，不是 RocketMQ 事务消息。</b>所以"事务消息半消息/回查"那条你若被追问三层必塌，两个选择：① 面试讲任务表补偿方案（big-market 教的，你能讲深），措辞相应改为"任务表 + 定时补偿保障最终一致性"；② 真去把 RocketMQ 事务消息机制吃透（W3 MQ 课内容）再保留原表述。数字（用户量/QPS）一律答"内部数据不方便给具体值，量级是十万级 DAU 平台上的营销活动"这类定性口径，<b>不编具体数</b>。
     </div>
 
     <div class="qlist">
@@ -213,7 +218,15 @@
 
   <!-- ==================== 五、通用 ==================== -->
   <section>
-    <h2><span class="no">保底</span>接不住的问题怎么接（诚实话术）</h2>
+    <h2><span class="no">保底</span>gap 与离职怎么圆 + 接不住的问题怎么接</h2>
+
+    <div class="callout gold">
+      <span class="ttl">休整期话术（2025.11 - 2026.03，HR 面专用，简历不写）</span>
+      "嘉立创的项目交付之后，我给自己安排了一段完整的休整——之前几年节奏一直很紧。这段时间也系统补了新技术栈，Java 17、Spring Boot 3 这一版，三月份看到这个做出海充电宝的机会，技术栈刚好对上就加入了。"要点三连：<b>主动安排</b>（不是被动空窗）+ <b>休整有产出</b>（学的新栈在 Ingoo 真用上了，叙事自洽闭环）+ <b>现在目标明确</b>。被追"五个月是不是有点长"——"含春节，实际完整休整三个多月，回头看是很值得的投资。"被问 Ingoo 为何又离开——回第 1 课被裁话术（公司融资问题，团队整体优化）。
+    </div>
+
+    <div class="callout red">
+      <span class="ttl">三段式接不住话术</span>
     <div class="callout red">
       <span class="ttl">三段式接不住话术</span>
       ① 坦承 + 边界："这个细节我印象不深了，我说下我确定的部分……"；② 给方法："如果线上遇到，我的排查路径会是……"（展示思路而非知识）；③ 回收："这块我回去会把当时的记录整理出来。"——<b>绝不含糊编造</b>：面试官都是对着细节追问的行家，编一个细节会在第二问塌方，而"诚实 + 有方法论"在小厂是加分项，在大厂至少不死。被问倒的题，当天回 Claude Code 报给我，24 小时内变成手册新条目。

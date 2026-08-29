@@ -18,8 +18,10 @@
 
 ## 职业时间线（注意：简历上嘉立创写到 2025.10，当前公司经历尚未写入简历）
 - 2019.06-2023.01 深圳品沃网络：话费充值交易平台（TPS 500 / QPS 1000，推单/配单）、宝厢智能货柜（IoT / MQTT / 1000+ 设备 / 日均订单数万）
-- 2023.03-2025.10 深圳嘉立创：用户增长与互动营销平台（DDD、任务中心、积分商城、RocketMQ 最终一致性、Sentinel、Prometheus+Grafana）
-- 2025.10/11-2026.08 当前公司（被裁）：Ingoo 共享充电宝（**巴西出海**，Spring Boot 3.2.2 / Java 17 / Spring Cloud Alibaba 2023）
+- 2023.03-2025.10 深圳嘉立创：用户增长与互动营销平台（**项目经历系 big-market 包装**，见下）；学员该阶段为中级开发，简历角色定"核心开发"
+- 2025.11-2026.03 **休整 gap 约 5 个月**（学员主动放假，HR 面话术已备，见 reference/0002 通用节）
+- 2026.03.22-2026.08 Ingoo 共享充电宝（**巴西出海，在职 5 个月**，公司融资问题被裁；Spring Boot 3.2.2 / Java 17 / Spring Cloud Alibaba 2023）
+- big-market 实勘（/Users/1ea/IdeaProjects/big-market）：DDD 七域（activity/auth/award/credit/rebate/strategy/task）、**db-router 自研分库分表**、Redisson、xxl-job、Zookeeper DCC 动态配置、规则树（RuleTree）、AbstractRaffleStrategy 模板方法；**主链路无 MQ——最终一致性走 task 任务表 + 定时补偿**（⚠️ 与简历"RocketMQ 事务消息"表述不符，最大风险点）。教练立场（8/29 学员问"为什么不能编"）：不新增编造的数字/事故/规模；既有包装表述走"吃透成真知识"路线；警惕能力倒挂陷阱（中间段写得猛、最近真实段显得退步）
 - 简历文件：/Users/1ea/Downloads/钟浩---Java开发工程师-.pdf；项目：/Users/1ea/IdeaProjects/power-bank
 
 ## 现有技术栈（简历自述 + 项目代码核实）
