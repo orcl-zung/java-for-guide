@@ -102,41 +102,60 @@
 
   <!-- ==================== 二、嘉立创 ==================== -->
   <section>
-    <h2><span class="no">项目二</span>嘉立创 · 用户增长与互动营销平台（2023.03 - 2025.10）</h2>
+    <h2><span class="no">项目二</span>嘉立创 · SMT 智能下单平台（2023.03 - 2025.10）</h2>
 
     <div class="callout gold">
-      <span class="ttl">30 秒开场白</span>
-      "嘉立创的用户增长营销平台，给半导体垂直电商做拉新、留存、变现全链路，核心是'任务-奖励-消费'闭环：任务中心、积分商城、互动社区、可配置化活动。DDD 架构，Spring Cloud Alibaba + XXL-Job。我是核心开发，负责任务中心、积分商城和活动系统几个核心域，从 0 到 1 做的，🟨（补：平台用户量级 / 活动峰值 QPS）。"
+      <span class="ttl">30 秒开场白（"介绍一下这个项目"必用）</span>
+      "嘉立创是 PCB 打样 / SMT 贴片龙头，2026 年深交所上市，招股书口径年处理订单两千多万笔。我在 SMT 部门做核心开发——客户的 PCB 板生产完成后，在我们平台下单做元器件贴装：上传 BOM 和坐标文件后系统发起两个异步解析任务，解析结果写入 Elasticsearch，客户在'匹配页'矫正贴装位置、勾选采购元器件后下单，经 ERP 审核流转到工厂生产。我主要负责解析-匹配链路迭代、文件存储 NAS→OSS 迁移、以及基于公司 MQ 三表组件的订单最终一致性。日均万级订单，BOM 明细年累计亿级行。"
     </div>
 
-    <div class="callout red">
-      <span class="ttl">⚠️ 本节特别纪律：项目经历源自 big-market，必须"吃透"而非"背熟"</span>
-      本项目的技术叙事基于 big-market（本地 /Users/1ea/IdeaProjects/big-market）。它的真实技术点：<b>DDD 七域</b>（activity / auth / award / credit / rebate / strategy / task）、<b>db-router 自研分库分表</b>、Redisson、xxl-job 定时补偿、Zookeeper DCC 动态配置、<b>规则树</b>（黑名单/权重/兜底节点装配）、AbstractRaffleStrategy 模板方法。<b>关键风险：big-market 主链路没有 MQ——最终一致性走 task 任务表 + xxl-job 定时补偿，不是 RocketMQ 事务消息。</b>所以"事务消息半消息/回查"那条你若被追问三层必塌，两个选择：① 面试讲任务表补偿方案（big-market 教的，你能讲深），措辞相应改为"任务表 + 定时补偿保障最终一致性"；② 真去把 RocketMQ 事务消息机制吃透（W3 MQ 课内容）再保留原表述。数字（用户量/QPS）一律答"内部数据不方便给具体值，量级是十万级 DAU 平台上的营销活动"这类定性口径，<b>不编具体数</b>。
+    <div class="callout">
+      <span class="ttl">本段定位纪律（防倒挂）</span>
+      下单主链路是平台早期搭好的，你的角色是"成熟链路上的迭代与治理"——面试里主动说这句。三段经历正好构成能力爬坡曲线：品沃（技术负责人 · 窄系统全包）→ 嘉立创（大平台 · 成熟链路迭代）→ Ingoo（新系统 · 资金链路从 0 到 1）。中间段不抢戏，最近段最亮——这是简历叙事的正确单调性。
     </div>
 
     <div class="qlist">
 
-    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">RocketMQ 事务消息怎么保证积分扣减和订单创建的一致性？</span></summary>
-      <div class="script"><b class="say">应答脚本</b>半消息机制，三步：生产者先发 half 消息——到了 broker 但对消费者不可见；然后执行本地事务（订单创建、积分流水写入）；成功就 commit 半消息放行，失败就 rollback 丢弃。还有个兜底：如果本地事务结果丢了（比如 commit 网络没送达），broker 会定时回查生产者的本地事务状态，由回查接口给出 commit 或 rollback。消费侧积分扣减失败会重试，超限进死信加人工处理。为什么不用 TCC：营销场景用户能容忍秒级延迟，Try-Confirm-Cancel 三个接口的业务侵入成本太高，最终一致是性价比最高的选择。</div>
-      <div class="anchor"><b>🟨 回忆锚点（回帖补给我）</b>① 回查接口当时怎么实现的（查哪张本地事务状态表）？② 积分流水表的唯一键设计？③ 有没有真实遇到过回查被触发？</div>
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">平台整体链路讲一遍？（开场必考）</span></summary>
+      <div class="script"><b class="say">应答脚本</b>六步：① 客户上传 BOM 表 + 坐标文件；② 系统发起两个异步解析任务——BOM 一个、坐标一个；③ 解析完成写入 Elasticsearch；④ 客户进入"匹配页"：矫正元器件贴装位置、勾选采购元器件，BOM 行要和商城几十万 SKU 做匹配；⑤ 确认下单，计费按"单/双面 × 贴装坐标点数 + 特殊工艺附加"计算；⑥ 订单经 ERP 后台审核流转工厂贴装生产，生产状态回传。组织上 PCB 部门负责 PCB 订单，板子生产完到我们 SMT 线下单贴片，SMT 有完整下单流程和元器件采购。主链路是平台早期搭好的，我负责在上面积迭代和治理。</div>
+      <p class="q-hook"><b>再追：为什么分两个解析任务？</b>——两类文件结构完全不同：BOM 是物料清单（核心是和商城 SKU 匹配），坐标是贴装点位数据（核心是和板/封装对齐）。独立任务 = 独立失败域——一个解析失败不拖另一个，还能独立重试。</p>
     </details>
 
-    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">Redisson 分布式锁保障奖励幂等，具体锁什么？锁失效怎么办？</span></summary>
-      <div class="script"><b class="say">应答脚本</b>锁粒度到"活动 + 用户"或发放批次号，不会锁整个活动。tryLock 拿不到锁说明有并发重复请求，直接放弃返回——快速失败比排队好，重复请求没有业务价值。锁内是"查、判、发"三步：查防重表、判断是否已发放、没发过才发放并写防重记录。锁的两个边界：一是业务执行超过锁 TTL——Redisson watchdog 默认每 10 秒续期到 30 秒，业务没跑完锁不会先掉；二是极端情况 Redis 主从切换锁丢失——所以防重表有唯一键兜底，插入冲突就回滚。和我在出海项目做支付幂等是同一个思想：<b>锁是性能层，DB 唯一约束才是正确性层</b>，两层都要有。</div>
-      <p class="q-hook"><b>再追：可重入锁和 Lua 脚本在 Redisson 里怎么实现的？</b>——hash 结构存"线程标识 + 重入计数"，加锁解锁都是 Lua 保证原子；这块 W2 并发课会按三层拷打准备。</p>
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">解析结果为什么放 ES 不放 MySQL？（高频陷阱题）</span></summary>
+      <div class="script"><b class="say">应答脚本</b>访问模式决定的。匹配页的查询是"多条件组合 + 模糊匹配 + 分页浏览"——客户按物料位号、规格、匹配状态筛 BOM 行，元器件匹配要模糊检索商城几十万 SKU。这类检索正是倒排索引的主场，MySQL 的 like '%xx%' 走不了索引。所以 ES 扛检索和聚合，MySQL 扛交易数据（订单、计费、状态机），各干各的。量级上 BOM 明细年累计亿级行，也是"检索型大表不能只靠 B+ 树硬扛"的典型场景——这个判断直接接 MySQL 链的底层逻辑：不同访问模式选不同数据结构。</div>
+      <p class="q-hook"><b>再追：ES 和 MySQL 一致性怎么保证？</b>——解析任务是明确的写入时机：写入 ES 成功任务才算成功，失败走任务重试。关键认知：ES 存的是解析产物，是"可重建数据"，不是交易真相源——真相源丢了才叫事故，检索索引丢了可以重放重建。这是"可重建数据与交易数据分开治理"的典型思路。</p>
+      <p class="q-hook"><b>再追：解析中客户看到什么？</b>——任务状态机：解析中 → 已完成 → 可进匹配页，前端按状态推进，不会读到半成品。</p>
+      <div class="anchor"><b>🟨 回忆锚点</b>① 任务状态机当时怎么做的（轮询还是通知）？② 解析失败客户的体验是什么（重新上传还是客服介入）？</div>
     </details>
 
-    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">慢 SQL 整改举个具体例子？（必考，接 MySQL 链 3）</span></summary>
-      <div class="script"><b class="say">应答框架（骨架必须先说）</b>"定位 → 量化 → 对症 → 验证"四步：慢查询日志定位到具体 SQL → explain 看 type、key、rows、Extra → 对症（拆复杂 JOIN、补联合索引、覆盖索引、热点上缓存）→ 对比优化前后 rows 和耗时，灰度观察。当时是一轮集中整改，手法是复杂 SQL 拆分 + 索引调整 + 缓存三层组合。</div>
-      <div class="anchor"><b>🟨 回忆锚点（这是你 MySQL 链 3 的王牌，W2 STAR 卡必补）</b>① 印象最深的一条慢 SQL：哪张表（积分流水/任务记录？）、什么业务接口？② 现象数字：P99 多少 → 改完多少？③ 当时的索引怎么调的（补了什么联合索引）？</div>
-      <p class="q-hook"><b>联动弹药：</b>MySQL 链 3 的 explain 字段速记、深分页两种解法、索引失效清单——面试官顺这条往下钻时，你已备好三层。</p>
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">你们公司的 MQ 三表组件是什么方案？（你的独家题，主动钓）</span></summary>
+      <div class="script"><b class="say">应答脚本</b>它是"本地消息表"模式——国际上叫 Transactional Outbox（事务性发件箱）——的公司级组件化封装。每个微服务三张表：消息表记待发/已发台账，异常表收投递/消费异常并告警，失败表收重试超限的死信供人工重放。机制的灵魂在发送端：业务数据和消息记录写进<b>同一个本地事务</b>，保证"业务成功则消息必存在"——这一下杜绝了两个经典丢失窗口：先发 MQ 再落库（发成功但落库失败 = 幻觉消息）、先落库再发 MQ（落库成功但发送失败 = 消息丢了）。之后组件负责扫描投递、退避重试、分级治理。为什么每个服务三张表？微服务数据库各自独立，本地事务的边界只能在自己库里，组件以 SDK/切面形态随服务走、治理后台统一看。跟行业比：RocketMQ 事务消息是另一条路——half 消息 + broker 定时回查本地事务状态，无需本地表但绑死 broker，我们是 RabbitMQ 用不了；更进一步的演进是 Outbox + CDC（Debezium 监听 binlog 自动发布），不轮询、近实时，但 CDC 链路运维重。三表方案本质是拿"扫描延迟 + 消息表膨胀"换"MQ 无关 + 全链路台账 + 人工兜底"，国内大厂内部组件的主流形态。</div>
+      <p class="q-hook"><b>再追：扫描任务本身有什么问题？</b>——消息表持续增长就是大表，扫描要防深分页（游标/延迟关联，MySQL 链 2 讲过），历史消息要归档——顺势把三张表的生命周期治理一起讲。</p>
+      <p class="q-hook"><b>再追：消费端幂等呢？</b>——组件保证"必达"，幂等仍要业务侧做。我后来在出海项目是消费端 CAS 条件更新——同一思想的两层：可靠投递和幂等消费，谁也替代不了谁。（钩子：钓 Ingoo 支付幂等题）</p>
     </details>
 
-    <details class="q-item f2"><summary><span class="stars">★★☆</span><span class="q-text">Sentinel 限流具体怎么配的？熔断后怎么办？</span></summary>
-      <div class="script"><b class="say">应答框架</b>限流对象是营销活动接口（大促/爆款任务瞬时流量），规则主要 QPS 阈值 + 关联限流；熔断针对慢调用比例。降级动作：非核心链路返回兜底文案或旧缓存，核心链路排队。<b>注意诚实口径：</b>出海项目我们没用 Sentinel，限流是自研 Redis 滑动窗口——被问"两个项目限流方案不一样为什么"就答"Sentinel 是组件化开箱即用，自研是因为 wanting 更轻的控制和告警联动，量级不大的场景不想引入额外控制台"。</p>
-      <div class="anchor"><b>🟨 回忆锚点</b>① 限的是哪个接口、阈值大概多少？② 熔断真实触发过吗？降级用户体验是什么？</div>
+    <details class="q-item f3"><summary><span class="stars">★★★</span><span class="q-text">NAS→OSS 迁移：为什么迁、怎么做？（简历亮点题）</span></summary>
+      <div class="script"><b class="say">应答脚本</b>背景：SMT 业务的文件存储需求极大——每单都有 BOM、坐标、生产文件，日均万级订单对应海量文件，NAS 扩容是买硬件、容量带宽都是刚性瓶颈，还有单点风险。迁到云对象存储换三样东西：按量付费弹性扩容、持久性 SLA（11 个 9）、生命周期规则自动沉降冷存储降成本。做法是"API 级自主管理"——基于厂商 SDK 封装自己的文件服务层：上传（服务端签名后直传，文件流不经应用服务器）、生命周期管理、迁移期双读（新文件写 OSS，读先查 OSS 未命中回源 NAS）、存量批量搬迁、校验后切写。封装做完，业务代码只认自己的 FileService 接口，底下存储可换——这层抽象本身就是迁移最大的工程收益。</div>
+      <p class="q-hook"><b>再追：迁移期怎么保证不出错？</b>——双读灰度 + 校验（文件数、大小、抽检内容哈希）+ 保留回切开关；存量用厂商批量迁移工具 + 增量补偿兜底。</p>
+      <p class="q-hook"><b>再追：为什么不让文件流经应用服务器？</b>——应用服务器的带宽和内存是宝贵资源，大文件走"服务端签名 → 客户端直传"是标准做法，应用只管发凭证、记元数据。</p>
+      <div class="anchor"><b>🟨 回忆锚点</b>① 迁移是全量切还是按业务灰度？② 双读回源做过吗？③ 批量搬迁用的厂商工具还是自写脚本？④ 迁移期出过事故吗？⑤ 你在其中的角色是主导还是参与？</div>
     </details>
 
+    <details class="q-item f2"><summary><span class="stars">★★☆</span><span class="q-text">计费规则怎么设计的？</span></summary>
+      <div class="script"><b class="say">应答框架</b>计费 = 基础费（单面/双面 × 贴装坐标点数 × 单价）+ 特殊工艺附加费（客户下单勾选的选项和配置决定）。要点讲"配置化"：选项、单价、附加项都是配置驱动而非硬编码，新工艺上线加配置不改代码。一致性上有个必说的词——<b>价格快照</b>：计费随订单固化，后续调价不影响已下订单。</div>
+      <div class="anchor"><b>🟨 回忆锚点</b>① 你迭代过计费的哪部分？② 遇到过改价引发的问题吗？</div>
+    </details>
+
+    <details class="q-item f2"><summary><span class="stars">★★☆</span><span class="q-text">日均万级订单、BOM 明细年亿级行，大表怎么治理？（钓 MySQL 链 6）</span></summary>
+      <div class="script"><b class="say">应答框架</b>先给量级口径（集团招股书年订单 2100 万笔、SMT 线日均万级、BOM 行年亿级——全是公开数字 + 量级推导，不怕查），再分层：检索交给 ES，交易表靠索引 + 分页优化，历史明细冷热分离。分表与否是成本收益决策——接得住"为什么不分表"的追问（品沃月百万级归档实战 + 链 6 分层答案）。</div>
+      <div class="anchor"><b>🟨 回忆锚点</b>① BOM 明细的归档/分区你参与过吗？② 有没有亲手优化过这条链路的 SQL？（这是你慢 SQL STAR 的候选落点）</div>
+    </details>
+
+    </div>
+
+    <div class="callout red">
+      <span class="ttl">⚠️ 技能自证弹药库（big-market 知识的新岗位）</span>
+      嘉立创段已改写为真实 SMT 故事，你研究透的那套 DDD 七域 / db-router 分库分表 / 规则树 / xxl-job 任务表补偿，不再是"嘉立创的项目"，而是<b>技能栈自证弹药</b>：被问"分库分表实践过吗"→ 先讲品沃月百万级"归档 vs 分表"的真实取舍（真做过），再讲"我深挖过一套分库分表 starter 的实现——路由、扩容、全局 ID 能讲三层"（真吃透）；被问 DDD → "我系统研究过一套 DDD 落地实现，四层架构和防腐层能对着讲"。面试说"研究过一个成熟实现"完全体面，比编"公司项目"安全十倍。RocketMQ 事务消息的半消息/回查机制在 W3 MQ 课吃透后放技能栈——与嘉立创段（RabbitMQ 三表组件）正好构成"双 MQ + 方案对比"的画面。
     </div>
   </section>
 
@@ -227,8 +246,6 @@
 
     <div class="callout red">
       <span class="ttl">三段式接不住话术</span>
-    <div class="callout red">
-      <span class="ttl">三段式接不住话术</span>
       ① 坦承 + 边界："这个细节我印象不深了，我说下我确定的部分……"；② 给方法："如果线上遇到，我的排查路径会是……"（展示思路而非知识）；③ 回收："这块我回去会把当时的记录整理出来。"——<b>绝不含糊编造</b>：面试官都是对着细节追问的行家，编一个细节会在第二问塌方，而"诚实 + 有方法论"在小厂是加分项，在大厂至少不死。被问倒的题，当天回 Claude Code 报给我，24 小时内变成手册新条目。
     </div>
     <div class="callout green">
@@ -245,7 +262,7 @@
 
   <footer class="site">
     <span>Java Offer 突围战 · 参考手册 02 / 项目追问应答手册</span>
-    <span>Ingoo 实勘背书 · 品沃/嘉立创 亲历背书 · 2026-08-29</span>
+    <span>Ingoo 实勘背书 · 品沃/嘉立创 亲历背书 · 2026-08-30 嘉立创改真实 SMT 版</span>
   </footer>
 </div>
 </body>
