@@ -87,27 +87,27 @@
     <h2><span class="no">第三部分 · 新简历全文</span>可直接复制（⬜ 为待填数字）</h2>
     <p class="lead">以下每一条都有 power-bank 代码证据背书（证据档案见 learning-records/0004）。⬜ 标记的数字<b>凭记忆/监控记录填，没有就删掉该短语</b>。</p>
 
-    <h3>① 专业技能（整段替换原 12 条）</h3>
+    <h3>① 专业技能（v2 · 7 条，2026-09-01 定稿，与实际简历一致）</h3>
     <pre class="draft">1. Java 基础扎实，精通并发编程（volatile / synchronized / ReentrantLock / AQS / 线程池），
-   有线上"线程池任务堆积连锁反应引发 OOM"的完整排查与治理经验；掌握 JVM 内存模型与 GC 机制，具备调优实战能力。
-2. 熟练运用设计模式（策略、责任链、代理、模板方法）与设计原则构建可复用代码——多支付渠道
-   统一网关即"策略模式 + 工厂自动注册"的生产落地。
-3. 熟练使用 Spring Boot 3.x / Spring Cloud Alibaba（Nacos、Gateway）/ MyBatis-Plus，
-   深入理解 IoC、AOP，读过 Spring 部分源码并运用于实际业务。
-4. MySQL：熟练运用索引、事务机制，具备慢 SQL 集中整改实战（复杂 SQL 拆分 / 索引调整 / 热点缓存）
-   与月百万级数据归档方案；Redis + Redisson：分布式锁注解（SpEL）、延迟队列、多级缓存、
-   滑动窗口限流均有生产级组件沉淀；Elasticsearch 多条件检索场景实战（亿级明细的检索与
-   交易数据分离治理）。
-5. 消息队列双栈：RocketMQ（事务消息、顺序消息、幂等、积压治理）+ RabbitMQ（手动 ACK、
-   24h TTL + 死信交换机、消费端 CAS 幂等；曾基于公司本地消息表组件——消息 / 异常 / 失败
-   三表——落地订单域最终一致性），理解 Outbox / 事务消息 / CDC 三种方案的选型差异。
-6. 高并发与网络编程：Netty 自定义私有协议长连接网关（粘包拆包 / 心跳空闲检测 / 多实例路由
-   方案设计）；Nginx 负载均衡与反向代理。
-7. 可观测性与 DevOps：从 0 到 1 落地 Prometheus + Grafana + Alertmanager + ELK + Tempo +
-   SkyWalking 全链路可观测体系，业务侧 Micrometer 自定义指标埋点；Docker + Jenkins 自动化
-   部署，自研滚动发布 / 回滚脚本。
-8. 出海实战（稀缺）：主导巴西市场共享充电宝后端——Stripe / Mercado Pago(Pix) / Phiz /
-   GlobalPay 多支付渠道接入、巴西 NFe 电子发票对接、中英葡三语 i18n 与多时区处理。</pre>
+   有"线程池任务堆积连锁反应引发 OOM"的完整排查治理经验；理解 JMM 与 GC 机制，具备线上调优实战能力。
+2. 熟练 Spring Boot 3.x / Spring Cloud Alibaba（Nacos / Gateway / Feign）与微服务治理
+   （注册发现、链路追踪、限流熔断降级）、MyBatis-Plus、Sa-Token 多端权限体系；深入理解
+   IoC、AOP 与常用设计模式（策略、责任链、代理、模板方法均有生产落地）。
+3. MySQL：索引与事务机制、慢 SQL 整改实战、月百万级归档与冷热分离，理解分库分表选型；
+   Redis + Redisson：分布式锁注解、延迟队列、多级缓存、滑动窗口限流；Elasticsearch
+   检索与交易数据分离；阿里云 OSS / MinIO 对象存储。
+4. 消息队列双栈：RabbitMQ（手动 ACK、TTL + 死信交换机、消费端 CAS 幂等）+ RocketMQ
+   （顺序消息、异步解耦）；XXL-Job 分布式任务调度；Netty / MQTT 长连接设备接入。
+5. 分布式一致性专项：幂等设计（DB 条件更新 CAS / 唯一约束 / 防重表）、可靠消息
+   （本地消息表三表组件 / Outbox 与事务消息选型）、对账兜底体系、分布式锁与延迟队列、
+   最终一致与 TCC 的取舍判断。
+6. 可观测与交付：从 0 到 1 落地 Prometheus + Grafana + Alertmanager + ELK + Tempo +
+   SkyWalking 全链路与 Micrometer 业务指标；Linux / Docker / Jenkins / Nginx，自研
+   滚动发布与回滚脚本。
+7. 支付出海实战（稀缺）：Stripe / Mercado Pago(Pix) / Phiz / GlobalPay 多渠道收单、
+   信用卡预授权两段式、webhook 可靠性与资损防控、开放平台 API 安全（HMAC 验签 / 防重放 /
+   AES）、巴西 NFe 电子发票、三语 i18n 与多时区。</pre>
+    <p class="cite">v2 变更（9/1）：5 条 Codex 版合并过度，丢了 XXL-Job / OSS / "分布式"独立项 / 支付出海技能条四个 JD 关键词；深挖审计后新增⑤分布式一致性专项（三项目三形态背书：嘉立创三表组件 / 任务表补偿研究 / Ingoo 流水表+DLQ+CAS+对账兜底）。关键词命中：任务调度→④、对象存储→③、分布式→⑤、支付出海→⑦、限流熔断链路追踪→②、分库分表→③选型口径。</p>
 
     <h3>② 项目一（主打，新写）：Ingoo 共享充电宝出海平台</h3>
     <pre class="draft">Ingoo 共享充电宝出海平台（巴西市场）            2025.11 - 2026.08
