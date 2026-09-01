@@ -32,6 +32,21 @@
   虚拟线程在 IO 密集高并发场景的落地重构。用于：2026 新趋势话题（JDK 17→21）。
 - 本机项目文档：`/Users/1ea/IdeaProjects/power-bank/doc/`
   重构立项书、支付幂等分析、drive 多实例路由、广告计费方案。用于：项目深挖与架构师叙事的真实素材（最高信任级——本人亲历）。
+- AI 工程化与 AI 辅助编程阅读包（2026-09-01 检索命中验证；AI 速成课 9/11 的骨架输入，简历技能第 8 条的两层依据）：
+  - [JavaGuide：AI 应用开发知识体系](https://javaguide.cn/ai/)
+    大模型调用 / Agent / RAG / MCP / Prompt 工程 / 向量数据库 / 评测 / 系统设计——AI 八股第二层的第一入口（javaguide.cn 为用户指定主参考）。
+  - [AIGuide（Snailclimb 开源仓库）](https://github.com/Snailclimb/AIGuide)
+    AI 应用开发 + AI 编程实战与面试指南（2026 版学习路线）：大模型基础 → LLM API → Prompt → RAG → Agent → 工程化 → 项目实战。
+  - [JavaGuide：10 道 AI 编程相关的开放性面试问题](https://javaguide.cn/ai-coding/practices/ai-ide.html)
+    Cursor / Claude Code / Trae 使用技巧、Spec Coding 与 Vibe Coding 区别、AI 对后端开发的影响——第一层"你怎么用 AI"的题源。
+  - [牛客：7 道 AI 编程高频面试题](https://www.nowcoder.com/discuss/863477807953817600)
+    涵盖 Cursor、Claude Code、Skills——第一层标配考点的清单原文。
+  - [小林 coding：2026 最全 AI 大模型面试题](https://www.xiaolincoding.com/project/xiaolinnote.html)
+    74 道大厂高频题；后端转 AI 应用开发按 Agent → RAG → 工具调用（MCP/网关）顺序补齐——速成顺序的依据。
+  - [知乎：2026 年 Java AI 开发实战——Spring AI 完全指南](https://zhuanlan.zhihu.com/p/2026364563268879288)
+    Spring AI 2.0 核心概念、Spring AI vs LangChain4j 选型。
+  - [paicoding：Spring AI 面试题预测](https://paicoding.com/springai-interview-questions)
+    JD 最常问的 Spring AI 题目：统一模型调用 / RAG / Function Calling 与 Spring 生态集成。
 
 ## Wisdom (Communities)
 
@@ -43,5 +58,5 @@
   职场与 offer 对比讨论。用于：谈薪阶段的行情参照、offer 选择讨论。
 
 ## Gaps
-- "AI 工程化 + Java 后端"缺少系统性教程（目前多为散点面经）——后续需专门检索 Spring AI 官方文档与 RAG 实战文章补齐
+- ~~"AI 工程化 + Java 后端"缺少系统性教程~~（2026-09-01 已补：JavaGuide AI 知识体系 + AIGuide + 小林 74 题见上方阅读包；Spring AI 官方文档待速成课时按需补）
 - 架构师级系统设计系统课（如《System Design Interview》vol 1/2、ByteByteGo）尚未评估引入，待进入系统设计专题时补充
