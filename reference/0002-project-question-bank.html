@@ -126,6 +126,9 @@
     <details class="q-item f2"><summary><span class="stars">★★☆</span><span class="q-text">可观测体系具体怎么落地的？</span></summary>
       <div class="script"><b class="say">应答脚本</b>从 0 到 1 搭的：指标用 Micrometer + Prometheus，展示 Grafana，告警 Alertmanager，日志 ELK，链路 Tempo 加 SkyWalking 双轨。两个自研点：一是告警桥接服务——Alertmanager webhook 打到我们的 monitor 服务，做 token 鉴权、告警分级（critical 才 @人），然后自动拼装三个跳转链接：Grafana 面板、Kibana Discover（带查询条件）、Tempo trace——值班的人点一下就从告警钻到现场，不用手工拼查询；二是业务指标埋点，支付域自定义了创建量、回调成功率、回调延迟、死信量这些指标，出问题先看大盘再下钻。设计原则是"监控不是装出来的，是设计出来的"——指标跟着故障预案走，每个告警都要能回答"收到它我做什么动作"。</div>
       <p class="q-hook"><b>再追：告警风暴怎么治？</b>——分级 + 去重 + 静默窗口：低级别告警聚合日报，critical 才实时 @人；同类告警窗口期去重。</p>
+      <p class="q-hook"><b>再追：为什么 Prometheus 是 pull 不是 push？</b>——pull 让采集端掌握节奏：目标挂了 target 的 up 指标立刻变 0，采集本身就是健康检查；Prometheus 无状态易扩；短生命周期任务用 pushgateway 补位。push 要在每个目标侧配推送地址，网段/防火墙问题多，且目标挂了是"收不到数据"而非"发现它挂了"。</p>
+      <p class="q-hook"><b>再追：P95 怎么算？histogram 和 summary 区别？</b>——histogram 分桶累计，服务端 PromQL 聚合：<code>histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m]))</code>，多实例可加总；summary 在客户端算好分位数、多实例无法聚合——所以监控选 histogram，summary 只用于单实例无法二次聚合的场景。</p>
+      <p class="q-hook"><b>再追：指标标签设计有什么坑？</b>——高基数是头号杀手：userId/deviceNo 这类实体 ID 进 label，每个取值一条时间序列，内存先爆。原则：实体 ID 不进 label，要下钻就走日志和 trace——正好接我们的告警桥接设计（告警 → Grafana → Kibana → Tempo 一路钻到单笔）。</p>
     </details>
 
     </div>
