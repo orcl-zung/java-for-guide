@@ -13,6 +13,13 @@
   - [为什么 MySQL 采用 B+ 树作为索引？](https://xiaolincoding.com/mysql/index/why_index_chose_bpuls_tree.html)：二分 → 二叉查找树 → AVL/红黑树 → B 树 → B+ 树的动图推导链，与第 2 课链 1 推理链一一对应（2026-08-28 验证可访问）。
 - [美团技术团队：MySQL 索引原理及慢查询优化](https://tech.meituan.com/2014/06/30/mysql-index.html)
   2014 年常青文。磁盘 IO 与预读（"页"概念的原文版）、树高公式 h=㏒(m+1)N（链 1 容量计算的原版）、建索引五大原则、带 explain 执行计划的真实慢查询案例——直接喂养链 3（2026-08-28 验证可访问）。
+- MySQL 索引优化实战阅读包（2026-09-01 检索命中验证；配套应答手册"索引优化"题的场景认领清单 A-D，认领哪个场景读哪篇）：
+  - [JavaGuide：MySQL 索引失效场景总结](https://javaguide.cn/database/mysql/mysql-index-invalidation.html)：SELECT * / 违背最左前缀 / 索引列函数与计算 / 类型转换 / LIKE / OR / IN 使用不当——场景 C 的清单原文（javaguide.cn 为用户指定主参考）。
+  - [腾讯云开发者：索引失效的隐形杀手——隐式类型转换](https://developer.cloud.tencent.com/article/2706948)：字符串列传数字导致索引失效与查询结果异常的机理——场景 C 的深挖版。
+  - [掘金：九个实验验证联合索引最左匹配原则](https://juejin.cn/post/7283832557502693413)：实验驱动，含"遇到范围查询停止匹配"的边界——场景 A/B 的动手验证版。
+  - [博客园：最左前缀匹配原则 + EXPLAIN 命令详解](https://www.cnblogs.com/xuwc/p/14007766.html)：原则与执行计划对照读——"定位→量化→对症→验证"四步法中 explain 环节的配套。
+  - [JavaGuide：深度分页介绍及优化建议](https://javaguide.cn/high-performance/deep-pagination-optimization.html)：延迟关联 / 游标分页（范围查询）的选型结论——场景 D 的结论版。
+  - [京东云：千万级数据深分页 SQL 性能优化实践](https://developer.jdcloud.com/article/3201)：大厂实战案例（标签记录法/游标）——场景 D 的大厂叙事版。
 - [《MySQL 实战 45 讲》笔记版（林晓斌专栏，GitBook 镜像）](https://jums.gitbook.io/mysql-shi-zhan-45-jiang)
   用户 2026-08-27 指定的深挖参考。第 1 讲（查询执行五组件）、第 2 讲（更新执行 + redo/binlog + 两阶段提交）、第 4 讲（索引模型对比）已沉淀为第 2 课"链 1 地基"一节。
 - [牛客：【面经分享】2026 Java 后端开发面试真题汇总（含 AI 工程方向）](https://www.nowcoder.com/discuss/864594486704291840)
