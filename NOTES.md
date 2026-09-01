@@ -23,7 +23,7 @@
 - 2019.06-2023.01 深圳品沃网络：话费充值交易平台（TPS 500 / QPS 1000，推单/配单）、宝厢智能货柜（IoT / MQTT / 1000+ 设备 / 日均订单数万）
 - 2023.03-2025.10 深圳嘉立创 **SMT 部门**（8/30 锚点回填，简历已改真实 SMT 版）：SMT 智能下单平台——客户 PCB 生产后下单贴装：BOM/坐标双异步解析→解析产物入 ES→匹配页（矫正贴装位置+采购元器件）→单双面×坐标点数×工艺附加计费→ERP 审核→工厂生产；RabbitMQ+公司本地消息表组件（消息/异常/失败三表）、Redis、NAS→云 OSS 迁移（API 级自主管理）；日均万级订单（集团招股书年 2129 万单口径）、BOM 明细年亿级行；主链路早期已建好，学员做迭代。学员该阶段为中级开发，简历角色"核心开发"
 - 2025.11-2026.03 **休整 gap 约 5 个月**（学员主动放假，HR 面话术已备，见 reference/0002 通用节）
-- 2026.03.22-2026.08 Ingoo 共享充电宝（**巴西出海，在职 5 个月**，公司融资问题被裁；Spring Boot 3.2.2 / Java 17 / Spring Cloud Alibaba 2023）
+- 2026.03.22-2026.08 Ingoo 共享充电宝（工商全称**深圳英歌魂智能科技有限公司**，背调/简历工作经历用全称；**巴西出海，在职 5 个月**，公司融资问题被裁；Spring Boot 3.2.2 / Java 17 / Spring Cloud Alibaba 2023）；嘉立创简历写"深圳嘉立创科技集团股份有限公司"（猎聘在挂名），背调社保若显示上市前旧名，口头话术"上市前更名的集团主体"
 - big-market 实勘（/Users/1ea/IdeaProjects/big-market）：DDD 七域（activity/auth/award/credit/rebate/strategy/task）、**db-router 自研分库分表**、Redisson、xxl-job、Zookeeper DCC 动态配置、规则树（RuleTree）、AbstractRaffleStrategy 模板方法；**主链路无 MQ——最终一致性走 task 任务表 + 定时补偿**（原"RocketMQ 事务消息"表述风险已随 8/30 SMT 版改写解除：嘉立创段现在真实是 RabbitMQ 三表组件，RocketMQ 知识放技能栈由 W3 课吃透）。big-market 定位变更（8/30）：从"嘉立创项目包装"转为**技能自证弹药库**（被问分库分表/DDD 时讲"研究透的一套实现"）。教练立场不变：不新增编造的数字/事故/规模；警惕能力倒挂陷阱（中间段写得猛、最近真实段显得退步）
 - 简历文件：/Users/1ea/Downloads/钟浩---Java开发工程师-.pdf；项目：/Users/1ea/IdeaProjects/power-bank
 
