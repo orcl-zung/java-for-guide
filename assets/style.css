@@ -444,6 +444,21 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); 
 .flow .step b { display: block; font-family: var(--serif); font-size: 15px; margin-bottom: 3px; }
 .flow .step.hot { border-color: color-mix(in srgb, var(--accent) 35%, transparent); background: var(--accent-soft); }
 
+/* ---------- 移动端修复（2026-09-02） ---------- */
+@media (max-width: 1023.98px) {
+  /* 左上角的固定导航按钮（top:14px + 高 36px = 占到 50px）会压住页面标题，内容整体让位 */
+  body.has-nav .page { padding-top: 68px; }
+  /* "你的实战锚点"绿标内容较长，nowrap 在窄屏会溢出屏幕——改为可换行的高亮形态 */
+  .q-item .you {
+    display: inline;
+    white-space: normal;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  /* 长 URL / 长英文串兜底：允许必要时断词，防横向溢出 */
+  .callout, .q-hook, .card .d, td, p, li { overflow-wrap: break-word; }
+}
+
 /* ---------- 打印 ---------- */
 @media print {
   body { background: #fff; font-size: 12px; }

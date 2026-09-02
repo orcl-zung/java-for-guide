@@ -86,21 +86,21 @@
     <h2><span class="no">模块四</span>MySQL <span class="badge green" style="vertical-align:middle">面试官原话：一定结合项目问索引设计</span></h2>
     <div class="qlist">
       <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">为什么用 B+ 树？</span></div>
-        <p class="q-hook">vs B 树（非叶子不存数据→扇出更大、树更矮）→ vs 哈希（不支持范围）→ vs 跳表（层高 log 级但磁盘 IO 是块读取）。追问：一棵 3 层 B+ 树能存多少行（约 2000 万的推导）。</p></div>
+        <p class="q-hook">vs B 树（非叶子不存数据→扇出更大、树更矮）→ vs 哈希（不支持范围）→ vs 跳表（层高 log 级但磁盘 IO 是块读取）。追问：一棵 3 层 B+ 树能存多少行（约 2000 万的推导）。树高公式（美团文）：h = log<sub>m+1</sub>(N)——底数 = 扇出 = 每页 m 个键 + 1 个指针，换底 = lnN÷ln(m+1)；N 固定时 m 越大 h 越小（log 对底数是减函数），扇出 1170 → 2000 万行只要 3 层。</p></div>
       <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">聚簇索引 / 回表 / 覆盖索引？</span></div>
         <p class="q-hook">二级索引叶子存主键→需要回表；查询列都在索引里就"覆盖"免回表。追问：为什么推荐自增主键（页写满顺序插入，UUID 导致页分裂）。</p></div>
       <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">最左前缀原则与索引失效场景？</span></div>
-        <p class="q-hook">失效：函数计算 / 隐式类型转换（字符串列传数字）/ 前导 % / OR 连接非索引列 / 不满足最左前缀。追问：联合索引 (a,b,c) 里 where b=? 走不走索引。</p></div>
+        <p class="q-hook">失效：函数计算 / 隐式类型转换（字符串列传数字）/ 前导 % / OR 连接非索引列 / 不满足最左前缀。追问：联合索引 (a,b,c) 里 where b=? 走不走索引。底层：联合索引 = 字典序元组列表，后列只在前列相等的分组内有序 → 等值钉前缀、范围之后全断（断的是定位，ICP 还能过滤）；例外：IN 是多个等值不算断点、IS NULL 能走索引、8.0.13+ skip scan 救低基数缺前缀；explain key_len 验证用到几列（详见第 2 课地基⑤）。时间列选型：总跟等值列走→联合索引放最后（钉前缀+给边界、零回表）；纯时间查询（清理/归档/最近 N 条）→单列；一个查询一张表只用一个索引，别指望 index merge。</p></div>
       <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">一条 SQL 很慢，怎么排查？（场景题）</span></div>
-        <p class="q-hook">慢查询日志定位 → explain 看 type（至少 range）/ key / rows / Extra（Using filesort / temporary）→ 优化路径：加索引/改写/拆查询/缓存/归档。<span class="you">你有实战：慢 SQL 集中整改（复杂 SQL 拆分+索引调整+缓存）</span></p></div>
+        <p class="q-hook">慢查询日志定位 → EXPLAIN 四看：id 定执行顺序（大的先、同 id 从上到下）/ type 至少 range（ALL 报警）/ key+key_len 定索引用量 / rows+Extra 判成本（filesort、temporary 报警）→ 优化路径：加索引/改写/拆查询/缓存/归档。区分度低不判死刑——判据是组合命中集（stage_poi 案例：业务保证小工作集 → 联合索引把扫描量 361 万压到千级，30 倍提速，详见第 2 课链 3 补充）。<span class="you">你有实战：慢 SQL 集中整改（复杂 SQL 拆分+索引调整+缓存）</span></p></div>
       <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">事务隔离级别与 MVCC？</span></div>
-        <p class="q-hook">RR 为 MySQL 默认；MVCC = undo log 版本链 + ReadView。追问：RR 怎么解决幻读（快照读靠 MVCC、当前读靠临键锁）→ RR 下先快照读再当前读仍可能幻读。</p></div>
+        <p class="q-hook">RR 为 MySQL 默认；MVCC = undo log 版本链 + ReadView。追问：RR 怎么解决幻读（快照读靠 MVCC、当前读靠临键锁）→ RR 下先快照读再当前读仍可能幻读。三概念分野：脏读=读到未提交版本 / 不可重复读=同一行值变（UPDATE）/ 幻读=结果集行数变（INSERT）——锁行防不住幻读所以要间隙锁；事故形态=超卖/重复扣费/对账不平，check-then-act 三板斧：当前读 / 原子 SQL / 唯一约束（详见第 2 课链 4 补充）。</p></div>
       <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">行锁 / 间隙锁 / 临键锁？</span></div>
         <p class="q-hook">RR 级别下：记录锁+间隙锁=临键锁，锁的是索引区间。追问：update 没走索引会怎样（锁全部扫描行）。<span class="you">你有实战：锁表死锁问题</span></p></div>
       <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">分库分表怎么做？什么时候做？</span></div>
         <p class="q-hook">先垂直后水平；分片键选择（高频查询维度）；带来的问题：跨分片查询/分布式事务/全局 ID。追问：不加分表的替代方案（归档/读写分离/冷热分离）。<span class="you">你有实战：月百万级数据归档方案</span></p></div>
       <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">redo log / undo log / binlog？</span></div>
-        <p class="q-hook">redo 保证持久性（crash safe）、undo 保证原子性与 MVCC、binlog 用于复制与恢复。追问：两阶段提交（prepare→写 binlog→commit）为什么需要。</p></div>
+        <p class="q-hook">redo 保证持久性（crash safe）、undo 保证原子性与 MVCC、binlog 用于复制与恢复。追问：两阶段提交（prepare→写 binlog→commit）为什么需要。为什么：提交≠落盘→redo 重做保持久性；半成品会落盘→undo 擦除保原子性；崩溃恢复=先 redo 全量回放（含半成品）再 undo 回滚未提交。buffer pool=引擎层内存的 16KB 页缓存，是两份日志存在的前提（详见第 2 课地基⑥）。</p></div>
     </div>
   </section>
 

@@ -50,7 +50,7 @@
       <p class="q-hook"><b>一层：</b>哈希索引只支持等值查询，范围、排序、模糊全废；红黑树是二叉树，数据量大了树太高，每层一次磁盘 IO 扛不住；B 树非叶子节点也存数据，单页能放的索引项少；B+ 树非叶子只存"键 + 页指针"，单页扇出大 → 树矮胖（千万级只要 3 层），且叶子节点是双向链表，天然支持范围查询和排序。</p>
       <p class="q-hook"><b>追问①：3 层 B+ 树到底能存多少行？算给我看。</b><br>页大小 16K；非叶子页一个"键 + 指针"约 14 字节（bigint 8B + 指针 6B），单页扇出约 1170；叶子页按每行 1K 算存 16 行 → 1170 × 1170 × 16 ≈ <b>两千两百万行</b>。且根节点常驻内存，实际磁盘 IO 只有 1-2 次。——能算出这个数字的人，全场面试不超过三个。</p>
       <p class="q-hook"><b>追问②：为什么所有规范都强制自增主键？用 UUID 会怎样？</b><br>一句话：聚簇索引的数据按主键顺序存放，<b>插入位置由主键决定</b>。自增 = 永远追加到最右页：写满就申请新页、旧页不动、写盘是顺序写。UUID = 插进中间的随机页，引发<b>三步灾难</b>：<b>① 页分裂</b>——目标页满了要劈：申请新页、搬走一半行、改链表、父页加指针（父页满了级联再劈）；<b>② 页碎片</b>——一个满页变两个半满页，长期下来叶子页平均只装五六成满：表膨胀、范围扫描读更多页、buffer pool 一半装空气；<b>③ 随机 IO</b>——目标页随机 → 大概率不在 buffer pool，先随机读进内存再随机写回；磁盘层面从文件末尾追加写变成散布全文件的随机写。外加扇出那一刀：UUID 36 字节 → 扇出从 ~1170 掉到 ~390（见地基节），树更高；且二级索引叶子存主键值，<b>每一棵二级索引</b>都跟着变大。<em>再追一层（防身）：非唯一二级索引的随机写入，InnoDB 有 change buffer 缓解——修改先缓存，页被读进内存时再合并（45 讲第 9 讲）。</em></p>
-      <p class="q-hook"><b>追问③：联合索引 (a,b,c)，where b=? 走不走索引？where a=? and b&gt;? and c=? 呢？</b><br>前者不走——索引内部是先按 a 排、a 相同再按 b 排，没有 a，b 在整棵树里无序，只能全扫（MySQL 5.6+ 可能走 ICP 索引下推做引擎层过滤，但那不是"用索引定位"）。后者：c 用不上——b 是范围条件，b 之后 c 无序。<b>口诀：范围之后全断。</b></p>
+      <p class="q-hook"><b>追问③：联合索引 (a,b,c)，where b=? 走不走索引？where a=? and b&gt;? and c=? 呢？</b><br>前者不走——索引内部是先按 a 排、a 相同再按 b 排，没有 a，b 在整棵树里无序，只能全扫（MySQL 5.6+ 可能走 ICP 索引下推做引擎层过滤，但那不是"用索引定位"）。后者：c 用不上——b 是范围条件，b 之后 c 无序。<b>口诀：范围之后全断。</b>——底层原理（字典序元组 + 完整断点清单 + key_len 验证法）见地基⑤。</p>
       <p class="q-hook"><b>追问④：自增主键暴露出去，竞品不就能算出你的业务量吗？</b><br>这叫<b>德国坦克问题</b>——竞品隔一周下两单，订单号一减就是你这周的单量。正解不是"不用自增主键"，而是<b>分层：自增主键当里子，业务编号当面子</b>。① 物理主键照旧自增 bigint（阿里规约强制：表必备 id unsigned bigint、单表自增）——吃满聚簇索引收益，且永不离开数据库；② 对外暴露的业务编号用"全局唯一 + 趋势递增 + 不含业务量"的方案：雪花 ID / 有序 UUID（8.0 的 <code>uuid_to_bin(@uuid, true)</code>）/ 淘宝式"时间 + 去重字段 + 用户尾号"（真实订单号 19 位、前 14 位单调递增）；③ 小系统偷懒路线：内部自增 + 出站混淆（Feistel 加密 / Hashids）。面试组合拳：<b>"自增主键只做物理主键，对外业务编号趋势递增但不含业务量——前者保 B+ 树插入性能，后者防德国坦克问题。"</b></p>
     </details>
 
@@ -98,11 +98,31 @@
     </details>
 
     <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 3 补充 · EXPLAIN 输出怎么逐列解读？（拿美团真实执行计划练手）</span></summary>
+      <p class="q-hook"><b>四看法（别逐列背）：</b>① <b>id 看执行顺序</b>——id 大的先执行，id 相同从上往下，NULL（union result）最后；<code>&lt;derived2&gt;</code> 的意思是"id=2 的查询造出来的临时表"。② <b>type 看访问方式</b>——system &gt; const &gt; eq_ref &gt; ref &gt; range &gt; index &gt; ALL，<b>至少 range，见 ALL 报警</b>；eq_ref = 主键等值关联（一次一行），ref = 非唯一索引等值。③ <b>key / key_len / ref 看索引用量</b>——possible_keys 是候选、key 是实际选中（NULL = 没用索引）；key_len 是进访问路径的字节数（地基⑤ 的断点验证器）；ref 是索引列在和谁比（const 常量 / 前表列）。④ <b>rows + Extra 看成本</b>——rows 是预估扫描行数，"绝大部分 rows 小的语句执行一定很快"（美团原话），优化 SQL 很大程度就是优化 rows；Extra 警惕 Using filesort / Using temporary，加分 Using index（覆盖免回表）/ Using index condition（ICP）。</p>
+      <p class="q-hook"><b>练手一（stage_poi 的真实执行计划）：</b><code>type: ALL | key: NULL | rows: 3613155</code> → 翻译：全表扫 361 万行只为找 951 行——病不在 SQL 写法，在<b>没有可用索引</b>。</p>
+      <p class="q-hook"><b>查询执行顺序（两层答案都备着）：</b>① <b>逻辑顺序</b>（子句求值次序）：FROM/JOIN → ON → WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT——解释了 WHERE 为什么不能用 SELECT 的别名；② <b>物理顺序</b>（MySQL 怎么跑）：连接器 → 分析器 → <b>优化器（EXPLAIN 展示的就是它的产出）</b> → 执行器调引擎逐行取数，多表 JOIN 走嵌套循环、EXPLAIN 第一行就是驱动表（地基①）。</p>
+      <p class="q-hook"><b>stage_poi 案例复盘：两个低区分度字段凭什么联合索引就解决了？</b>数据分布：accurate_result 只有 3 个值（-1/0/1）、sync_status 只有 2 个值，单列区分度都低得可怜——按区分度公式看"好像无法优化"。三层破局：① <b>区分度是单列的尺子，索引价值看组合命中集</b>——两列各自低基数 ≠ 组合后命中集大；② <b>业务沟通改变数据分布认知（第 4 步是关键动作）</b>——业务每 5 分钟扫一批、处理完把 sync_status 置 1，任意时刻未处理工作集只有千级，300 多万行是处理完的死数据；<b>业务保证了不平衡 → 小工作集 → 索引稳赚</b>；③ <b>联合索引让两条件都变定位条件</b>——(accurate_result, sync_status) 上前者等值钉前缀、后者 IN(0,2,4) 是三个等值范围（<b>IN 不算断点</b>，地基⑤ 例外①），两步定位圈出 ~1000 行：扫描量 361 万 → 千级，6.22s → 0.20s（30 倍）。<b>为什么单列索引不够：</b>accurate_result=1 命中 97 万行，单列索引要逐行回表验 sync_status，回表比例太高优化器干脆放弃索引回全表扫（呼应链 2 补充的优化器行为）；联合索引把过滤全压进索引，命中集直接缩到千级。</p>
+      <p class="q-hook"><b>收拢判据：</b>区分度 0.1 的经验值是单列快速筛查的启发式，不是定律——真正的问题只有一个：<b>"这个 WHERE 最终剩多少行"，剩得少就值得索引定位，哪怕每列都是低基数。</b>金句兜底（美团原文结尾）："任何数据库层面的优化都抵不上应用系统的优化"——这个案例的优化信息一半来自数据，一半来自业务。</p>
+      <p class="q-hook"><span class="you">你的实战锚点：和你的慢 SQL 集中整改互为印证——能说出"我们当时也是先看数据分布、再问业务处理节奏"这种话，面试官就知道你真做过"找业务方沟通"这一步，而不是只会 explain。</span></p>
+    </details>
+
+    <details class="q-item f3">
       <summary><span class="stars">★★★</span> <span class="q-text">链 4 · 四个隔离级别？InnoDB 默认哪个？MVCC 怎么实现的？</span></summary>
       <p class="q-hook"><b>一层：</b>读未提交 / 读已提交 / 可重复读 / 串行化，分别对应脏读、不可重复读、幻读三个问题。InnoDB 默认 <b>RR（可重复读）</b>。</p>
       <p class="q-hook"><b>追问①：MVCC 怎么实现 RR？</b><br>每行有两个隐藏列：最近修改它的事务 id（trx_id）和回滚指针（roll_pointer），沿指针在 undo log 里串出<b>版本链</b>。事务第一次快照读时生成 <b>ReadView</b>（当前活跃事务列表 + 高低水位），沿版本链找"对本事务可见"的那个版本。关键差异：<b>RC 每条快照读都新建 ReadView，RR 复用第一次的</b>——这就是"可重复读"三个字的实现。</p>
       <p class="q-hook"><b>追问②：RR 到底解没解决幻读？</b><br>分两种读答：<b>快照读</b>靠 MVCC 解决；<b>当前读</b>（update / delete / select for update）靠 next-key lock 解决。陷阱题：先快照读、再当前读，仍可能看到别的事务新插入的行——因为当前读读的是最新版本。能主动讲出这个陷阱，RR 这题就封顶了。</p>
       <p class="q-hook"><b>追问③：为什么很多大厂规范反而强制 RC + row 格式 binlog？</b><br>RC 下基本没有间隙锁 → 并发度更高、死锁概率更低；主从一致性由 row 格式 binlog 兜底。RR 的间隙锁很大程度是 statement 格式 binlog 时代的历史包袱。这一层答出来 = 你理解设计动机，不只是背行为。</p>
+    </details>
+
+    <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 4 补充 · 脏读 / 不可重复读 / 幻读到底差在哪？电商里长什么样？</span></summary>
+      <p class="q-hook"><b>统一框架：三个都是"同一事务内两次读结果不一致"，按两个维度区分——别人干了什么 × 你读的对象。</b>脏读：读到别人<b>没提交</b>的版本（危害：这版本可能回滚，从未真正存在）；不可重复读：<b>同一行</b>被已提交事务 UPDATE/DELETE，两次读<b>值变了</b>；幻读：<b>同一范围条件</b>被已提交事务 INSERT 新行，两次读<b>行数变了</b>。"未提交"的界定单位是<b>版本</b>（每个版本头上盖着 trx_id 戳），不是"同一行"或"范围"——点查和范围扫都可能脏读。</p>
+      <p class="q-hook"><b>幻读 ≈ 范围版的不可重复读</b>，SQL 标准里两者定义本来就挨着；分开定义是因为<b>成因不同 → 解法不同</b>：防不可重复读，锁住那一行就够（记录锁）；防幻读，锁行没用——你要防的行"还不存在"，锁不住不存在的东西，只能锁<b>间隙</b>。<b>这就是间隙锁 / next-key lock 存在的根本理由</b>（桥接链 5）。</p>
+      <p class="q-hook"><b>电商事故形态（被问"实际场景"时讲）：</b>不可重复读 → 库存超卖（check-then-act：<code>select stock=1</code> → 判断 → <code>update</code>，两个事务都读到 1 都通过）、支付回调 vs 超时取消竞态（按旧状态把已支付订单取消了）；幻读 → <b>防重插入</b>（<code>select count(*)=0</code> → insert，RR 快照读互相看不见对方的未提交插入 → 重复扣费 / 重复下单）、秒杀优惠券多发、结算批处理对不上。<b>关键认知：MVCC 保护"读的一致性"，保护不了"先查再写"的业务动作</b>——check 是快照读、act 是写，两个事务各看各的旧世界。</p>
+      <p class="q-hook"><b>三板斧（对应三类事故的工程解）：</b>① check 变<b>当前读</b>（<code>select ... for update</code>：加锁 + 读最新版本）；② check+act 合并成<b>一条原子 SQL</b>（<code>update ... where stock&gt;0</code>，判断和扣减同一语句完成）；③ <b>唯一约束兜底</b>——insert 的唯一性检查是当前读语义，直接撞索引最新记录，第二个 insert 报 duplicate key。</p>
+      <p class="q-hook"><b>金句（加分点）：</b>"幻读在生产事故报告里从来不叫幻读——它叫<b>超卖</b>、叫<b>重复扣费</b>、叫<b>对账不平</b>。"案例：火山引擎生鲜秒杀超卖 287 单复盘（根因：回调重试无幂等 + 行锁超时 + Redis/DB 不一致；防护三原则：幂等 / 事务闭环 / 缓存不替库）——链接在<a href="../resources.html">资源库 · 事务与 MVCC 阅读包</a>。</p>
+      <p class="q-hook"><span class="you">你的实战锚点（直接勾连）：充电宝四次扣费就是"防重插入"场景——你们的修复（防重表 + 唯一约束）之所以有效，是因为唯一约束的冲突检查是当前读语义。面试讲这段时把概念收回来："四次扣费本质是 check-then-act 在 RR 快照读下的幻读族问题，唯一约束是兜底锁。"</span></p>
     </details>
 
     <details class="q-item f3">
@@ -192,6 +212,99 @@
       <span class="ttl">两个容量口径都要会（防追问）</span>
       45 讲口径：N ≈ 1200，树高 4 → 1200³ ≈ <b>17 亿个键</b>，根节点常驻内存，十亿行的表最多 3 次磁盘 IO。链 1 口径：1170 × 1170 × 16（叶子页每行 1K）≈ <b>2200 万行</b>。两个都对、假设不同：前者算"能定位多少个键"，后者算"聚簇索引能装多少行"。面试任选其一，<b>但把假设说出口</b>——能分清口径的人，面试官立刻知道你不是背的。
     </div>
+
+    <h3>④ h = log<sub>m+1</sub>(N)：美团那篇的树高公式，逐符号拆开</h3>
+    <p>读<a href="https://tech.meituan.com/2014/06/30/mysql-index.html" target="_blank">美团《MySQL 索引原理及慢查询优化》</a>会在"b+ 树性质"第 1 条撞上这个公式：<b>h = log<sub>m+1</sub>(N)</b>。原文给了三个符号：<b>N</b> = 数据表总记录数；<b>m</b> = 每个磁盘块（一个数据页）里数据项（索引键）的个数；<b>h</b> = 树高 ≈ 查一条记录的磁盘 IO 次数。</p>
+    <p><b>谁是底、谁是真数：</b>(m+1) 是<b>底数</b>（下标），N 是<b>真数</b>——读作"以 m+1 为底 N 的对数"，等价于 (m+1)<sup>h</sup> = N。也就是说，h 回答的问题是<b>"(m+1) 连乘几次才能盖住 N 条记录"</b>。</p>
+    <p><b>为什么底数是 m+1 而不是 m：</b>m 个键把值域切成 m+1 段，所以一个节点有 <b>m+1 个指针——扇出就是 m+1</b>（美团那张图里磁盘块 1 有 17、35 两个数据项，对应 P1 / P2 / P3 三个指针）。满员的树每往下一层覆盖量 ×(m+1)：第 1 层 1 个块、第 2 层 m+1 个、第 3 层 (m+1)²……总容量 ≈ (m+1)<sup>h</sup>，两边取对数反解出 h。<b>注意符号撞车：</b>上面 ③ 和 45 讲口径里用 N 指扇出（≈1200），美团公式里 N 是总记录数、扇出写作 m+1——两个 N 不是一回事，<b>坐在底数位置上的那个才是扇出</b>。</p>
+    <p><b>为什么 N 一定时 m 越大 h"反而"越小：</b>"反而"的别扭感来自把 m 当成了真数——<b>log 对真数是增函数，对底数是减函数</b>，而 m 坐在底数位置上。换底公式一眼看穿：h = ln N ÷ ln(m+1)，N 固定分子就固定，m 越大分母越大、h 越小。直觉版：每层把搜索范围缩小 (m+1) 倍，倍率越大需要的层数越少——树越"矮胖"。</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>扇出 m+1</th><th>h = ln(2×10⁷) ÷ ln(m+1)</th><th>层数（N = 2000 万行）</th></tr></thead>
+      <tbody>
+        <tr><td>2（二叉树）</td><td>≈ 24.3</td><td>~25 层 = 25 次 IO，不可接受——③ 推理链第 2 步说的就是它</td></tr>
+        <tr><td>10</td><td>≈ 7.3</td><td>8 层，还是太贵</td></tr>
+        <tr><td><b>1170（InnoDB：16K 页 ÷ 14B"键+指针"）</b></td><td><b>≈ 2.4</b></td><td><b>3 层——"3 层 B+ 树装下千万级"的算术本体，就是链 1 追问① 那笔账</b></td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout green">
+      <span class="ttl">这个公式在面试里干什么用（两处勾连）</span>
+      ① 它是链 1 追问①"两千两百万行"的形式化表达——1170 就是填进底数的那个数；② 美团原文的下一句话就是结论：<b>"索引字段要尽量小"——字段越短 → m 越大 → h 越小 → IO 越少</b>。int(4B) 优于 bigint(8B)、UUID(36B) 扇出掉到 ~390，全打在这条公式的分母上。
+    </div>
+    <p class="q-hook"><b>严谨性注脚（被较真时兜底）：</b>这是<b>满员理想估算</b>——假设每个节点都塞满 m 个键，实际要向上取整；最坏情况节点只半满，有效底数得按最小扇出算。但作为量级分析完全够：它要说明的是"h 是以扇出为底的 log N"，不是给你精确层数。</p>
+
+    <h3>⑤ 最左前缀的底层原理：联合索引是一条"字典序"元组列表</h3>
+    <p>链 1 追问③ 的口诀"范围之后全断"凭什么成立？把联合索引 (a,b,c,d) 的物理形态建立起来，所有现象自己长出来：<b>叶子层是一条按"元组字典序"排好的线性列表</b>——先按 a 排，a 相等按 b 排，b 相等按 c 排，依此类推；B+ 树只是这条列表上方的二分定位器（非叶子层的分隔键也是元组，比较时先比 a、相等再比 b）。全部推论都从一条性质长出来：<b>后一列的有序是局部的——只在前一列取值相等的分组内部成立，全局看是乱的。</b>这就是电话簿：按（姓，名）排序，"名"只在同姓内部有序，所以"查所有姓张的"很快，"查所有名叫伟的"得翻整本。</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>条目</th><th>a</th><th>b</th><th>c</th><th>d</th><th>竖着读</th></tr></thead>
+      <tbody>
+        <tr><td>①</td><td>1</td><td>1</td><td>2</td><td>5</td><td rowspan="7" style="vertical-align:middle">a 列全局有序；b 列全局无序（1,1,2,2,2,1,3），但 a=1 分组内（①-⑤）有序；c 列只在 (a,b) 都相等的分组内有序——(1,2) 组内是 1,4,7；d 只在 (a,b,c) 全相等的组内有序</td></tr>
+        <tr><td>②</td><td>1</td><td>1</td><td>5</td><td>3</td></tr>
+        <tr><td>③</td><td>1</td><td>2</td><td>1</td><td>6</td></tr>
+        <tr><td>④</td><td>1</td><td>2</td><td>4</td><td>2</td></tr>
+        <tr><td>⑤</td><td>1</td><td>2</td><td>7</td><td>1</td></tr>
+        <tr><td>⑥</td><td>2</td><td>1</td><td>3</td><td>4</td></tr>
+        <tr><td>⑦</td><td>2</td><td>3</td><td>1</td><td>8</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>查找 = 等值钉前缀，逐列收缩。</b>以 <code>a=1 and b=2 and c&gt;3 and d=4</code> 为例：a=1 二分定位到 ①-⑤；b=2 在 a=1 内部有序，收缩到 ③④⑤；c&gt;3 在 (1,2) 组内有序（1,4,7），给出扫描起点，得到连续区间 ④⑤——<b>范围列本身用到了索引（它给边界），断的是它后面的列</b>；轮到 d=4 时，c 已取 4、7 两个值，d 的有序只在"c 相等"的分组内成立，跨组看 ④⑤ 的 d 列是 <b>2,1——乱序，无法二分</b>，只能逐条过滤。<b>"停止匹配"的准确含义：d 从"定位条件"降级为"过滤条件"，不再参与计算扫描边界。</b>补丁：d 是索引列，5.6+ 的 ICP 让过滤发生在索引页上（Extra: <code>Using index condition</code>），d≠4 的行连回表都省——所以 (a,b,c,d) 下这查询不算惨，只是 d 不参与定位。</p>
+    <p><b>换成 (a,b,d,c) 为什么四列全用上：</b>三个等值列全钉成点 → 锁定 (1,2,4,·) 这个点区间，组内 c 依然有序 → c&gt;3 给边界。<b>建索引的排序原则由此得来：等值列在前，范围列放最后。</b>别混淆两种"顺序"：SQL 里条件的<b>书写顺序</b>无关紧要——AND 是集合，优化器会按索引定义的列序重新配对（美团说的"a,b,d 顺序可任意调整"指这个）；但索引<b>定义里的列序</b>是设计活——等值列之间的相对顺序对本查询无差别，却决定其他查询能否复用前缀、ORDER BY 能否借序。</p>
+    <p><b>实战回扣（美团原文的慢 SQL）：时间字段建索引有什么不一样？</b>原查询 <code>status=2 and operator_id=20839 and operate_time&gt;… and operate_time&lt;… and type=2</code>，最终索引 (status, operator_id, type, operate_time)——时间列在最后。"不一样"的从来不是<b>字段类型</b>（B+ 树眼里所有 key 都只是按序排列的字节串，int / varchar / 时间戳地位平等），而是<b>条件形态</b>：status / operator_id / type 是等值钉前缀，operate_time 是范围给边界。所以"时间列放联合索引最后"只是"范围列放最后"的推论——业务上查时间几乎永远是区间查询；哪天时间字段是等值条件（如按天生成的分区键），它一样能进等值前缀。<b>索引设计看的是条件形态，不是字段类型。</b></p>
+    <div class="callout">
+      <span class="ttl">反向追问：范围列总放最后，那还放它进去干什么？（防自残）</span>
+      别把"范围之后全断"读成"范围列是死重"——<b>断的是它后面的列，范围列本身是访问路径的一部分：它给出扫描起点和终点</b>。反事实推演：索引只有 (status, operator_id, type) 三列时，时间条件不在索引里 → 命中 3 万行就<b>回表 3 万次</b>逐条验时间（随机 IO 风暴）；时间列进索引后，等值前缀 + 时间范围 = 一段连续区间顺序扫，count(*) 直接走覆盖索引<b>零回表</b>。树高账用地基④ 算：int 时间列加 4B，扇出 1170 → ~910，h = ln N ÷ ln 910 ≈ 2.48，<b>还是 3 层</b>——扇出要掉到 280 以下才会多一层，对数把底数变化压扁了。判据只有一条：<b>列是否出现在高频查询的 WHERE / JOIN / ORDER BY 里，不看它是等值还是范围</b>。
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>断点情况</th><th>底层原因（全是破坏了有序性假设）</th></tr></thead>
+      <tbody>
+        <tr><td>范围查询（&gt; / &lt; / BETWEEN / LIKE 'x%'）</td><td>该列取多值 → 后续列跨组无序，断</td></tr>
+        <tr><td>LIKE '%xx' 前导通配</td><td>排序从第一个字符开始，前缀未知 = 整条列表对该条件无序</td></tr>
+        <tr><td>列上套函数 / 运算（left(name,3)、a+1）</td><td>索引按<b>原值</b>排序，f(列) 的顺序树不知道；8.0.13 函数索引是官方解法</td></tr>
+        <tr><td>隐式类型转换</td><td>等于偷套 CAST。<b>谁被套函数谁死</b>：字符串列传数字死的是列；数字列传字符串转的是常量，索引没事</td></tr>
+        <tr><td>OR 两边不都有索引</td><td>一边无法定位，只能全表扫</td></tr>
+        <tr><td>缺前缀列（(a,b,c) 只给 a 和 c）</td><td>没有 b，c 的有序性不成立（c 的序依赖"b 相等"）→ c 同样进不了访问路径</td></tr>
+        <tr><td>!= / NOT IN 负条件</td><td>命中"除一点外的两段区间"，等同范围 → 后续列断，优化器多半直接全表扫</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout gold">
+      <span class="ttl">三个反常识例外（兜底防追问）</span>
+      ① <b>IN 不算断点</b>：<code>a=1 and b in (2,3) and c=5</code> 拆成两段等值范围 (1,2,·)、(1,3,·)，每个子区间内 c 依然有序可用——IN 是"多个等值"，不是范围；② <b>IS NULL 能走索引</b>：NULL 参与排序（排最前），"IS NULL 索引失效"是谣言；③ <b>8.0.13+ 的 skip scan</b>：缺前缀列时若前缀列基数很低（如性别），优化器按前缀每个取值各做一次局部扫描（Extra: <code>Using index for skip scan</code>）——"缺前缀必全扫"在 8.0 有了例外。
+    </div>
+    <div class="callout green">
+      <span class="ttl">怎么验证断没断：explain 的 key_len</span>
+      key_len 告诉你索引实际有多少字节进了访问路径。(a,b,c,d) 都是 int 且允许 NULL 时各占 5 字节：(a,b,c,d) 索引跑上面的查询 key_len = 15（a+b+c）；换 (a,b,d,c) 后 key_len = 20（四列全进）。再配 Extra 的 <code>Using index condition</code>（d 被 ICP 过滤）就齐了——面试官让你证明，别背，给他看 key_len。
+    </div>
+    <p><b>配套追问：时间列到底跟联合索引，还是单独建一列？</b>判据只有一个——<b>查询形态</b>。联合索引和单列索引不是"哪个更好"，是"哪个匹配你的查询形态"：</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>查询形态</th><th>时间列怎么处理</th></tr></thead>
+      <tbody>
+        <tr><td>时间总跟着等值列走（a=? and time range，90% 的 OLTP）</td><td>联合索引 (a,b,…,time)，时间放最后——等值钉前缀 + 时间给边界，零回表</td></tr>
+        <tr><td>时间单独作条件（归档清理 delete where time&lt;?、定时任务、最近 N 条）</td><td>单列索引 (time) 或时间打头的索引——联合索引里时间在最后，对纯时间查询<b>毫无用处</b>（最左前缀）</td></tr>
+        <tr><td>两种形态都有</td><td>两个索引都建；记住一个查询一张表<b>只用一个索引</b>，别指望 index merge 合并</td></tr>
+        <tr><td>带 order by create_time 且有等值前缀（a=? order by time）</td><td>时间列放对应联合索引最后，白赚免 filesort 的排序</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout green">
+      <span class="ttl">30 秒口径（被问"时间列怎么建索引"时）</span>
+      "看查询形态，不看字段类型。时间总跟着等值列走就进联合索引放最后——等值钉前缀、时间给边界，零回表；只有纯按时间查的场景（清理任务、归档）才单独建列。联合索引和单列索引不是哪个更好，是哪个匹配查询形态——而且一个查询一张表只用一个索引，别指望 index merge。"
+    </div>
+
+    <h3>⑥ Buffer Pool 与三大日志的因果链：为什么 undo 保原子性、redo 保持久性</h3>
+    <p><b>Buffer pool 三问（地基①② 的补丁）：</b>是什么——InnoDB 在内存里开的一大块缓存，缓存单位是 <b>16KB 页</b>（数据页 / 索引页 / undo 页的内存副本），读先查它、写先改它（改过的叫<b>脏页</b>，后台线程慢慢刷盘）；在哪——<b>内存</b>，mysqld 启动时向 OS 申请，<code>innodb_buffer_pool_size</code> 控制（默认 128MB，生产一般给物理内存 50%-70%）；属于谁——<b>InnoDB 引擎层</b>，不是 Server 层（8.0 删了查询缓存后 Server 层彻底不碰数据缓存；MyISAM 只有缓存索引块的 key_buffer）。判别口诀：<b>跨引擎通用的功能在 Server 层（binlog），引擎特有的在引擎层（buffer pool、redo）</b>。</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>层</th><th>有什么</th><th>记什么</th></tr></thead>
+      <tbody>
+        <tr><td><b>Server 层</b>（跨引擎通用）</td><td>连接器 / 分析器 / 优化器 / 执行器、binlog</td><td>不缓存任何数据</td></tr>
+        <tr><td><b>InnoDB · 内存</b></td><td><b>Buffer Pool</b>（16KB 页缓存 + Change Buffer + 自适应哈希 AHI）、Redo Log Buffer</td><td>buffer pool 是引擎层私有财产</td></tr>
+        <tr><td><b>InnoDB · 磁盘</b></td><td>.ibd（表数据 + 索引，B+ 树本体）、undo log 文件、redo log 文件</td><td>16KB 页是磁盘 ↔ 内存之间的"货币单位"</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>因果链（一条链串起三大日志）：</b>① 为了快，读写都先打 buffer pool，不直接碰磁盘 → ② <b>提交 ≠ 落盘</b>（提交时只刷 redo 那几百字节顺序写，脏页以后慢慢刷）→ 崩了数据页是旧的 → <b>redo 负责"重做"，保持久性</b>；③ 反过来<b>脏页刷盘不看事务脸色</b>（没提交的半成品可能已在盘上）→ 崩了要把半成品擦掉 → <b>undo 负责"撤销"，保原子性</b>。一句话：<b>buffer pool 是性能的答案，undo 和 redo 是这个答案的两份代价的解法。</b></p>
+    <p><b>字面助记（纠偏版）：</b>日志名 = 崩溃恢复时对它执行的动作。undo log 用来做<b>撤销</b> → 装的是<b>修改前的旧值</b>（不是"修改后的记录"！）；redo log 用来做<b>重做</b> → 装的是<b>修改后的新值</b>（物理日志：哪个页哪个偏移改成什么）。redo 的职责边界很窄——<b>只保已提交事务不丢</b>；"全成功或全失败"是原子性，归 undo 管。</p>
+    <div class="callout gold">
+      <span class="ttl">崩溃恢复的真实两步（被深挖时讲这个）</span>
+      ① <b>redo 回放</b>：把 redo log 里所有修改全部重做进数据页——<b>包括没提交事务的半成品，也一并重做</b>（回放不区分提交与否）；② <b>undo 回滚</b>：找出崩溃时未提交的事务，用 undo log 逐个擦掉。防追问：undo 页本身也是数据页，它的修改同样先记 redo——<b>undo log 的持久化也是 redo 保证的</b>（WAL 覆盖所有页修改）。
+    </div>
+    <p><b>两个"为什么"防追问：</b>① 为什么不用 OS 文件缓存、非要自建 buffer pool？进程内缓存可以定制策略（LRU、加锁、change buffer），OS 缓存做不到——所以 InnoDB 用直接 I/O 绕过 OS 缓存，避免双份缓存；② buffer pool 的 LRU 不是纯 LRU：新页插在 <b>5/8 处（midpoint）</b>，全表扫描冲进来的页进不了热区头部——防的就是一次大扫描把热点页全挤出去。</p>
   </section>
 
   <!-- ==================== 四、面试官会把 MySQL 往你项目引 ==================== -->
@@ -240,7 +353,7 @@
   <!-- ==================== 延伸资源 ==================== -->
   <section>
     <h2><span class="no">延伸</span>主资源</h2>
-    <p><b>主资源：</b><a href="https://jums.gitbook.io/mysql-shi-zhan-45-jiang" target="_blank">《MySQL 实战 45 讲》笔记版（林晓斌）</a>——你指定的深挖参考，第 1 / 2 / 4 讲对应本课"地基"一节，第 5 / 9 / 10 讲对应链 1 / 2 / 3，第 34 / 35 讲对应 JOIN 补充块；<a href="https://javaguide.cn/mysql/mysql-index.html" target="_blank">JavaGuide · MySQL 篇</a>（索引 / 事务 / 日志全覆盖）；<a href="https://xiaolincoding.com/mysql/" target="_blank">小林 coding · 图解 MySQL</a>（配图最清楚，MVCC 和锁看这里）。配套的<a href="../reference/0001-high-frequency-topics.html">《高频考点速查手册》模块四</a>是本课的速记版。</p>
+    <p><b>主资源：</b><a href="https://jums.gitbook.io/mysql-shi-zhan-45-jiang" target="_blank">《MySQL 实战 45 讲》笔记版（林晓斌）</a>——你指定的深挖参考，第 1 / 2 / 4 讲对应本课"地基"一节，第 5 / 9 / 10 讲对应链 1 / 2 / 3，第 34 / 35 讲对应 JOIN 补充块；<a href="https://javaguide.cn/mysql/mysql-index.html" target="_blank">JavaGuide · MySQL 篇</a>（索引 / 事务 / 日志全覆盖）；<a href="https://xiaolincoding.com/mysql/" target="_blank">小林 coding · 图解 MySQL</a>（配图最清楚，MVCC 和锁看这里）；<a href="https://tech.meituan.com/2014/06/30/mysql-index.html" target="_blank">美团技术团队 · MySQL 索引原理及慢查询优化</a>（地基④ 那个 h = log<sub>m+1</sub>(N) 树高公式的出处，后半篇真实慢查询案例喂养链 3）。配套的<a href="../reference/0001-high-frequency-topics.html">《高频考点速查手册》模块四</a>是本课的速记版。</p>
     <div class="callout red">
       <span class="ttl">任何一层讲不顺，直接问我</span>
       比如"ReadView 的可见性判断规则到底是什么"——在 Claude Code 里打出来，我给你拆到讲顺为止。这比你卡着搜十分钟博客高效。

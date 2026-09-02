@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>高信任资源库 · Java Offer 突围战</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/theme.js"></script>
+<script src="assets/nav.js"></script>
+</head>
+<body>
+<main class="page">
+
+  <div class="kicker">Java Offer 突围战 · 资源索引 · 全程使用</div>
+  <h1>高信任资源库</h1>
+  <p class="subtitle">RESOURCES.md 的网页版。所有外链按"主参考 → 专题阅读包 → 社区 → 缺口"组织，每条标注<b>用途</b>与<b>验证日期</b>。用法：认领哪个场景读哪篇，别囤。</p>
+  <div class="meta-badges">
+    <span class="badge gold">主参考：JavaGuide</span>
+    <span class="badge blue">阅读包 × 3（索引 / 事务 MVCC / AI）</span>
+    <span class="badge green">最近更新 2026-09-01</span>
+  </div>
+
+  <hr class="rule">
+
+  <!-- ==================== 一、主参考与深挖 ==================== -->
+  <section>
+    <h2><span class="no">一</span>主参考与深挖（骨架级）</h2>
+    <div class="cards">
+      <a class="card" href="https://javaguide.cn/" target="_blank">
+        <div class="n">主参考</div>
+        <div class="t">JavaGuide</div>
+        <div class="d">国内最系统的 Java 面试知识库。八股主线的骨架——Java 基础/并发/JVM/MySQL/Redis/MQ/分布式/微服务/系统设计各专题的第一入口。</div>
+      </a>
+      <a class="card" href="https://javaguide.cn/roadmap/java-roadmap.html" target="_blank">
+        <div class="n">主参考 · 路线图</div>
+        <div class="t">Java 后端学习路线（2026 最新版）</div>
+        <div class="d">2026 版已加入 AI 应用开发板块。用于：核对知识覆盖面、安排专题学习顺序。</div>
+      </a>
+      <a class="card" href="https://github.com/snailclimb/JavaGuide" target="_blank">
+        <div class="n">主参考 · 仓库</div>
+        <div class="t">JavaGuide GitHub 仓库</div>
+        <div class="d">仓库首页有"AI 智能面试辅助平台 + RAG 知识库"实战项目（Spring Boot 4.0 + Java 21 + Spring AI 2.0）。用于：AI 加分项的参考项目选型。</div>
+      </a>
+      <div class="card">
+        <div class="n">图解第一参考</div>
+        <div class="t"><a href="https://xiaolincoding.com/" target="_blank">小林 coding — 图解 MySQL / 图解网络</a></div>
+        <div class="d">B+ 树/索引/事务/锁/网络原理讲解质量极高。已定点使用的单篇：</div>
+        <div class="d" style="margin-top:6px">
+          · <a href="https://xiaolincoding.com/mysql/index/why_index_chose_bpuls_tree.html" target="_blank">为什么 MySQL 采用 B+ 树作为索引？</a>——动图推导链，对应第 2 课链 1（2026-08-28 验证）<br>
+          · <a href="https://www.xiaolincoding.com/mysql/architecture/mysql_architecture.html" target="_blank">MySQL 架构是怎样的？</a>——Server 层 + InnoDB 全景图，"buffer pool 属于引擎层"的出处，已沉淀为<b>地基⑥</b>（2026-09-01 验证）<br>
+          · <a href="https://www.xiaolincoding.com/mysql/transaction/mvcc.html" target="_blank">事务隔离级别是怎么实现的？</a>——版本链 / ReadView 全图解，链 4 追问①（2026-09-01 检索验证）<br>
+          · <a href="https://www.xiaolincoding.com/mysql/transaction/phantom.html" target="_blank">可重复读完全解决幻读了吗？</a>——快照读 vs 当前读，链 4 追问②（2026-09-01 检索验证）
+        </div>
+      </div>
+      <a class="card" href="https://jums.gitbook.io/mysql-shi-zhan-45-jiang" target="_blank">
+        <div class="n">深挖参考 · 用户指定</div>
+        <div class="t">《MySQL 实战 45 讲》笔记版（林晓斌）</div>
+        <div class="d">第 1/2/4 讲已沉淀为第 2 课"地基①②③"；事务配套讲数：第 3 讲（事务隔离）、第 8 讲（事务到底是隔离的还是不隔离的）、第 20/21 讲（幻读与加锁规则）。</div>
+      </a>
+      <a class="card" href="https://tech.meituan.com/" target="_blank">
+        <div class="n">大厂视角</div>
+        <div class="t">美团技术团队博客</div>
+        <div class="d">国内一线大厂工程实践深度文章（Java 性能优化、分布式、数据库）。用于：项目深挖时展示"大厂视角"。</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ==================== 二、MySQL 专题阅读包 ==================== -->
+  <section>
+    <h2><span class="no">二</span>MySQL 专题阅读包</h2>
+
+    <h3>⓪ 源头长文 · 美团《MySQL 索引原理及慢查询优化》 <span class="badge green" style="vertical-align:middle">2026-08-28 验证</span></h3>
+    <div class="cards">
+      <a class="card" href="https://tech.meituan.com/2014/06/30/mysql-index.html" target="_blank">
+        <div class="n">2014 常青文 · 已大量沉淀进第 2 课</div>
+        <div class="t">MySQL 索引原理及慢查询优化</div>
+        <div class="d">磁盘 IO 与预读（"页"概念原文版）；树高公式 h=㏒(m+1)N → 已沉淀为<b>地基④</b>；建索引五大原则（最左前缀"范围之后全断"）→ 已沉淀为<b>地基⑤</b>；真实慢查询案例 + explain → <b>链 3 补充</b>（EXPLAIN 四看法 + stage_poi 低区分度复盘）。</div>
+      </a>
+    </div>
+
+    <h3>① 索引优化实战阅读包 <span class="badge blue" style="vertical-align:middle">2026-09-01 检索验证</span></h3>
+    <p class="lead">配套应答手册"索引优化"题的<b>场景认领清单 A-D</b>——认领哪个场景读哪篇。</p>
+    <div class="cards">
+      <a class="card" href="https://javaguide.cn/database/mysql/mysql-index-invalidation.html" target="_blank">
+        <div class="n">场景 C · 清单原文 · 主参考</div>
+        <div class="t">MySQL 索引失效场景总结（JavaGuide）</div>
+        <div class="d">SELECT * / 违背最左前缀 / 索引列函数与计算 / 类型转换 / LIKE / OR / IN 使用不当。</div>
+      </a>
+      <a class="card" href="https://developer.cloud.tencent.com/article/2706948" target="_blank">
+        <div class="n">场景 C · 深挖版</div>
+        <div class="t">索引失效的隐形杀手——隐式类型转换（腾讯云）</div>
+        <div class="d">字符串列传数字导致索引失效与查询结果异常的机理。</div>
+      </a>
+      <a class="card" href="https://juejin.cn/post/7283832557502693413" target="_blank">
+        <div class="n">场景 A/B · 动手验证版</div>
+        <div class="t">九个实验验证联合索引最左匹配原则（掘金）</div>
+        <div class="d">实验驱动，含"遇到范围查询停止匹配"的边界。</div>
+      </a>
+      <a class="card" href="https://www.cnblogs.com/xuwc/p/14007766.html" target="_blank">
+        <div class="n">explain 配套</div>
+        <div class="t">最左前缀匹配原则 + EXPLAIN 命令详解（博客园）</div>
+        <div class="d">原则与执行计划对照读——"定位→量化→对症→验证"四步法中 explain 环节的配套。</div>
+      </a>
+      <a class="card" href="https://javaguide.cn/high-performance/deep-pagination-optimization.html" target="_blank">
+        <div class="n">场景 D · 结论版 · 主参考</div>
+        <div class="t">深度分页介绍及优化建议（JavaGuide）</div>
+        <div class="d">延迟关联 / 游标分页（范围查询）的选型结论。</div>
+      </a>
+      <a class="card" href="https://developer.jdcloud.com/article/3201" target="_blank">
+        <div class="n">场景 D · 大厂叙事版</div>
+        <div class="t">千万级数据深分页 SQL 性能优化实践（京东云）</div>
+        <div class="d">大厂实战案例（标签记录法 / 游标）。</div>
+      </a>
+    </div>
+
+    <h3>② 事务与 MVCC 阅读包 <span class="badge blue" style="vertical-align:middle">2026-09-01 检索验证</span></h3>
+    <p class="lead">链 4 配套深挖材料，按"原理图解 → 文字对照 → 实战案例"三层递进。图解两篇在小林条目（上方第一节）；三概念分野 + 电商事故形态已沉淀为第 2 课<b>链 4 补充</b>（2026-09-01）。</p>
+    <div class="cards">
+      <a class="card" href="https://javaguide.cn/database/mysql/innodb-implementation-of-mvcc.html" target="_blank">
+        <div class="n">文字对照版 · 主参考</div>
+        <div class="t">InnoDB 存储引擎对 MVCC 的实现（JavaGuide）</div>
+        <div class="d">隐藏列 / 版本链 / ReadView / 可见性规则推导。</div>
+      </a>
+      <a class="card" href="https://tech.meituan.com/2014/08/20/innodb-lock.html" target="_blank">
+        <div class="n">链 4③ ↔ 链 5 桥梁</div>
+        <div class="t">Innodb 中的事务隔离级别和锁的关系（美团）</div>
+        <div class="d">隔离级别与锁策略的对应关系。</div>
+      </a>
+      <a class="card" href="https://developer.jdcloud.com/article/3424" target="_blank">
+        <div class="n">实战案例</div>
+        <div class="t">记一次线上问题引发的对 MySQL 锁机制分析（京东云）</div>
+        <div class="d">大厂线上排查实战叙事——链 5 死锁排查的同类案例。</div>
+      </a>
+      <a class="card" href="https://juejin.cn/post/7090693923370172452" target="_blank">
+        <div class="n">实战案例</div>
+        <div class="t">一次线上报错引起对 MySQL 间隙锁的研究（掘金）</div>
+        <div class="d">线上报错 → 间隙锁根因的实战推演。</div>
+      </a>
+      <a class="card" href="https://developer.volcengine.com/articles/7543213619673366578" target="_blank">
+        <div class="n">实战案例 · 已全文验证</div>
+        <div class="t">电商库存系统超卖事故的技术复盘（火山引擎）</div>
+        <div class="d">生鲜秒杀超卖 287 单复盘——回调重试无幂等 + 行锁超时 + Redis/DB 不一致。标题无"幻读"，但病因同族（check 与 act 之间世界已变）。防护三原则：幂等 / 事务闭环 / 缓存不替库。</div>
+      </a>
+      <a class="card" href="https://developer.aliyun.com/article/1311044" target="_blank">
+        <div class="n">综述 · 未全文精读</div>
+        <div class="t">深入探讨 MySQL 中的幻读现象（阿里云社区）</div>
+        <div class="d">幻读成因与解决方案综述。</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ==================== 三、AI 工程化阅读包 ==================== -->
+  <section>
+    <h2><span class="no">三</span>AI 工程化阅读包 <span class="badge blue" style="vertical-align:middle">2026-09-01 检索验证</span></h2>
+    <p class="lead">AI 速成课（9/11）的骨架输入，简历技能第 8 条的两层依据。</p>
+    <div class="cards">
+      <a class="card" href="https://javaguide.cn/ai/" target="_blank">
+        <div class="n">第一入口 · 主参考</div>
+        <div class="t">AI 应用开发知识体系（JavaGuide）</div>
+        <div class="d">大模型调用 / Agent / RAG / MCP / Prompt 工程 / 向量数据库 / 评测 / 系统设计。</div>
+      </a>
+      <a class="card" href="https://github.com/Snailclimb/AIGuide" target="_blank">
+        <div class="n">开源仓库</div>
+        <div class="t">AIGuide（Snailclimb）</div>
+        <div class="d">AI 应用开发 + AI 编程实战与面试指南（2026 版学习路线）：大模型基础 → LLM API → Prompt → RAG → Agent → 工程化 → 项目实战。</div>
+      </a>
+      <a class="card" href="https://javaguide.cn/ai-coding/practices/ai-ide.html" target="_blank">
+        <div class="n">第一层 · 你怎么用 AI</div>
+        <div class="t">10 道 AI 编程相关的开放性面试问题（JavaGuide）</div>
+        <div class="d">Cursor / Claude Code / Trae 使用技巧、Spec Coding 与 Vibe Coding 区别、AI 对后端开发的影响。</div>
+      </a>
+      <a class="card" href="https://www.nowcoder.com/discuss/863477807953817600" target="_blank">
+        <div class="n">第一层 · 标配考点</div>
+        <div class="t">7 道 AI 编程高频面试题（牛客）</div>
+        <div class="d">涵盖 Cursor、Claude Code、Skills。</div>
+      </a>
+      <a class="card" href="https://www.xiaolincoding.com/project/xiaolinnote.html" target="_blank">
+        <div class="n">第二层 · 题库</div>
+        <div class="t">2026 最全 AI 大模型面试题（小林 coding）</div>
+        <div class="d">74 道大厂高频题；后端转 AI 应用开发按 Agent → RAG → 工具调用（MCP/网关）顺序补齐。</div>
+      </a>
+      <a class="card" href="https://zhuanlan.zhihu.com/p/2026364563268879288" target="_blank">
+        <div class="n">框架选型</div>
+        <div class="t">2026 年 Java AI 开发实战——Spring AI 完全指南（知乎）</div>
+        <div class="d">Spring AI 2.0 核心概念、Spring AI vs LangChain4j 选型。</div>
+      </a>
+      <a class="card" href="https://paicoding.com/springai-interview-questions" target="_blank">
+        <div class="n">JD 高频</div>
+        <div class="t">Spring AI 面试题预测（paicoding）</div>
+        <div class="d">统一模型调用 / RAG / Function Calling 与 Spring 生态集成。</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ==================== 四、面经 / 趋势 / 本机文档 ==================== -->
+  <section>
+    <h2><span class="no">四</span>面经 · 趋势 · 本机文档</h2>
+    <div class="cards">
+      <a class="card" href="https://www.nowcoder.com/discuss/864594486704291840" target="_blank">
+        <div class="n">面试官视角</div>
+        <div class="t">2026 Java 后端面试真题汇总（牛客）</div>
+        <div class="d">一线面试官（后端团队负责人，月面 10+ 人）整理：传统八股 + AI 工程化双方向 + 项目深挖套路。用于：考点频率校准、AI 方向题库。</div>
+      </a>
+      <a class="card" href="https://zhuanlan.zhihu.com/p/1962956461396173924" target="_blank">
+        <div class="n">阶段自测</div>
+        <div class="t">Java 高频面试题总结（2025 最新版 · 知乎）</div>
+        <div class="d">分析了几百份大中小厂面经的高频题清单。</div>
+      </a>
+      <a class="card" href="https://cloud.tencent.com/developer/article/2640467" target="_blank">
+        <div class="n">2026 新趋势</div>
+        <div class="t">Java21 虚拟线程实践：框架高并发升级之路（腾讯云）</div>
+        <div class="d">虚拟线程在 IO 密集高并发场景的落地重构。用于：2026 新趋势话题（JDK 17→21）。</div>
+      </a>
+      <div class="card">
+        <div class="n">最高信任级 · 本人亲历</div>
+        <div class="t">本机项目文档</div>
+        <div class="d"><code>/Users/1ea/IdeaProjects/power-bank/doc/</code><br>重构立项书、支付幂等分析、drive 多实例路由、广告计费方案。用于：项目深挖与架构师叙事的真实素材。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 五、社区 ==================== -->
+  <section>
+    <h2><span class="no">五</span>社区（Wisdom）</h2>
+    <div class="cards">
+      <a class="card" href="https://www.nowcoder.com/" target="_blank">
+        <div class="t">牛客网面经区</div>
+        <div class="d">实时面经流水，可按公司/岗位筛选，另有 AI 模拟面试。用于：目标公司投递前情报、模拟面试题源。</div>
+      </a>
+      <a class="card" href="https://www.mianshiya.com/" target="_blank">
+        <div class="t">面试鸭</div>
+        <div class="d">面试题库 + 高频专题。用于：检索式自测（间隔重复的题源）。</div>
+      </a>
+      <a class="card" href="https://juejin.cn/" target="_blank">
+        <div class="t">掘金 / V2EX</div>
+        <div class="d">职场与 offer 对比讨论。用于：谈薪阶段的行情参照、offer 选择讨论。</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ==================== 六、缺口 ==================== -->
+  <section>
+    <h2><span class="no">六</span>缺口清单（Gaps）</h2>
+    <div class="callout green">
+      <span class="ttl">✅ 已补上（2026-09-01）</span>
+      <del>"AI 工程化 + Java 后端"缺少系统性教程</del>——已补：JavaGuide AI 知识体系 + AIGuide + 小林 74 题，见第三节阅读包；Spring AI 官方文档待速成课时按需补。
+    </div>
+    <div class="callout red">
+      <span class="ttl">⬜ 未补</span>
+      架构师级系统设计系统课（如《System Design Interview》vol 1/2、ByteByteGo）尚未评估引入，待进入系统设计专题（W2 · 9/5-9/6）时补充。
+    </div>
+  </section>
+
+  <div class="callout" style="margin-top:2rem">
+    <span class="ttl">维护约定</span>
+    本页是 <code>RESOURCES.md</code> 的可读版，内容以 .md 为准——新增链接先落 .md，再同步本页。所有外链标注验证日期：「验证可访问」= 打开核对过内容；「检索命中验证」= 搜索命中确认存在，未逐篇精读。
+  </div>
+
+  <div class="lesson-nav no-print">
+    <a class="primary" href="index.html">🏠 课程主页</a>
+    <a href="reference/0001-high-frequency-topics.html">📋 高频考点速查 →</a>
+  </div>
+
+  <footer class="site">
+    <span>Java Offer 突围战 · 高信任资源库</span>
+    <span>源文件 RESOURCES.md · 更新 2026-09-01</span>
+  </footer>
+</main>
+</body>
+</html>

@@ -17,7 +17,8 @@
     ]},
     { title: "参考手册", items: [
       { n: "", t: "高频考点速查", h: "reference/0001-high-frequency-topics.html" },
-      { n: "", t: "项目追问应答手册", h: "reference/0002-project-question-bank.html" }
+      { n: "", t: "项目追问应答手册", h: "reference/0002-project-question-bank.html" },
+      { n: "", t: "高信任资源库", h: "resources.html" }
     ]}
   ];
 
