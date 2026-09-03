@@ -87,10 +87,10 @@
         <div class="t">MySQL 索引失效场景总结（JavaGuide）</div>
         <div class="d">SELECT * / 违背最左前缀 / 索引列函数与计算 / 类型转换 / LIKE / OR / IN 使用不当。</div>
       </a>
-      <a class="card" href="https://developer.cloud.tencent.com/article/2706948" target="_blank">
-        <div class="n">场景 C · 深挖版</div>
-        <div class="t">索引失效的隐形杀手——隐式类型转换（腾讯云）</div>
-        <div class="d">字符串列传数字导致索引失效与查询结果异常的机理。</div>
+      <a class="card" href="https://javaguide.cn/database/mysql/index-invalidation-caused-by-implicit-conversion.html" target="_blank">
+        <div class="n">场景 C · 深挖版 · 已全文验证</div>
+        <div class="t">MySQL 隐式转换造成索引失效（JavaGuide）</div>
+        <div class="d">千万行数据 + 四组对照 SQL + 官方转换规则：为什么 int 列传字符串索引还在、varchar 列传数字索引就失效（转换发生在列上 → 索引有序性不可用）。替换原腾讯云文（排版差、深度不足，2026-09-03 淘汰）。</div>
       </a>
       <a class="card" href="https://juejin.cn/post/7283832557502693413" target="_blank">
         <div class="n">场景 A/B · 动手验证版</div>
@@ -111,6 +111,11 @@
         <div class="n">场景 D · 大厂叙事版</div>
         <div class="t">千万级数据深分页 SQL 性能优化实践（京东云）</div>
         <div class="d">大厂实战案例（标签记录法 / 游标）。</div>
+      </a>
+      <a class="card" href="https://use-the-index-luke.com/" target="_blank">
+        <div class="n">英文底本 · 索引圣经 · 已全文验证</div>
+        <div class="t">Use The Index, Luke（Markus Winand）</div>
+        <div class="d">SQL 索引/调优体系书免费网络版：B 树解剖 / 函数与类型混用（Numeric Strings 章正合隐式转换）/ 深分页 offset vs seek 对照。厂商中立、各版本 MySQL 实测——场景 A-D 的英文深挖底本。</div>
       </a>
     </div>
 
@@ -212,6 +217,16 @@
         <div class="t">Java21 虚拟线程实践：框架高并发升级之路（腾讯云）</div>
         <div class="d">虚拟线程在 IO 密集高并发场景的落地重构。用于：2026 新趋势话题（JDK 17→21）。</div>
       </a>
+      <a class="card" href="https://juejin.cn/post/7613927450733756426" target="_blank">
+        <div class="n">行情数据 · 已全文验证</div>
+        <div class="t">2026年程序员薪资真相（掘金 · 多平台数据清洗）</div>
+        <div class="d">传统 Java 后端 5 年 25-40K 月 / 年包 35-60 万——目标区间即市场主流带；初级年包较 2021 降 20%。数据截至 2026-03。</div>
+      </a>
+      <a class="card" href="https://blog.csdn.net/jlq_diligence/article/details/161994538" target="_blank">
+        <div class="n">行情数据 · 已全文验证</div>
+        <div class="t">Java 工程师 2025–2026 薪资与前景全景（CSDN）</div>
+        <div class="d">供需比 初级15:1 / 高级·架构师5:1；北上深杭 5-8 年 30K-50K；分布式+云原生+MySQL调优 30-50% 溢价；金融科技高 20-40%；Java+AI 逆势涨 20-50%。</div>
+      </a>
       <div class="card">
         <div class="n">最高信任级 · 本人亲历</div>
         <div class="t">本机项目文档</div>
@@ -254,7 +269,8 @@
 
   <div class="callout" style="margin-top:2rem">
     <span class="ttl">维护约定</span>
-    本页是 <code>RESOURCES.md</code> 的可读版，内容以 .md 为准——新增链接先落 .md，再同步本页。所有外链标注验证日期：「验证可访问」= 打开核对过内容；「检索命中验证」= 搜索命中确认存在，未逐篇精读。
+    本页是 <code>RESOURCES.md</code> 的可读版，内容以 .md 为准——新增链接先落 .md，再同步本页。所有外链标注验证日期：「验证可访问」= 打开核对过内容；「检索命中验证」= 搜索命中确认存在，未逐篇精读。<br>
+    <b>选源约定（2026-09-03 定）：</b>大厂技术博客（事故+权衡）&gt; 体系化参考（JavaGuide/小林/45 讲）&gt; 个人水文（只作线索）；<b>国内外一视同仁</b>——官方文档 / Use The Index, Luke / DDIA / Netflix·Uber·Meta 工程博客同等优先；及格线 = 能撑三层追问（是什么/为什么/边界），进包前正文级抽查，替换注明淘汰原因。
   </div>
 
   <div class="lesson-nav no-print">

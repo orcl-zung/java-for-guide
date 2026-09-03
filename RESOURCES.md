@@ -1,5 +1,11 @@
 # Java 高级开发 / 架构师面试 Resources
 
+## 选源约定（2026-09-03 定）
+
+- **优先级**：大厂技术博客（事故复盘 + 权衡，如美团/阿里/京东云）> 体系化参考（JavaGuide / 小林 / 45 讲，原理透彻）> 个人水文（只作线索，不作教材）。
+- **国内外一视同仁**（学员英文可读）：国外一手源同等优先——官方文档（MySQL Reference Manual）、Use The Index, Luke（索引圣经）、DDIA、Netflix/Uber/Meta 工程博客等；场景设计题优先"实战案例 + 权衡复盘"型中外长文。
+- **及格线**：能支撑三层追问（是什么 / 为什么这样设计 / 什么边界会失效）。进包前做正文级抽查（代码格式、实验与原理深度），不达标当场换源；替换条目注明淘汰原因与日期（首例：2026-09-03 腾讯云 2706948 → JavaGuide 隐式转换专文）。
+
 ## Knowledge
 
 - [JavaGuide（用户指定主参考）](https://javaguide.cn/)
@@ -18,11 +24,12 @@
   2014 年常青文。磁盘 IO 与预读（"页"概念的原文版）、树高公式 h=㏒(m+1)N（链 1 容量计算的原版；逐符号拆解已沉淀为第 2 课地基④，2026-09-01）、建索引五大原则（最左前缀"范围之后全断"的底层拆解已沉淀为第 2 课地基⑤，2026-09-01）、带 explain 执行计划的真实慢查询案例——直接喂养链 3（EXPLAIN 四看法 + stage_poi 低区分度案例复盘已沉淀为第 2 课"链 3 补充"，2026-09-01）（2026-08-28 验证可访问）。
 - MySQL 索引优化实战阅读包（2026-09-01 检索命中验证；配套应答手册"索引优化"题的场景认领清单 A-D，认领哪个场景读哪篇）：
   - [JavaGuide：MySQL 索引失效场景总结](https://javaguide.cn/database/mysql/mysql-index-invalidation.html)：SELECT * / 违背最左前缀 / 索引列函数与计算 / 类型转换 / LIKE / OR / IN 使用不当——场景 C 的清单原文（javaguide.cn 为用户指定主参考）。
-  - [腾讯云开发者：索引失效的隐形杀手——隐式类型转换](https://developer.cloud.tencent.com/article/2706948)：字符串列传数字导致索引失效与查询结果异常的机理——场景 C 的深挖版。
+  - [JavaGuide：MySQL 隐式转换造成索引失效](https://javaguide.cn/database/mysql/index-invalidation-caused-by-implicit-conversion.html)：千万行数据 + 四组对照 SQL（int列/varchar列 × 数字/字符串参数）+ 官方转换规则第 7 条，讲透"为什么 int 列传字符串索引还在、varchar 列传数字索引就失效"（转换发生在列上、多个字符串可映射同一数值 → 索引有序性不可用）——场景 C 的深挖版（2026-09-03 已全文验证；替换原腾讯云文 2706948——代码无格式化、深度不足，学员亲测淘汰）。
   - [掘金：九个实验验证联合索引最左匹配原则](https://juejin.cn/post/7283832557502693413)：实验驱动，含"遇到范围查询停止匹配"的边界——场景 A/B 的动手验证版。
   - [博客园：最左前缀匹配原则 + EXPLAIN 命令详解](https://www.cnblogs.com/xuwc/p/14007766.html)：原则与执行计划对照读——"定位→量化→对症→验证"四步法中 explain 环节的配套。
   - [JavaGuide：深度分页介绍及优化建议](https://javaguide.cn/high-performance/deep-pagination-optimization.html)：延迟关联 / 游标分页（范围查询）的选型结论——场景 D 的结论版。
   - [京东云：千万级数据深分页 SQL 性能优化实践](https://developer.jdcloud.com/article/3201)：大厂实战案例（标签记录法/游标）——场景 D 的大厂叙事版。
+  - [Use The Index, Luke（英文 · SQL 索引圣经免费网络版）](https://use-the-index-luke.com/)：Markus Winand 的索引/调优体系书——B 树解剖 / 函数与类型混用（Numeric Strings 章正合隐式转换）/ 深分页 offset vs seek 对照，厂商中立、各版本 MySQL 实测——场景 A-D 的英文深挖底本（2026-09-03 已全文验证首页与目录；学员英文可读，"国内外一视同仁"首例）。
 - MySQL 事务与 MVCC 阅读包（2026-09-01 检索命中验证；链 4 配套深挖材料，按"原理图解 → 文字对照 → 实战案例"三层递进；小林两篇图解见上方小林条目；三概念分野 + 电商事故形态已沉淀为第 2 课"链 4 补充"，2026-09-01）：
   - [JavaGuide：InnoDB 存储引擎对 MVCC 的实现](https://javaguide.cn/database/mysql/innodb-implementation-of-mvcc.html)：隐藏列 / 版本链 / ReadView / 可见性规则推导的文字对照版（javaguide.cn 为用户指定主参考）。
   - [美团技术团队：Innodb 中的事务隔离级别和锁的关系](https://tech.meituan.com/2014/08/20/innodb-lock.html)：隔离级别与锁策略的对应关系——链 4 追问③ 与链 5 的桥梁（2026-09-02 已全文验证：原文实验环境即 RC + `binlog_format='ROW'`，是链 4 追问③"大厂强制 RC+ROW"的一手出处；快照读/当前读分法与 Serializable"select 也加锁"吐槽出自此文，已沉淀为第 2 课链 4 补充②）。
@@ -58,6 +65,13 @@
     Spring AI 2.0 核心概念、Spring AI vs LangChain4j 选型。
   - [paicoding：Spring AI 面试题预测](https://paicoding.com/springai-interview-questions)
     JD 最常问的 Spring AI 题目：统一模型调用 / RAG / Function Calling 与 Spring 生态集成。
+
+## Market（2026 行情数据 · 2026-09-03 检索）
+
+- [掘金：2026年程序员薪资真相——我把猎聘、Boss、脉脉的数据扒了一遍](https://juejin.cn/post/7613927450733756426)（2026-09-03 已全文验证；数据截至 2026-03，多平台样本清洗）：传统 Java 后端 5 年经验 25-40K 月 / 年包 35-60 万——**25-40K 目标区间即 5-6 年档市场主流带本身**；3 年年包较 2021 降约 20%（存量博弈、初级被压缩）；大厂高级（4-6 年）80-150 万。
+- [CSDN：java工程师 2025–2026 现状、一二线薪资与就业前景全景分析](https://blog.csdn.net/jlq_diligence/article/details/161994538)（2026-09-03 已全文验证）：供需比 初级 15:1 / 中级 10:1 / 高级·架构师 5:1；第一梯队（北上深杭）5-8 年 30K-50K；掌握分布式+云原生+Redis/MQ+MySQL调优+JVM 的候选人 30-50% 薪资溢价；金融科技同级别高 20-40%；Java+AI 工程化复合薪资逆势涨 20-50%。
+- 检索摘要级（未全文精读）：职友集深圳高级 Java（73.3% 岗位 20-50K、年薪 24-60 万、2025 较 2024 +2%）；猎聘《2026 节后开工首周人才供需趋势》新发职位 +18.81%；脉脉 2026 年 1-2 月洞察（岗位量增 / 薪资上行 / AI 新发岗位同比 +12 倍）。
+- **结论入档（2026-09-03）**：25-40K 目标 = 深圳 5-6 年档市场中位带，可达；冲 40K 需"资深/小架构"叙事或金融/AI 赛道溢价。支付/金融科技是本人项目经验（充电宝支付/对账/防重）溢价最高的赛道。
 
 ## Wisdom (Communities)
 
