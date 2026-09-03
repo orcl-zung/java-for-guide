@@ -18,7 +18,7 @@
   <div class="meta-badges">
     <span class="badge gold">主参考：JavaGuide</span>
     <span class="badge blue">阅读包 × 3（索引 / 事务 MVCC / AI）</span>
-    <span class="badge green">最近更新 2026-09-01</span>
+    <span class="badge green">最近更新 2026-09-03</span>
   </div>
 
   <hr class="rule">
@@ -49,7 +49,7 @@
         <div class="d" style="margin-top:6px">
           · <a href="https://xiaolincoding.com/mysql/index/why_index_chose_bpuls_tree.html" target="_blank">为什么 MySQL 采用 B+ 树作为索引？</a>——动图推导链，对应第 2 课链 1（2026-08-28 验证）<br>
           · <a href="https://www.xiaolincoding.com/mysql/architecture/mysql_architecture.html" target="_blank">MySQL 架构是怎样的？</a>——Server 层 + InnoDB 全景图，"buffer pool 属于引擎层"的出处，已沉淀为<b>地基⑥</b>（2026-09-01 验证）<br>
-          · <a href="https://www.xiaolincoding.com/mysql/transaction/mvcc.html" target="_blank">事务隔离级别是怎么实现的？</a>——版本链 / ReadView 全图解，链 4 追问①（2026-09-01 检索验证）<br>
+          · <a href="https://www.xiaolincoding.com/mysql/transaction/mvcc.html" target="_blank">事务隔离级别是怎么实现的？</a>——版本链 / ReadView 全图解，链 4 追问①；可见性三段切割 + 时序推演已沉淀为补充③（2026-09-03）<br>
           · <a href="https://www.xiaolincoding.com/mysql/transaction/phantom.html" target="_blank">可重复读完全解决幻读了吗？</a>——快照读 vs 当前读，链 4 追问②（2026-09-01 检索验证）
         </div>
       </div>
@@ -115,7 +115,7 @@
     </div>
 
     <h3>② 事务与 MVCC 阅读包 <span class="badge blue" style="vertical-align:middle">2026-09-01 检索验证</span></h3>
-    <p class="lead">链 4 配套深挖材料，按"原理图解 → 文字对照 → 实战案例"三层递进。图解两篇在小林条目（上方第一节）；三概念分野 + 电商事故形态已沉淀为第 2 课<b>链 4 补充</b>（2026-09-01）。</p>
+    <p class="lead">链 4 配套深挖材料，按"原理图解 → 文字对照 → 实战案例"三层递进。图解两篇在小林条目（上方第一节）；三概念分野 + 电商事故形态已沉淀为第 2 课<b>链 4 补充</b>（2026-09-01）；快照读/当前读分法 + ReadView 拍照时机已沉淀为<b>链 4 补充②</b>（2026-09-02）；MVCC 并发控制分工 + trx_id 生命周期 + 可见性三段切割 + MVCC↔Java 并发对照已沉淀为<b>链 4 补充③④</b>（2026-09-03）。</p>
     <div class="cards">
       <a class="card" href="https://javaguide.cn/database/mysql/innodb-implementation-of-mvcc.html" target="_blank">
         <div class="n">文字对照版 · 主参考</div>
@@ -123,9 +123,9 @@
         <div class="d">隐藏列 / 版本链 / ReadView / 可见性规则推导。</div>
       </a>
       <a class="card" href="https://tech.meituan.com/2014/08/20/innodb-lock.html" target="_blank">
-        <div class="n">链 4③ ↔ 链 5 桥梁</div>
+        <div class="n">链 4③ ↔ 链 5 桥梁 · 已全文验证</div>
         <div class="t">Innodb 中的事务隔离级别和锁的关系（美团）</div>
-        <div class="d">隔离级别与锁策略的对应关系。</div>
+        <div class="d">隔离级别与锁策略的对应；原文实验环境即 RC + ROW binlog（链 4 追问③"大厂强制 RC+ROW"的一手出处）；快照读/当前读分法与 Serializable"select 也加锁"吐槽出自此文 → 链 4 补充②。</div>
       </a>
       <a class="card" href="https://developer.jdcloud.com/article/3424" target="_blank">
         <div class="n">实战案例</div>

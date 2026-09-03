@@ -126,6 +126,66 @@
     </details>
 
     <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 4 补充② · 快照读和当前读怎么分？跟隔离级别有没有关系？</span></summary>
+      <p class="q-hook"><b>判据就一条：读的是"快照"还是"当下最新已提交版本"，要不要加锁。</b>快照读 = 裸 <code>SELECT</code>，不加锁，沿 undo log 版本链读 ReadView 框出的历史版本——读写不互斥，所以并发高；当前读 = <code>SELECT ... FOR UPDATE</code>（X 锁）/ <code>SELECT ... LOCK IN SHARE MODE</code>（S 锁）/ <b>INSERT / UPDATE / DELETE</b>，加锁读<b>最新已提交版本</b>。</p>
+      <p class="q-hook"><b>两个反直觉点钉死：</b>① <b>UPDATE / DELETE 也是当前读</b>——<code>update stock=stock-1</code> 不是盲目改，是先当前读出该行最新版本（并加锁）再改。所以 RR 的快照保护不到写：事务里裸 SELECT 看到 stock=100 可能是旧快照，UPDATE 时读到的永远是最新值。② <b>当前读是三板斧的第一板</b>——防超卖的 <code>select ... for update</code> 就是故意放弃快照、强制读最新值并锁行；火山 287 单超卖的病因之一，正是拿普通快照读去做库存校验。</p>
+      <p class="q-hook"><b>RR 怎么解决不可重复读：ReadView 只建一次，整个事务复用。</b>ReadView 四字段：<code>m_ids</code>（此刻活跃未提交事务列表）、<code>min_trx_id</code>（低水位）、<code>max_trx_id</code>（高水位）、<code>creator_trx_id</code>（自己）。拿版本链上每个版本的 trx_id 对快照判可见性：<b>&lt; 低水位</b> → 可见（拍快照前已提交）；<b>≥ 高水位</b> → 不可见（拍快照后才开启）；<b>落在水位之间</b> → 在 m_ids 里则不可见（仍活跃），不在则可见；<b>自己改的永远可见</b>。不可见就顺 roll_pointer 往 undo log 版本链找下一个旧版本——这就是快照读的实体。<b>RC 和 RR 的唯一差别在拍照时机：RC 每条 SELECT 新建 ReadView（所以能读到别人新提交的）→ 不可重复读；RR 第一次快照读建好、复用到底（快照冻结）→ 可重复读</b>。一句话："可重复读"不是锁出来的，是"一张 ReadView 用到底"钉出来的。</p>
+      <p class="q-hook"><b>"快照读/当前读不区分隔离级别"——对一半：</b>分法本身不随级别变（RC、RR 下裸 SELECT 都是快照读），变的是<b>行为</b>——隔离级别调两个旋钮：快照读的<b>拍照时机</b>（RC 每语句 / RR 整事务）和当前读的<b>锁范围</b>（RC 基本只行锁 → 当前读防不住幻读 / RR next-key lock → 防得住）。两个例外钉死：<b>读未提交</b>直接读最新版本、连未提交的都读，没有"快照"可言；<b>串行化</b>下裸 SELECT 自动转成 LOCK IN SHARE MODE，<b>快照读整个消失、全变当前读</b>——美团 innodb-lock 原文吐槽的就是这句："不要看到 select 就说不会加锁了，Serializable 这个级别还是会加锁的！"</p>
+      <p class="q-hook"><span class="you">面试口径（被反问"这两种读和隔离级别什么关系"时不卡壳版）："快照读和当前读是读法分类，本身不随隔离级别变；隔离级别调的是它们的行为——快照读的 ReadView 创建时机（RC 每语句、RR 整事务）和当前读的锁范围（RC 行锁、RR next-key lock）。Serializable 下快照读退化成当前读。"</span></p>
+    </details>
+
+    <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 4 补充③ · MVCC 凭什么做"并发控制"？trx_id 和 ReadView 怎么配合？</span></summary>
+      <p class="q-hook"><b>并发冲突只有三类，每类用最便宜的机制处理：</b>读↔读无冲突，不用管；<b>读↔写</b>（脏读 / 不可重复读 / 幻读全属此类）由 <b>MVCC 无锁化</b>——写不阻塞读、读不阻塞写；<b>写↔写</b>（丢失更新）MVCC 管不了，必须<b>行锁互斥</b>。所以 InnoDB 并发控制是两条腿：MVCC 把最高频的读写冲突无锁化，锁只留给写写。<b>MVCC = 多版本存储（undo 版本链 + 隐藏列 trx_id）× 可见性仲裁（ReadView）</b>——没有版本链，ReadView 判了也没旧版本可读；没有 ReadView，版本链躺着不知道给谁看。</p>
+      <p class="q-hook"><b>trx_id 生命周期（反直觉：begin 时不分配）：</b>全局单调递增计数器，<b>第一次写操作才分配</b>（insert / update / delete；select for update 这类加锁当前读也要分配——锁得挂在有身份的事务上）；只读事务全程没有 trx_id，ReadView 的 creator_trx_id 记 0。懒分配的动机：只读事务占大多数，省一次全局计数器争抢；单调递增的动机：id 大小就是时间先后，可见性判断全靠这个序。commit 后退出活跃名单，但 id 永远留在行版本上，直到 purge 线程确认没有任何活跃 ReadView 需要旧版本才物理清理。</p>
+      <p class="q-hook"><b>版本链上的 trx_id 钉死不变：</b>每个版本永远盖"创造它的事务"的 id，旧版本进 undo 链时带着当年的老戳，后来者改这行不会给它换戳。观察到的"trx_id 会变"，真相是<b>每次 UPDATE 往链头压一个盖新戳的版本</b>——"当前版本"这个位置换人，不是旧版本改戳。DELETE 也算一次修改（打删除标记、换新戳），物理删除留给 purge。</p>
+      <p class="q-hook"><b>可见性判断 = 把 trx_id 轴切成三段：</b></p>
+      <pre>      段① 已提交区        段② 待定区          段③ 未出生区
+  ─────────────┼──────────────────┼──────────────▶ trx_id
+           min_trx_id          max_trx_id
+          (m_ids 最小值)     (下一个待分配 id)
+      必然可见         在 m_ids → 不可见       必然不可见
+                       不在 → 可见（已提交）
+  段①: trx_id &lt; min ｜ 段②: [min, max) 左闭右开 ｜ 段③: trx_id &gt;= max</pre>
+      <p class="q-hook">段①为什么必然可见：min 是"此刻还在跑的最老事务"，比它小的若还没提交，那它自己就该是 min——矛盾。段③为什么必然不可见：id ≥ max 意味着拍照时这个号还没发出去，事务此刻不存在。段②为什么必须查名单：号已发出，状态只有两种——还在跑（在名单）/ 已提交（不在名单），名单就是完备判据，不能只用大小一刀切。<b>开闭区间防晃点：两个端点殊途同归都不可见，但原因不同</b>——trx_id == min 落在段②（它就是活跃名单里最小的那个，查名单必然命中）；trx_id == max 落在段③（这个号拍照时还没发出去）。再钉一个考点：trx_id == max-1（拍照前发出的最后一个号）落在段②，必须查名单。<b>特例：等于 creator_trx_id（自己改的）永远最先判、可见。</b>能反杀追问的例子：版本戳比 creator 大、落在待定区，仍<b>可能可见</b>——只要它拍照前已提交（领号早、提交得也快）。</p>
+      <p class="q-hook"><b>四事务时序推演（盯三件事：trx_id 分配时机 / ReadView 创建时机 / 链头增长）：</b></p>
+      <pre>t0  初始: 当前(100,trx=80) → (50,trx=60)；全局计数器=102
+t1  A: begin; UPDATE stock=99 → A 分配 trx_id=102，计数器→103
+    链: (99,102)→(100,80)→(50,60)，A 未提交
+t2  B: begin; UPDATE id=2 → B 分配 trx_id=103，计数器→104
+t3  C: begin; SELECT id=1（只读，无 trx_id）
+    → 创建 ReadView: creator=0, m_ids=[102,103], min=102, max=104
+    → (99,102) 在 m_ids → 不可见 → (100,80) 可见，读到 100
+t4  A: COMMIT（退出活跃名单）
+t5  C: SELECT id=1
+    RR: 复用 t3 的 ReadView → 102 仍在 m_ids → 还是 100
+    （RC: 重建 → m_ids=[103] → 102 不在 → 读到 99）
+t6  B: UPDATE id=1（当前读拿到 99，改 98）; COMMIT
+    链: (98,103)→(99,102)→(100,80)→(50,60)
+t7  C: SELECT id=1 → 仍用 t3 的 ReadView
+    (98,103) 在 m_ids ✗ → (99,102) 在 m_ids ✗ → (100,80) 可见
+    读到 100（连走两级版本链）
+t8  D: begin; UPDATE id=3 → 分配 104；SELECT id=1
+    → 新 ReadView: m_ids=[104], min=104, max=105
+    → (98,103): 103 &lt; min → 可见，读到 98</pre>
+      <p class="q-hook"><span class="you">30 秒口径："MVCC 管读写冲突、锁管写写冲突。trx_id 第一次写才从全局递增计数器分配，跟着自己产出的版本走、钉死不变；ReadView 用 min / max / m_ids 把 id 轴切成三段，可见性就是拿版本的戳对这三段。RC 每条语句新建 ReadView，RR 一张用到提交——两级全部差异就这一个开关。"</span></p>
+    </details>
+
+    <details class="q-item f2">
+      <summary><span class="stars">★★☆</span> <span class="q-text">链 4 补充④ · MVCC 和 Java 并发有什么异曲同工？（封顶追问弹药）</span></summary>
+      <p class="q-hook"><b>同一套思想在两个领域的落地：并发控制的第一性问题相同——冲突分类，每类用最便宜的机制处理。</b></p>
+      <table>
+        <tr><th></th><th>MySQL（InnoDB）</th><th>Java</th></tr>
+        <tr><td>读写冲突</td><td>MVCC 无锁化：读旧版本，不加锁</td><td>CopyOnWriteArrayList：读旧快照，不加锁</td></tr>
+        <tr><td>写写冲突</td><td>行锁互斥，悲观排队</td><td>COW 写时 ReentrantLock / synchronized / CAS</td></tr>
+        <tr><td>可见性规则</td><td>ReadView + trx_id 版本戳</td><td>happens-before / volatile / 内存屏障</td></tr>
+      </table>
+      <p class="q-hook"><b>最精确的对应物是 CopyOnWriteArrayList：</b>它的 iterator 一旦创建，看到的就是创建那一刻的数组，之后别人怎么改都看不到——这就是 <b>RR 复用 ReadView</b>；每次 get 直接读当前数组、每次看最新——对照 <b>RC 每条语句重建</b>。读全程不加锁、读写互不阻塞，和 MVCC 一模一样；写要加锁，对应 MVCC 管不了的写写冲突。</p>
+      <p class="q-hook"><b>三个差别（加分项在这）：</b>① 冗余方式：COW 每次写<b>全量拷贝</b>整个数组，InnoDB 只为改过的行存<b>增量旧版本</b>（undo 链）——所以 COW 只敢用在读极多写极少处，MVCC 敢扛高并发写；② 写写冲突：Java 有 CAS 乐观重试，InnoDB 一律悲观行锁排队——数据库丢不起 lost update；③ 垃圾清理：COW 靠 GC，MVCC 靠 <b>purge 线程</b>清理没有 ReadView 需要的旧版本——所以<b>长事务是 MySQL 大忌</b>：purge 不敢删，undo 表空间越胀越大。</p>
+      <p class="q-hook"><span class="you">封顶口径："MVCC 在 Java 里的孪生兄弟是 CopyOnWriteArrayList——读快照、写加锁、读写不互斥。区别是 InnoDB 用 undo 链存增量版本而非全量拷贝，写写冲突也没有乐观重试、只能行锁互斥。本质同一个设计：按冲突类型选机制，读写冲突用版本冗余换无锁，写写冲突才付锁的代价。"——这句出口，Java 和 MySQL 两头的追问都接得住。</span></p>
+    </details>
+
+    <details class="q-item f3">
       <summary><span class="stars">★★★</span> <span class="q-text">链 5 · InnoDB 的行锁有哪几种？死锁怎么排查？</span></summary>
       <p class="q-hook"><b>一层：</b>记录锁（锁单行）、间隙锁（锁开区间，防插入）、<b>next-key lock</b>（记录 + 间隙，左开右闭，RR 的默认加锁单位）、插入意向锁；表级还有意向锁（IS/IX）和 MDL 元数据锁。最核心一句：<b>行锁锁的是索引记录，不是物理行</b>——没走索引就没有行锁可言。</p>
       <p class="q-hook"><b>追问①：update 没走索引会发生什么？</b><br>无法用索引定位行 → 全表扫描 → 扫到的每一行都加 next-key lock，间隙全锁 → <b>效果等于锁全表</b>。生产上"一个 update 拖垮整张表"的经典事故就是这么来的。</p>

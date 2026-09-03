@@ -66,7 +66,7 @@ body {
   color: var(--ink);
   font-family: var(--sans);
   font-size: 16px;
-  line-height: 1.75;
+  line-height: 1.9;
   text-rendering: optimizeLegibility;
   transition: background .25s ease, color .25s ease;
 }
@@ -166,7 +166,7 @@ body.resizing .sidenav { transition: none; }
 }
 .card .n { font-size: 11.5px; letter-spacing: .08em; color: var(--accent); margin-bottom: 4px; }
 .card .t { font-family: var(--serif); font-size: 17px; font-weight: 700; margin-bottom: 4px; }
-.card .d { font-size: 13px; color: var(--ink-soft); line-height: 1.6; }
+.card .d { font-size: 13px; color: var(--ink-soft); line-height: 1.75; }
 
 .phase { margin: 20px 0 6px; font-size: 15.5px; }
 
@@ -259,7 +259,7 @@ h3 {
 }
 
 .lead { font-size: 17px; color: var(--ink); }
-p { margin: 10px 0; }
+p { margin: 14px 0; }
 a { color: var(--blue); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--blue) 35%, transparent); }
 a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
@@ -267,13 +267,13 @@ strong { font-weight: 650; }
 em { font-style: normal; background: linear-gradient(transparent 62%, var(--em-mark) 62%); padding: 0 1px; }
 
 ul, ol { padding-left: 1.4em; }
-li { margin: 4px 0; }
+li { margin: 6px 0; }
 li::marker { color: var(--accent); }
 
 /* ---------- 表格 ---------- */
 .tbl-wrap { overflow-x: auto; margin: 14px 0; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
 
-table { border-collapse: collapse; width: 100%; font-size: 14px; line-height: 1.6; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; line-height: 1.75; }
 
 th {
   font-family: var(--sans);
@@ -304,8 +304,8 @@ table .mid  { color: var(--gold); font-weight: 600; }
   border-left: 4px solid var(--blue);
   border-radius: 8px;
   background: var(--blue-soft);
-  padding: 14px 18px;
-  margin: 16px 0;
+  padding: 16px 20px;
+  margin: 18px 0;
   font-size: 15px;
 }
 .callout .ttl { font-weight: 700; display: block; margin-bottom: 4px; font-family: var(--serif); }
@@ -387,20 +387,21 @@ table .mid  { color: var(--gold); font-weight: 600; }
 .prio-list .delta { margin-left: auto; font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
 
 /* ---------- 考点清单（reference 文档复用组件） ---------- */
-.qlist { display: grid; gap: 10px; margin: 14px 0; }
+.qlist { display: grid; gap: 14px; margin: 14px 0; }
 .q-item {
   border: 1px solid var(--line); border-left: 3px solid var(--line);
-  border-radius: 8px; background: var(--card); padding: 10px 14px;
+  border-radius: 8px; background: var(--card); padding: 14px 18px;
 }
 .q-item.f3 { border-left-color: var(--accent); }
 .q-item.f2 { border-left-color: var(--gold); }
 .q-item.f1 { border-left-color: var(--line); }
 .q-item .q-line { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .q-item .q-text { font-weight: 650; font-size: 15px; }
-.q-item .q-hook { margin: 4px 0 0; font-size: 13.5px; color: var(--ink-soft); line-height: 1.65; }
+.q-item .q-hook { margin: 10px 0 0; font-size: 13.5px; color: var(--ink-soft); line-height: 1.85; }
 .q-item .you {
-  display: inline-block; font-size: 11.5px; color: var(--green); background: var(--green-soft);
-  border: 1px solid color-mix(in srgb, var(--green) 35%, transparent); border-radius: 999px; padding: 2px 8px; white-space: nowrap;
+  display: inline; font-size: 11.5px; color: var(--green); background: var(--green-soft);
+  border: 1px solid color-mix(in srgb, var(--green) 35%, transparent); border-radius: 999px; padding: 2px 8px;
+  box-decoration-break: clone; -webkit-box-decoration-break: clone;
 }
 
 /* ---------- 引用 / 出处 ---------- */
@@ -434,12 +435,19 @@ footer.site {
 
 code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); border-radius: 4px; padding: 1px 5px; }
 
+pre {
+  font-family: var(--mono); font-size: 0.8rem; line-height: 1.7;
+  background: var(--code-bg); border-radius: 8px; padding: 12px 14px;
+  margin: 10px 0; overflow-x: auto; white-space: pre;
+}
+pre code { background: none; padding: 0; font-size: inherit; }
+
 .flow {
   display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; margin: 14px 0;
 }
 .flow .step {
   flex: 1 1 150px; border: 1px solid var(--line); border-radius: 10px;
-  background: var(--card); padding: 12px 14px; font-size: 13.5px; line-height: 1.55;
+  background: var(--card); padding: 14px 16px; font-size: 13.5px; line-height: 1.75;
 }
 .flow .step b { display: block; font-family: var(--serif); font-size: 15px; margin-bottom: 3px; }
 .flow .step.hot { border-color: color-mix(in srgb, var(--accent) 35%, transparent); background: var(--accent-soft); }
@@ -448,13 +456,6 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); 
 @media (max-width: 1023.98px) {
   /* 左上角的固定导航按钮（top:14px + 高 36px = 占到 50px）会压住页面标题，内容整体让位 */
   body.has-nav .page { padding-top: 68px; }
-  /* "你的实战锚点"绿标内容较长，nowrap 在窄屏会溢出屏幕——改为可换行的高亮形态 */
-  .q-item .you {
-    display: inline;
-    white-space: normal;
-    box-decoration-break: clone;
-    -webkit-box-decoration-break: clone;
-  }
   /* 长 URL / 长英文串兜底：允许必要时断词，防横向溢出 */
   .callout, .q-hook, .card .d, td, p, li { overflow-wrap: break-word; }
 }
