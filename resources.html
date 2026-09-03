@@ -37,11 +37,6 @@
         <div class="t">Java 后端学习路线（2026 最新版）</div>
         <div class="d">2026 版已加入 AI 应用开发板块。用于：核对知识覆盖面、安排专题学习顺序。</div>
       </a>
-      <a class="card" href="https://github.com/snailclimb/JavaGuide" target="_blank">
-        <div class="n">主参考 · 仓库</div>
-        <div class="t">JavaGuide GitHub 仓库</div>
-        <div class="d">仓库首页有"AI 智能面试辅助平台 + RAG 知识库"实战项目（Spring Boot 4.0 + Java 21 + Spring AI 2.0）。用于：AI 加分项的参考项目选型。</div>
-      </a>
       <div class="card">
         <div class="n">图解第一参考</div>
         <div class="t"><a href="https://xiaolincoding.com/" target="_blank">小林 coding — 图解 MySQL / 图解网络</a></div>
@@ -107,10 +102,10 @@
         <div class="t">深度分页介绍及优化建议（JavaGuide）</div>
         <div class="d">延迟关联 / 游标分页（范围查询）的选型结论。</div>
       </a>
-      <a class="card" href="https://developer.jdcloud.com/article/3201" target="_blank">
-        <div class="n">场景 D · 大厂叙事版</div>
-        <div class="t">千万级数据深分页 SQL 性能优化实践（京东云）</div>
-        <div class="d">大厂实战案例（标签记录法 / 游标）。</div>
+      <a class="card" href="https://juejin.cn/post/6985478936683610149" target="_blank">
+        <div class="n">场景 D · 大厂实验版 · 已全文验证</div>
+        <div class="t">MySQL 深分页优化（得物技术）</div>
+        <div class="d">400 万行七连测，18.35s→0.74s 真实耗时 + EXPLAIN 对照；讲透优化器阈值转全表、覆盖索引免回表、无索引时等价双路排序。替换原京东云文（背景堆砌+概念八股，2026-09-03 淘汰）。</div>
       </a>
       <a class="card" href="https://use-the-index-luke.com/" target="_blank">
         <div class="n">英文底本 · 索引圣经 · 已全文验证</div>
@@ -137,20 +132,20 @@
         <div class="t">记一次线上问题引发的对 MySQL 锁机制分析（京东云）</div>
         <div class="d">大厂线上排查实战叙事——链 5 死锁排查的同类案例。</div>
       </a>
-      <a class="card" href="https://juejin.cn/post/7090693923370172452" target="_blank">
-        <div class="n">实战案例</div>
-        <div class="t">一次线上报错引起对 MySQL 间隙锁的研究（掘金）</div>
-        <div class="d">线上报错 → 间隙锁根因的实战推演。</div>
+      <a class="card" href="https://opensource.actionsky.com/20221221-mysql/" target="_blank">
+        <div class="n">实战案例 · 已全文验证</div>
+        <div class="t">MySQL 死锁案例分析：GAP 锁 × insert 意向锁（爱可生）</div>
+        <div class="d">资深 DBA 故障复盘（8.0.30 可复现）：死锁日志逐行读 + 逐步加锁推演（GAP 锁互兼容、insert intention 成环）+ 解法 insert on duplicate key。替换原掘金文（推演不清，2026-09-03 淘汰）。</div>
       </a>
       <a class="card" href="https://developer.volcengine.com/articles/7543213619673366578" target="_blank">
         <div class="n">实战案例 · 已全文验证</div>
         <div class="t">电商库存系统超卖事故的技术复盘（火山引擎）</div>
         <div class="d">生鲜秒杀超卖 287 单复盘——回调重试无幂等 + 行锁超时 + Redis/DB 不一致。标题无"幻读"，但病因同族（check 与 act 之间世界已变）。防护三原则：幂等 / 事务闭环 / 缓存不替库。</div>
       </a>
-      <a class="card" href="https://developer.aliyun.com/article/1311044" target="_blank">
-        <div class="n">综述 · 未全文精读</div>
-        <div class="t">深入探讨 MySQL 中的幻读现象（阿里云社区）</div>
-        <div class="d">幻读成因与解决方案综述。</div>
+      <a class="card" href="https://chanjarster.github.io/post/mysql/gap-lock-next-key-lock/" target="_blank">
+        <div class="n">机制图解版 · 已全文验证</div>
+        <div class="t">MySQL 幻读、间隙锁和 next-key lock（chanjarster）</div>
+        <div class="d">FOR SHARE / FOR UPDATE 锁范围差异、间隙锁不互斥、next-key lock 先 gap 后行锁非原子、两原则两优化一个 bug——45 讲 20/21 讲精编图解版。替换原阿里云文（综述泛泛，2026-09-03 淘汰）。</div>
       </a>
     </div>
   </section>

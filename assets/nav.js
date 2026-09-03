@@ -137,5 +137,14 @@
     }
     handle.addEventListener("pointerup", endDrag);
     handle.addEventListener("pointercancel", endDrag);
+
+    // ---- expose nav model for search.js, then load site-wide extras ----
+    window.JOG_NAV = NAV;
+    ["assets/search-index.js", "assets/search.js", "assets/toc.js"].forEach(function (src) {
+      var s = document.createElement("script");
+      s.src = prefix + src;
+      s.defer = true;
+      document.body.appendChild(s);
+    });
   });
 })();

@@ -4,7 +4,7 @@
 
 - **优先级**：大厂技术博客（事故复盘 + 权衡，如美团/阿里/京东云）> 体系化参考（JavaGuide / 小林 / 45 讲，原理透彻）> 个人水文（只作线索，不作教材）。
 - **国内外一视同仁**（学员英文可读）：国外一手源同等优先——官方文档（MySQL Reference Manual）、Use The Index, Luke（索引圣经）、DDIA、Netflix/Uber/Meta 工程博客等；场景设计题优先"实战案例 + 权衡复盘"型中外长文。
-- **及格线**：能支撑三层追问（是什么 / 为什么这样设计 / 什么边界会失效）。进包前做正文级抽查（代码格式、实验与原理深度），不达标当场换源；替换条目注明淘汰原因与日期（首例：2026-09-03 腾讯云 2706948 → JavaGuide 隐式转换专文）。
+- **及格线**：能支撑三层追问（是什么 / 为什么这样设计 / 什么边界会失效）。进包前做正文级抽查（代码格式、实验与原理深度），不达标当场换源；替换条目注明淘汰原因与日期（首例：2026-09-03 腾讯云 2706948 → JavaGuide 隐式转换专文；同日第二批：京东云深分页 3201 → 得物实验版、阿里云幻读 1311044 → chanjarster、掘金间隙锁 → 爱可生死锁案例；JavaGuide GitHub 仓库卡删除——正文与站点完全重复）。
 
 ## Knowledge
 
@@ -12,8 +12,6 @@
   国内最系统的 Java 面试知识库。用于：八股主线的骨架——Java 基础/并发/JVM/MySQL/Redis/MQ/分布式/微服务/系统设计各专题的第一入口。
 - [JavaGuide：Java 后端学习路线（2026 最新版）](https://javaguide.cn/roadmap/java-roadmap.html)
   2026 版已加入 AI 应用开发板块。用于：核对知识覆盖面、安排专题学习顺序。
-- [JavaGuide GitHub 仓库](https://github.com/snailclimb/JavaGuide)
-  仓库首页有"AI 智能面试辅助平台 + RAG 知识库"实战项目（Spring Boot 4.0 + Java 21 + Spring AI 2.0）。用于：AI 加分项的参考项目选型。
 - [小林 coding — 图解 MySQL / 图解网络](https://xiaolincoding.com/)
   图解系列，B+ 树/索引/事务/锁/网络原理讲解质量极高。用于：MySQL 与计算机网络专题的第一参考。
   - [为什么 MySQL 采用 B+ 树作为索引？](https://xiaolincoding.com/mysql/index/why_index_chose_bpuls_tree.html)：二分 → 二叉查找树 → AVL/红黑树 → B 树 → B+ 树的动图推导链，与第 2 课链 1 推理链一一对应（2026-08-28 验证可访问）。
@@ -28,15 +26,15 @@
   - [掘金：九个实验验证联合索引最左匹配原则](https://juejin.cn/post/7283832557502693413)：实验驱动，含"遇到范围查询停止匹配"的边界——场景 A/B 的动手验证版。
   - [博客园：最左前缀匹配原则 + EXPLAIN 命令详解](https://www.cnblogs.com/xuwc/p/14007766.html)：原则与执行计划对照读——"定位→量化→对症→验证"四步法中 explain 环节的配套。
   - [JavaGuide：深度分页介绍及优化建议](https://javaguide.cn/high-performance/deep-pagination-optimization.html)：延迟关联 / 游标分页（范围查询）的选型结论——场景 D 的结论版。
-  - [京东云：千万级数据深分页 SQL 性能优化实践](https://developer.jdcloud.com/article/3201)：大厂实战案例（标签记录法/游标）——场景 D 的大厂叙事版。
+  - [得物技术：MySQL 深分页优化](https://juejin.cn/post/6985478936683610149)：400 万行自建表七连测（无排序→主键排序→排序字段无索引→有索引深页→force index→游标→延迟关联），真实耗时 18.35s→0.74s + EXPLAIN 截图对照；讲透两个"为什么"——深页时优化器按比例阈值自动转全表扫描（force index 也只救到 15s，因为还要读海量索引页+回表随机 IO）、子查询快在覆盖索引免回表（无索引时等价双路排序，只搬排序键+rowid 减少临时文件 IO）；诚实标注 sort_buffer_size 调优"测不出效果"——场景 D 的大厂实验版（2026-09-03 已全文验证；替换原京东云文 3201——背景堆砌、后半概念八股无实验，学员亲测淘汰；另两个候选知乎 25918363479 原理归因错误、CSDN Chat2DB 拿 8.0 已删的查询缓存说事，质检双双淘汰）。
   - [Use The Index, Luke（英文 · SQL 索引圣经免费网络版）](https://use-the-index-luke.com/)：Markus Winand 的索引/调优体系书——B 树解剖 / 函数与类型混用（Numeric Strings 章正合隐式转换）/ 深分页 offset vs seek 对照，厂商中立、各版本 MySQL 实测——场景 A-D 的英文深挖底本（2026-09-03 已全文验证首页与目录；学员英文可读，"国内外一视同仁"首例）。
 - MySQL 事务与 MVCC 阅读包（2026-09-01 检索命中验证；链 4 配套深挖材料，按"原理图解 → 文字对照 → 实战案例"三层递进；小林两篇图解见上方小林条目；三概念分野 + 电商事故形态已沉淀为第 2 课"链 4 补充"，2026-09-01）：
   - [JavaGuide：InnoDB 存储引擎对 MVCC 的实现](https://javaguide.cn/database/mysql/innodb-implementation-of-mvcc.html)：隐藏列 / 版本链 / ReadView / 可见性规则推导的文字对照版（javaguide.cn 为用户指定主参考）。
   - [美团技术团队：Innodb 中的事务隔离级别和锁的关系](https://tech.meituan.com/2014/08/20/innodb-lock.html)：隔离级别与锁策略的对应关系——链 4 追问③ 与链 5 的桥梁（2026-09-02 已全文验证：原文实验环境即 RC + `binlog_format='ROW'`，是链 4 追问③"大厂强制 RC+ROW"的一手出处；快照读/当前读分法与 Serializable"select 也加锁"吐槽出自此文，已沉淀为第 2 课链 4 补充②）。
   - [京东云：记一次线上问题引发的对 MySQL 锁机制分析](https://developer.jdcloud.com/article/3424)：大厂线上排查实战叙事——链 5 死锁排查的同类案例。
-  - [掘金：一次线上报错引起对 MySQL 间隙锁的研究](https://juejin.cn/post/7090693923370172452)：线上报错 → 间隙锁根因的实战推演。
+  - [爱可生开源社区：MySQL 死锁案例分析（更新不存在记录：X GAP lock × insert 意向锁冲突）](https://opensource.actionsky.com/20221221-mysql/)：资深 DBA 真实故障复盘（8.0.30 可复现）——LATEST DETECTED DEADLOCK 日志逐行读 + 逐步加锁推演（GAP 锁互相兼容所以双双持锁、insert intention lock 与 GAP 锁冲突成环）+ 解法（update+insert 合并为 insert on duplicate key）+ RC"语句级释放不满足行锁"彩蛋——链 5 死锁排查的标杆案例（2026-09-03 已全文验证；替换原掘金文 7090693923370172452——推演不清楚，学员亲测淘汰）。
   - [火山引擎开发者社区：电商库存系统超卖事故的技术复盘与数据防护体系重构](https://developer.volcengine.com/articles/7543213619673366578)：生鲜秒杀超卖 287 单复盘——根因为回调重试无幂等 + 行锁超时 + Redis/DB 不一致；标题无"幻读"，但病因与不可重复读/幻读同族（check 与 act 之间世界已变），防护三原则（幂等/事务闭环/缓存不替库）——链 4/链 5 的业务事故对照（2026-09-01 检索命中并全文验证）。
-  - [阿里云开发者社区：深入探讨 MySQL 中的幻读现象：原因、影响及解决方案](https://developer.aliyun.com/article/1311044)：幻读成因与解决方案综述（2026-09-01 检索命中验证，未全文精读）。
+  - [chanjarster：MySQL 幻读、间隙锁和 next-key lock](https://chanjarster.github.io/post/mysql/gap-lock-next-key-lock/)：幻读定义 → FOR SHARE / FOR UPDATE 锁范围差异（覆盖索引时前者只锁二级索引、后者连主键一起锁）→ 间隙锁之间不互斥（所以双方各持 (5,10) GAP 锁再 insert 即成死锁）→ next-key lock"先 gap 后行锁"非原子的半锁死锁案例 → 两原则两优化一个 bug——45 讲 20/21 讲的精编图解版，机制语言无八股味（2026-09-03 已全文验证；替换原阿里云文 1311044——综述泛泛，学员亲测淘汰）。
   - 配套讲数：45 讲第 3 讲（事务隔离）、第 8 讲（事务到底是隔离的还是不隔离的）、第 20/21 讲（幻读与加锁规则）。
 - [《MySQL 实战 45 讲》笔记版（林晓斌专栏，GitBook 镜像）](https://jums.gitbook.io/mysql-shi-zhan-45-jiang)
   用户 2026-08-27 指定的深挖参考。第 1 讲（查询执行五组件）、第 2 讲（更新执行 + redo/binlog + 两阶段提交）、第 4 讲（索引模型对比）已沉淀为第 2 课"链 1 地基"一节。

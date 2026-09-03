@@ -470,3 +470,114 @@ pre code { background: none; padding: 0; font-size: inherit; }
   body.has-nav { padding-left: 0; }
   a { border-bottom: 0; color: var(--ink); }
 }
+
+/* ---------- 全局搜索面板（search.js 注入） ---------- */
+html { scroll-behavior: smooth; }
+
+.search-fab {
+  position: fixed; top: 14px; right: 58px; z-index: 80;
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 36px; padding: 0 12px; border-radius: 18px;
+  border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
+  font-size: 14px; cursor: pointer; box-shadow: 0 1px 6px var(--shadow-card);
+}
+.search-fab:hover { color: var(--accent); border-color: var(--accent); }
+.search-fab kbd {
+  font-family: var(--mono); font-size: 10px; color: var(--ink-soft);
+  border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px;
+}
+@media (max-width: 1023.98px) { .search-fab kbd { display: none; } }
+
+.cmdk-overlay {
+  position: fixed; inset: 0; z-index: 990;
+  background: rgba(24, 22, 20, 0.38); backdrop-filter: blur(2px);
+  display: none; justify-content: center; align-items: flex-start;
+}
+.cmdk-overlay.show { display: flex; }
+.cmdk {
+  margin-top: 12vh; width: min(580px, 92vw);
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28); overflow: hidden;
+}
+.cmdk-bar { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-bottom: 1px solid var(--line); }
+.cmdk-bar .cmdk-ico { font-size: 14px; }
+.cmdk-bar input {
+  flex: 1; border: none; outline: none; background: transparent;
+  color: var(--ink); font-size: 15px; font-family: var(--sans);
+}
+.cmdk-bar input::placeholder { color: var(--ink-soft); }
+.cmdk-bar kbd {
+  font-family: var(--mono); font-size: 10px; color: var(--ink-soft);
+  border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px;
+}
+.cmdk-list { max-height: 46vh; overflow-y: auto; padding: 6px; }
+.cmdk-item {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 8px 10px; border-radius: 8px; cursor: pointer;
+}
+.cmdk-item .tx { flex: 1; min-width: 0; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmdk-item .tx mark { background: var(--em-mark); color: inherit; border-radius: 2px; padding: 0 1px; }
+.cmdk-item .pg { flex: none; font-size: 11px; color: var(--ink-soft); }
+.cmdk-item.active { background: var(--surface-zebra); }
+.cmdk-item.active .pg { color: var(--accent); }
+.cmdk-empty { padding: 22px 16px; text-align: center; color: var(--ink-soft); font-size: 13px; }
+.cmdk-foot { display: flex; gap: 14px; padding: 7px 14px; border-top: 1px solid var(--line); font-size: 11px; color: var(--ink-soft); }
+
+.flash-hit { animation: jog-flash 2.4s ease-out; border-radius: 6px; }
+@keyframes jog-flash { 0% { background: var(--em-mark); } 100% { background: transparent; } }
+h2, h3, summary, .q-line { scroll-margin-top: 88px; }
+
+/* ---------- 右侧大纲（toc.js 注入，短线指示器：按节展开） ---------- */
+@media (min-width: 1280px) {
+  body.has-toc .page { max-width: 680px; }
+}
+.toc {
+  display: none; position: fixed; top: 96px; z-index: 40;
+  width: 46px; max-height: 68vh; overflow-y: auto; overflow-x: hidden;
+  font-size: 12px; scrollbar-width: thin; padding: 4px;
+  transition: width 0.18s ease;
+}
+.toc:hover, .toc:focus-within { width: 210px; }
+
+/* 标题：容器悬停时才浮现 */
+.toc .toc-ttl {
+  font-size: 10.5px; letter-spacing: 0.1em; color: var(--ink-soft);
+  margin: 2px 0 6px 8px; text-transform: uppercase; white-space: nowrap;
+  opacity: 0; transition: opacity 0.15s ease;
+}
+.toc:hover .toc-ttl, .toc:focus-within .toc-ttl { opacity: 1; }
+
+/* 条目：默认只呈现一条短线（l2 一条，l3 整行隐藏），无任何分割线 */
+.toc a {
+  display: flex; align-items: center;
+  padding: 5px 10px; text-decoration: none; line-height: 1.55; border-radius: 7px;
+}
+.toc a .dash {
+  flex: none; width: 20px; height: 2px; border-radius: 1px;
+  background: var(--dot-idle);
+  transition: width 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+}
+.toc a.l3 { display: none; padding-left: 26px; }
+.toc a .tx {
+  flex: 1; min-width: 0; margin-left: 10px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--ink-soft); opacity: 0; transform: translateX(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, margin 0.15s ease;
+}
+.toc a.l3 .tx { font-size: 11.5px; }
+
+/* 折叠态的当前节：红色加长的那条线 */
+.toc a.on .dash { background: var(--accent); width: 30px; }
+.toc a.on .tx { color: var(--accent); }
+
+/* 悬停某一节：只展开这一节（圆角底色给出明确边界），其余节仍是短线 */
+.toc-sec:hover, .toc-sec:focus-within { background: var(--surface-zebra); border-radius: 8px; }
+.toc-sec:hover a .tx, .toc-sec:focus-within a .tx { opacity: 1; transform: none; margin-left: 0; }
+.toc-sec:hover a.l2 .dash, .toc-sec:focus-within a.l2 .dash { width: 0; opacity: 0; }
+.toc-sec:hover a.l3, .toc-sec:focus-within a.l3 { display: flex; }
+.toc a:hover .tx { color: var(--ink); }
+.toc a.on:hover .tx { color: var(--accent); }
+
+@media print {
+  .search-fab, .toc, .cmdk-overlay { display: none !important; }
+}
