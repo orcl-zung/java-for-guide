@@ -18,6 +18,13 @@
   - [MySQL 架构是怎样的？](https://www.xiaolincoding.com/mysql/architecture/mysql_architecture.html)：自底向上拼出 Server 层 + InnoDB（内存：buffer pool/change buffer/自适应哈希/redo log buffer；磁盘：ibd/undo/redo）全景图——"buffer pool 属于引擎层"问题的出处，对应第 2 课地基①②；buffer pool 三问 + undo/redo 因果链已沉淀为地基⑥（用户提供，2026-09-01 验证可访问）。
   - [事务隔离级别是怎么实现的？](https://www.xiaolincoding.com/mysql/transaction/mvcc.html)：隐藏列 / undo log 版本链 / ReadView 四字段 / 可见性判断规则，全图解——链 4 追问① 的第一图解参考；trx_id 懒分配 + 可见性三段切割 + 四事务时序推演已沉淀为链 4 补充③（2026-09-03，学员亲证：机制图解比类比好懂）。
   - [可重复读隔离级别，完全解决幻读了吗？](https://www.xiaolincoding.com/mysql/transaction/phantom.html)：快照读 vs 当前读、RR 没完全解决幻读的两个场景——链 4 追问② 的图解版（2026-09-01 检索命中验证）。
+  - 锁篇（05）逐篇判定（2026-09-07 按学员存量+面试对口度筛；读序 ②→⑤→⑥→①三节→③，约一个上午；已沉淀为第 2 课"链 5 阅读指南"）：
+    - [MySQL 是怎么加锁的？](https://xiaolincoding.com/mysql/lock/how_to_lock.html)：**必读**——两原则两优化的带图案例推演（唯一/非唯一索引 × 等值/范围），链 5 主战场。
+    - [MySQL 死锁了，怎么办？](https://xiaolincoding.com/mysql/lock/deadlock.html)：**必读**——隐式锁→显式锁转换、show engine innodb status、data_locks；与爱可生死锁案例互证。
+    - [字节面试：加了什么锁，导致死锁的？](https://xiaolincoding.com/mysql/lock/show_lock.html)：快读当模拟考——先自推加锁过程再对答案。
+    - [MySQL 有哪些锁？](https://xiaolincoding.com/mysql/lock/mysql_lock.html)：只读三节——全局锁（FTWRL vs mysqldump --single-transaction）、MDL（写锁排队堵死全表 CRUD 的事故链，"长事务万恶之源"第二现场）、意向锁；行级锁/AUTO-INC 部分已被课页覆盖，跳过。
+    - [update 没加索引会锁全表吗？](https://xiaolincoding.com/mysql/lock/lock_index.html)：快读 10 分钟校准口径——锁全表 = 全行 next-key + 全间隙，"锁全表 ≠ 表锁"。
+    - [记录锁+间隙锁能防止删除导致的幻读吗？](https://xiaolincoding.com/mysql/lock/phantom_read.html)：可跳——边界应用题，用"快照读靠 MVCC、当前读靠 next-key"框架现场推。
 - [美团技术团队：MySQL 索引原理及慢查询优化](https://tech.meituan.com/2014/06/30/mysql-index.html)
   2014 年常青文。磁盘 IO 与预读（"页"概念的原文版）、树高公式 h=㏒(m+1)N（链 1 容量计算的原版；逐符号拆解已沉淀为第 2 课地基④，2026-09-01）、建索引五大原则（最左前缀"范围之后全断"的底层拆解已沉淀为第 2 课地基⑤，2026-09-01）、带 explain 执行计划的真实慢查询案例——直接喂养链 3（EXPLAIN 四看法 + stage_poi 低区分度案例复盘已沉淀为第 2 课"链 3 补充"，2026-09-01）（2026-08-28 验证可访问）。
 - MySQL 索引优化实战阅读包（2026-09-01 检索命中验证；配套应答手册"索引优化"题的场景认领清单 A-D，认领哪个场景读哪篇）：

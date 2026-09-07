@@ -185,6 +185,22 @@ t8  D: begin; UPDATE id=3 → 分配 104；SELECT id=1
       <p class="q-hook"><span class="you">封顶口径："MVCC 在 Java 里的孪生兄弟是 CopyOnWriteArrayList——读快照、写加锁、读写不互斥。区别是 InnoDB 用 undo 链存增量版本而非全量拷贝，写写冲突也没有乐观重试、只能行锁互斥。本质同一个设计：按冲突类型选机制，读写冲突用版本冗余换无锁，写写冲突才付锁的代价。"——这句出口，Java 和 MySQL 两头的追问都接得住。</span></p>
     </details>
 
+    <details class="q-item f2">
+      <summary><span class="stars">📖</span> <span class="q-text">链 5 阅读指南 · 小林锁篇 6 篇怎么读（必读 2 / 快读 2 / 选读 1 / 可跳 1）——一个上午的量</span></summary>
+      <p class="q-hook">按存量知识 + 面试对口度筛过（2026-09-07）。读序 = <b>② → ⑤ → ⑥ → ① 的三节 → ③</b>：</p>
+      <table>
+        <tr><th>篇目</th><th>判定</th><th>读法与理由</th></tr>
+        <tr><td>① <a href="https://xiaolincoding.com/mysql/lock/mysql_lock.html" target="_blank">MySQL 有哪些锁？</a></td><td><b>选读三节</b></td><td>总览型。行级锁 / AUTO-INC / 间隙锁部分<b>跳过</b>（已被链 5 补充 + 答疑覆盖且更深）。只读增量三节：<b>全局锁</b>（FTWRL 全库只读 vs <code>mysqldump --single-transaction</code> 开事务靠 ReadView 备份——接链 4 MVCC）、<b>MDL 元数据锁</b>（见下方专段）、<b>意向锁</b>（表级 IS/IX 存在的理由：不用遍历全表就能判断有无行锁）</td></tr>
+        <tr><td>② <a href="https://xiaolincoding.com/mysql/lock/how_to_lock.html" target="_blank">MySQL 是怎么加锁的？</a></td><td><b>必读 ★★★</b></td><td>链 5 主战场。两原则两优化 chanjarster 文给的是浓缩规则，这篇是<b>带图的案例推演</b>（唯一索引 / 非唯一索引 × 等值 / 范围逐个推）。被拷"加锁规则"要当场推得出来，不是背</td></tr>
+        <tr><td>③ <a href="https://xiaolincoding.com/mysql/lock/lock_index.html" target="_blank">update 没加索引会锁全表吗？</a></td><td>快读 10 分钟</td><td>答案已有（链 5 追问①）。读实验细节校准口径：锁全表 = 所有行 next-key + 全间隙；主动说出<b>"锁全表 ≠ 表锁"</b>这个区分</td></tr>
+        <tr><td>④ <a href="https://xiaolincoding.com/mysql/lock/phantom_read.html" target="_blank">记录锁+间隙锁能防止删除导致的幻读吗？</a></td><td>可跳</td><td>边界应用题，框架已齐（快照读靠 MVCC、当前读靠 next-key）。遇到追问用框架现场推</td></tr>
+        <tr><td>⑤ <a href="https://xiaolincoding.com/mysql/lock/deadlock.html" target="_blank">MySQL 死锁了，怎么办？</a></td><td><b>必读 ★★★</b></td><td>把锁表死锁实战校准成方法论：insert 的<b>隐式锁→显式锁转换</b>、<code>show engine innodb status</code> 读日志、<code>data_locks</code> 表。与已入档的爱可生案例互证</td></tr>
+        <tr><td>⑥ <a href="https://xiaolincoding.com/mysql/lock/show_lock.html" target="_blank">字节面试：加了什么锁，导致死锁的？</a></td><td>快读当模拟考</td><td>面试真题复盘。读完 ②⑤ 后自测：先自己推加锁过程再对答案——推不出来就是 ② 没吃透</td></tr>
+      </table>
+      <p class="q-hook"><b>MDL 单独钉牢（锁篇里你唯一的新增考点）：</b>CRUD 自动加 MDL 读锁、DDL 加 MDL 写锁；<b>MDL 事务提交才释放</b>；申请队列里<b>写锁优先于读锁</b>——所以事故链是：长事务持有 MDL 读锁 → DDL 写锁排队 → <b>后续该表所有 CRUD 全被堵死</b> → 连接池/线程爆满。"线上加个字段把表搞挂"的标准答案。和 undo 膨胀是同一个母题：<b>长事务是万恶之源</b>。</p>
+      <p class="q-hook"><span class="you">自测口径：锁家族被问任何一锁，先报"锁什么 × 怎么锁"两维框架，再按本指南的判定密度分配展开时间——加锁规则和死锁排查往深讲，AUTO-INC 一句话带过（弹药在链 5 补充）。</span></p>
+    </details>
+
     <details class="q-item f3">
       <summary><span class="stars">★★★</span> <span class="q-text">链 5 · InnoDB 的行锁有哪几种？死锁怎么排查？</span></summary>
       <p class="q-hook"><b>一层：</b>记录锁（锁单行）、间隙锁（锁开区间，防插入）、<b>next-key lock</b>（记录 + 间隙，左开右闭，RR 的默认加锁单位）、插入意向锁；表级还有意向锁（IS/IX）和 MDL 元数据锁。最核心一句：<b>行锁锁的是索引记录，不是物理行</b>——没走索引就没有行锁可言。</p>
@@ -195,10 +211,29 @@ t8  D: begin; UPDATE id=3 → 分配 104；SELECT id=1
     </details>
 
     <details class="q-item f2">
+      <summary><span class="stars">★★☆</span> <span class="q-text">链 5 补充 · AUTO-INC 锁为什么是配角？（弹药卡：自增空洞 / ROW binlog / 分布式 ID）</span></summary>
+      <p class="q-hook"><b>定位先钉死：直接考频 ★☆☆，10 分钟档配角</b>——锁家族的拷打主力是行锁三件套 + 加锁规则 + 死锁排查，AUTO-INC 几乎不被直接问。它的价值不在锁本身，在于卡在<b>三个高频话题的交叉点</b>上当弹药（见下方三张卡）。机制记三层就够：① 传统模式 = <b>语句级表锁</b>，INSERT 语句结束即释放、<b>不等事务提交</b>——这是它区别于普通表锁的"特殊"点；② 5.1.22 起演进为<b>轻量 mutex</b>，只护"分配自增计数器"这一小段临界区；③ 三档 <code>innodb_autoinc_lock_mode</code> 按<b>行数可预知性</b>分流：simple insert（行数可预知）走 mutex，bulk insert（INSERT...SELECT 行数不可预知）退回表锁；mode 2 全 mutex 最快，8.0 默认。</p>
+      <p class="q-hook"><b>跟 synchronized 锁升级像不像？像一半，轴不同（接链 4 补充④的跨界对照）：</b></p>
+      <table>
+        <tr><th></th><th>synchronized 锁升级</th><th>AUTO-INC 分档</th></tr>
+        <tr><td>相同</td><td colspan="2">分档用锁：便宜路径优先（偏向/CAS ｜ mutex），重的兜底（monitor ｜ 表锁）</td></tr>
+        <tr><td>方向</td><td>轻→重：随竞争加剧<b>升级</b>，不可降级</td><td>重→轻：5.1.22 版本演进是<b>砍掉表锁</b></td></tr>
+        <tr><td>分档的轴</td><td><b>竞争程度</b>——运行时动态感知，JVM 自动调</td><td><b>行数可预知性</b>——按语句类型静态分流，参数定死</td></tr>
+        <tr><td>状态</td><td>锁对象上的状态机，跟随对象一生</td><td>每条语句独立选档，无状态</td></tr>
+      </table>
+      <p class="q-hook">真正有"神似"的是 mode 1：像轻量级锁的思路——假设情况简单（行数可预知）就走便宜路径，hold 不住（bulk）再退回重的。<b>synchronized 的轴是"竞争"，AUTO-INC 的轴是"可预知性"。</b></p>
+      <p class="q-hook"><b>为什么 bulk insert 打死要退回表锁？</b>INSERT...SELECT 执行前不知道行数，mutex 模式下别的事务会<b>交错抢号</b>，同一条语句内自增值不连续（主库分出 1, 3, 5）；statement 格式 binlog 只记语句不记值，从库重放同一条语句可能分出 1, 2, 3——<b>主从数据直接分叉</b>。所以 mode 2 的安全前提是 <b>ROW binlog</b>（把分配到的真实值记下来）；8.0 敢默认 mode=2，正因为 binlog 默认 ROW——这是"大厂强制 RC+ROW"（链 4 补充② / 美团 innodb-lock）的另一半拼图。</p>
+      <p class="q-hook"><b>弹药卡① · 自增空洞</b>（偶考，能挂"订单号为什么不连续"的业务）：事务回滚、唯一键冲突 → 已分配的值<b>不回退</b>。为什么不回退？回退就得把锁持有到事务提交（否则别人已拿走更大的值），等于全表插入串行化——<b>设计取舍：连续性让位并发度</b>，和"语句级释放"是同一个取舍。</p>
+      <p class="q-hook"><b>弹药卡② · 主从复制</b>：mode 2 ⟺ ROW binlog，见上——"大厂为什么全 ROW"故事的另一半。</p>
+      <p class="q-hook"><b>弹药卡③ · 分布式 ID（9/19-20 系统设计专项主力，接链 6 追问②"全局 ID"）：</b>分库后单库 auto-inc 直接失效（两个库会发出相同的号）→ 选型三连：<b>UUID</b>——无序，当主键插入会频繁页分裂、伤 B+ 树；<b>雪花</b>——依赖机器时钟，有时钟回拨问题；<b>号段模式</b>（美团 Leaf-segment）——每次去 DB 把 max_id += step（如 1000）领一段，应用内存里慢慢发、发完再领。<b>号段的本质 = 把 AUTO-INC 的"短临界区 mutex 分配计数器"思想放大搬到应用层做批量预取</b>——理解了 AUTO-INC 为什么 mutex 化，号段就是同一思想换了个位置。</p>
+      <p class="q-hook"><span class="you">30 秒口径："AUTO-INC 锁本身低频，记三层：语句级表锁（不等事务提交）→ 5.1.22 mutex 化只护计数器分配 → 三档按行数可预知性分流，bulk 退回表锁是因为交错分配会让 statement 复制主从不一致，所以 mode 2 必须配 ROW binlog。它值钱在三处弹药：自增空洞（回滚不回退，连续性换并发度）、ROW binlog 的另一半理由、号段模式的设计原型——分库分表问全局 ID 时直接把这套端出去。"</span></p>
+    </details>
+
+    <details class="q-item f2">
       <summary><span class="stars">★★☆</span> <span class="q-text">链 6 · 一条 update 在 InnoDB 里完整走一遍？表太大了怎么办？</span></summary>
       <p class="q-hook"><b>一层：</b>加载数据页进 buffer pool → 写 undo log（回滚 + MVCC 版本链）→ 改内存页 → 写 redo log（prepare 状态）→ 写 binlog → redo log 置 commit。三大日志分工：<b>undo 保原子性和 MVCC，redo 保持久性（WAL：先写日志再写盘），binlog 管主从复制和数据恢复</b>。</p>
       <p class="q-hook"><b>追问①：redo 为什么要两阶段提交？</b><br>为了让 redo 和 binlog 逻辑一致。崩溃恢复时：redo 已 prepare 且 binlog 完整 → 提交；否则回滚。没有两阶段，就可能主库提交了但从库没收到 binlog——主从不一致。</p>
-      <p class="q-hook"><b>追问②：表多大该分库分表？</b><br>先给标尺（阿里规约：单表 500 万行或 2GB 考虑分表，实际看查询响应），<b>再给"不分的替代方案"——这才是分层答案</b>：索引优化 → 读写分离 → 冷热分离 / 历史归档 → 缓存。真要分：先垂直（按业务域拆）后水平（按分片键拆），分片键选最高频的查询维度。分完的新问题三连：<b>全局 ID、跨分片查询、分布式事务</b>——这三个词一出口，面试官就知道你真想过。</p>
+      <p class="q-hook"><b>追问②：表多大该分库分表？</b><br>先给标尺（阿里规约：单表 500 万行或 2GB 考虑分表，实际看查询响应），<b>再给"不分的替代方案"——这才是分层答案</b>：索引优化 → 读写分离 → 冷热分离 / 历史归档 → 缓存。真要分：先垂直（按业务域拆）后水平（按分片键拆），分片键选最高频的查询维度。分完的新问题三连：<b>全局 ID、跨分片查询、分布式事务</b>——这三个词一出口，面试官就知道你真想过。全局 ID 的现成弹药在上方<b>链 5 补充</b>（AUTO-INC 卡③：单库 auto-inc 跨库失效 → UUID / 雪花 / 号段选型）。</p>
       <p class="q-hook"><span class="you">你的实战锚点（必带）：话费项目月百万级数据归档方案——"我们没有一上来就分表，先做的历史归档 + 冷热分离，用最低成本解决了查询变慢。"这就是追问②里"替代方案"那层的活证据。</span></p>
     </details>
   </section>
