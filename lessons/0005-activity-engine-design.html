@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 5 课 · 活动引擎设计</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js"></script>
+<script src="../assets/nav.js"></script>
+</head>
+<body>
+<div class="page">
+
+  <div class="kicker">Java Offer 突围战 · 第 5 课 · 系统设计实战</div>
+  <h1>活动引擎设计：从两套并存到一台引擎</h1>
+  <p class="subtitle">把寻宝（真实落地）与抽奖/发券（预留扩展位）整合成统一活动引擎的实施级设计稿——五维公式 × 五节点管线 × 双通道一致性。配套代码切片：<code>code/activity-engine/</code>。</p>
+  <div class="meta-badges">
+    <span class="badge gold">9/8 烤问会 · 17 问决策全记录</span>
+    <span class="badge">交付 = 实施级设计稿 + 代码切片</span>
+    <span class="badge red">简历口径：动词限"设计 / 验证"</span>
+    <span class="badge blue">算法日：加权 3h → PRD 3h → 红包 1.5h → 秒杀片段 1.5h</span>
+  </div>
+
+  <hr class="rule">
+
+  <!-- ==================== 一、背景 ==================== -->
+  <section>
+    <h2><span class="no">第一章 · 背景</span>两套并存体系的痛点</h2>
+    <p class="lead">power-bank 的营销能力散在两套互不相通的体系里——这不是设计，是历史堆积。</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th></th><th>发券体系</th><th>寻宝体系</th></tr></thead>
+      <tbody>
+        <tr><td><b>表</b></td><td><code>ot_coupon</code> / <code>ot_act_base_info</code></td><td><code>ops_activity</code> + <code>ops_treasure_*</code></td></tr>
+        <tr><td><b>状态</b></td><td>coupon-refactor 重构后相当完善（锁券/核销/自然日有效期）</td><td>6 个 Service ≈ 1750 行，任务/决策/库存/发奖四概念纠缠</td></tr>
+        <tr><td><b>抽奖</b></td><td colspan="2">SPIN 只是枚举值，<code>RandomDrawRewardStrategy</code> 是 TODO 空壳——真实预留扩展位</td></tr>
+      </tbody>
+    </table></div>
+    <p>coupon-refactor spec 的 <i>Ask First</i> 里挂着一道悬案："是否将优惠券与新的 ops_activity 活动体系合并"。本设计稿就是它的正式回答：<b>不合并，引擎编排 + 领域自治</b>。</p>
+    <div class="callout gold">
+      <div class="ttl">30 秒开场白（背到脱口而出）</div>
+      "Ingoo 的营销能力是两套并存：发券一套、寻宝一套，抽奖只有枚举没有实现。我识别出三类玩法共享同一组概念——资格、任务、决策、库存、发奖——设计了统一活动引擎：五节点管线做内核，玩法做插件，存量券域通过适配层接入。寻宝没有重写，是把旧代码里隐含的概念显式化归位；抽奖内核和决策算法库我做了代码级验证。"
+    </div>
+  </section>
+
+  <!-- ==================== 二、行业全景 ==================== -->
+  <section>
+    <h2><span class="no">第二章 · 上帝视角</span>行业全景与五维公式</h2>
+    <p class="lead">只对着三种玩法设计，出来的是"三种玩法的并集"而不是"玩法之母"。先把业内营销活动的机制家族铺开。</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>机制家族</th><th>代表玩法</th><th>核心差异点</th></tr></thead>
+      <tbody>
+        <tr><td><b>概率类</b></td><td>转盘 / 九宫格 / 盲盒 / 刮刮卡</td><td>决策 = 概率</td></tr>
+        <tr><td><b>直发类</b></td><td>注册礼 / 首单礼 / 定向发券</td><td>无决策，触发即给</td></tr>
+        <tr><td><b>累积任务类</b></td><td>连签 / 邀请N人 / 集卡 / 砍价助力</td><td>有"进度"，达成才发</td></tr>
+        <tr><td><b>竞争类</b></td><td>秒杀 / 红包雨 / 拼团</td><td>先到先得，库存高并发</td></tr>
+        <tr><td><b>排名类</b></td><td>消费榜 / 邀请榜 / PK 赛</td><td>决策 = 排名取前 N</td></tr>
+        <tr><td><b>场景类</b></td><td>LBS 寻宝 / 到店打卡 / AR 集福</td><td>触发 = 地理位置</td></tr>
+        <tr><td><b>交易促销类</b></td><td>满减 / 满折 / 加价购</td><td>嵌交易链路，决策 = 门槛判断</td></tr>
+      </tbody>
+    </table></div>
+    <h3>五维公式：所有玩法 = 五个维度的笛卡尔组合</h3>
+    <pre>触发方式 × 任务进度 × 决策模式 × 权益类型 × 约束
+ 触发：主动 / 行为事件(MQ) / 定时 / 地理位置
+ 任务：无 / 单次 / 累积进度 / 排名竞争（可选维度）
+ 决策：必中 / 概率 / 概率+保底 / 先到先得 / 排名取前N
+ 权益：券 / 实物 / 碎片 / 积分 / 现金红包
+ 约束：库存 / 预算 / 频控 / 人群</pre>
+    <p>验证：砍价 = 事件触发 × 累积进度 × 达成即中 × 免单；秒杀 = 定时触发 × 无任务 × 先到先得 × 商品；寻宝 = 地理位置 × 单次行为 × 必中+概率掉落 × 券/碎片。<b>抽奖、寻宝、发券只是这张表的三行</b>——这就是"通用"的证明方式。</p>
+    <div class="callout">
+      <div class="ttl">引擎的检验标准</div>
+      新增一个玩法（签到、砍价），<b>需不需要加表？</b>默认零新表，纯配置组合出玩法；只有存在共享实体或特殊查询模式时才允许私有存储（判据见第五章）。
+    </div>
+  </section>
+
+  <!-- ==================== 三、管线内核 ==================== -->
+  <section>
+    <h2><span class="no">第三章 · 内核</span>五节点管线 + 玩法插件</h2>
+    <pre>触发（双入口：同步 API / MQ 行为事件）
+  → ① 资格责任链   装配态 → 风控封禁 → 黑名单 → 人群 → 频控 → 次数账户
+  → ②a 任务进度    counter / collection(item_key) / streak（可选节点，空任务直穿）
+  → ②b 决策        DecisionStrategy SPI（算法见第四章）
+  → ③ 规则树       库存校验 → 兜底奖 → 风控拦截
+  → ④ 统一发奖中心  AwardIssuer SPI + 幂等流水</pre>
+
+    <h3>① 资格链：成本升序 + 短路，两公理定序</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>#</th><th>节点</th><th>数据源</th><th>成本</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>活动装配态（状态/时间）</td><td>装配缓存（内存）</td><td>O(1) 读</td></tr>
+        <tr><td>1</td><td>风控封禁</td><td>Redis GET</td><td>读</td></tr>
+        <tr><td>2</td><td>黑名单</td><td>Redis SISMEMBER</td><td>读</td></tr>
+        <tr><td>3</td><td>人群/归属（新老人/商户）</td><td>Redis / 本地缓存</td><td>读</td></tr>
+        <tr><td>4</td><td>频控（日/总次数）</td><td>Redis INCR</td><td>第一个写</td></tr>
+        <tr><td>5</td><td>次数账户扣减</td><td>DB 条件更新</td><td>最贵的写，压尾</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>公理一：读前写后</b>——前置拒绝不产生写副作用（被黑名单挡掉的请求不该留下频控计数）。<b>公理二：便宜先贵后</b>——DB 写压到最后一跳，此时请求已确认合法。追问预演："风控为什么排在黑名单前？"——黑名单是静态运营配置，风控是动态攻击信号，<b>攻击信号优先于业务规则</b>，越早挡越省下游算力。</p>
+
+    <h3>②a 任务进度：三种进度语义覆盖累积家族</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>语义</th><th>玩法实例</th><th>存储</th></tr></thead>
+      <tbody>
+        <tr><td><code>counter</code></td><td>邀请 N 人 / 消费 N 次</td><td><code>act_task_progress</code> 单行计数</td></tr>
+        <tr><td><code>collection</code></td><td>集卡 / 碎片（每碎片一行）</td><td>+ <code>item_key</code> 维度</td></tr>
+        <tr><td><code>streak</code></td><td>连续签到（断签重置策略入参）</td><td>current_streak + last_date</td></tr>
+      </tbody>
+    </table></div>
+    <p>PRD 的 N（距上次中奖次数）也存在这张表里——五维模型内部自洽。进度达成即触发 ②b 决策；任务达成还可以<b>反向给次数账户充值</b>（邀请得抽奖次数），账户闭环。</p>
+
+    <h3>②b 决策 SPI 与 ④ 发奖中心 SPI</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>决策实现</th><th>玩法</th><th>发奖实现</th><th>权益</th></tr></thead>
+      <tbody>
+        <tr><td><code>MustHitDecision</code></td><td>发券 / 签到 / 砍价达成</td><td><code>CouponAwardIssuer</code></td><td>券（委托 ot_coupon 域）</td></tr>
+        <tr><td><code>WeightedTableDecision</code></td><td>抽奖主力</td><td><code>FragmentAwardIssuer</code></td><td>碎片（通用进度表）</td></tr>
+        <tr><td><code>PrdPityDecision</code></td><td>稀有掉落 / 高价值奖品</td><td><code>GrandPrizeAwardIssuer</code></td><td>实物（待核销流）</td></tr>
+        <tr><td><code>LuckyMoneyDecision</code></td><td>红包（v1 只设计）</td><td colspan="2" rowspan="2">扩展位：实现接口即接入</td></tr>
+        <tr><td><code>FirstComeDecision</code></td><td>秒杀 / 限量（委托③库存节点）</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>存量整合纪律</b>：发奖中心只管"给谁发、发什么、发没发成"（幂等、库存、落账）；券怎么用（锁券/核销/满减计算）留在 coupon 域——<b>引擎编排 + 领域自治</b>，限界上下文划清。</p>
+
+    <h3>触发双入口</h3>
+    <p><b>同步入口</b> <code>POST /activity/{id}/participate</code>：主动参与（抽奖/打卡/领券），走完整管线同步返回（转盘动画要等结果）。<b>异步入口</b> MQ 行为事件：注册/首单/登录/支付，按活动 <code>trigger_type</code> 匹配后走管线，结果落库 + 站内通知。为什么不全事件总线？<b>触发方式决定返回时效，不是反过来</b>——同步需求硬塞异步模型是"为了统一而统一"。GEO 附近查询是"活动发现"层，不进管线（管线从用户点击开始）。</p>
+  </section>
+
+  <!-- ==================== 四、决策算法库 ==================== -->
+  <section>
+    <h2><span class="no">第四章 · 算法</span>决策算法库（代码切片验证）</h2>
+    <p class="lead">每个算法带分布统计测试——"我不仅实现了，还用统计测试验证过分布正确性"。</p>
+
+    <h3>4.1 加权区间查表（抽奖主力，P0）</h3>
+    <pre>装配期：权重（百万分比整数，杜绝浮点）展开成 [0, 1_000_000) 区间
+        小池(≤64奖品) → O(1) 数组直查：下标即随机数
+        大池/高精度   → O(log N) CDF 二分（upper_bound 语义）
+运行期：一次随机 + 一次查表（随机数只生成一次——循环内重复生成破坏分布）
+库存联动：③扣库存失败 → 该奖品区间置空 + 剩余权重归一化重建</pre>
+    <p><b>为什么不用 Alias（O(1) 严格均匀）</b>：Alias 采样 O(1) 但构建 O(N) 且概率变更需全量重建两张表；营销抽奖库存实时消耗、概率频变，区间查表改边界即可。Alias 适合概率静态的游戏卡池，不适合库存驱动的营销抽奖。<b>知道但主动不选 &gt; 只会加权随机。</b></p>
+
+    <h3>4.2 PRD 伪随机 + 硬保底（稀有掉落，P0）</h3>
+    <pre>P(N) = C × N     N = 距上次命中次数，命中重置
+C 由标称概率二分反解（对照表：25%→C≈8.5%→保底12次；15%→3.2%→32；50%→30%→4）
+期望与真随机相同，方差收窄——消灭欧皇连中与酋长连空
+硬保底是 PRD 的自然推论：N = ⌈1/C⌉ 时 P = 1 必中
+N 存 act_task_progress（五维模型自洽点）</pre>
+    <p>落地场景：寻宝稀有碎片掉落。"真随机对用户体验是灾难"——这是把 PRD 引进引擎的业务理由，不是炫技。</p>
+
+    <h3>4.3 二倍均值法（拼手气红包，P1）</h3>
+    <pre>剩余 M 分、剩 N 人：本次金额 ∈ [1分, (M/N)×2] 均匀随机，最后一人拿剩余
+期望恒 = 当前剩余人均 → 先抢后抢数学公平（微信同款）
+对比线段切分法：理论更随机但方差失控（0.01 vs 99.99 极端值），业界弃用
+铁律：全程"分"为单位 long 运算，禁止浮点金额</pre>
+
+    <h3>4.4 先到先得（秒杀，P2 片段）</h3>
+    <pre>先到先得拼的不是算法是漏斗——每层过滤一个数量级：
+CDN 静态化 → 网关限流/答题 → 令牌桶 → Redis Lua 预减 → MQ 异步落库 → DB 条件更新兜底
+切片：resources/seckill/pre_deduct.lua（SISMEMBER 幂等 + DECR 预减，原子）
+纪律：Redis 只是削峰，最终一致性 = DB stock&gt;0 条件更新 + 超时未支付回补 + 定时对账</pre>
+
+    <div class="callout green">
+      <div class="ttl">切片验收标准（code/activity-engine/，11 个 @Disabled 待点亮）</div>
+      加权/PRD：10 万+ 次采样，频率误差 ≤ ±5%；PRD 加断最大连空 = 保底次数；红包：总额守恒分毫不差 + 各位置期望公平；PRD 多用户计数隔离。
+    </div>
+  </section>
+
+  <!-- ==================== 五、数据模型 ==================== -->
+  <section>
+    <h2><span class="no">第五章 · 存储</span>主表 + 五维配置表 + 私有存储判据</h2>
+    <pre>act_activity        主表：类型/起止/状态机(派生)/trigger_type/decision_type
+act_activity_task   任务配置(1对N)：任务类型/进度语义/目标值/参数
+act_award           奖品定义(1对N)：权益类型/库存/权重(百万分比)/保底
+act_award_issue     发奖流水：唯一键(activityId, userId, bizKey) ← 幂等防线
+act_account_count   次数账户：总/日/月参与额度（①资格链尾节点）
+act_task_progress   进度账户：counter/collection(item_key)/streak（②a + PRD 的 N）
+act_participate_record 参与流水：未中奖也落库（审计/风控/漏斗）</pre>
+    <h3>私有存储判据：默认零新表，两种例外</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>例外</th><th>玩法</th><th>私有存储</th><th>原因</th></tr></thead>
+      <tbody>
+        <tr><td><b>共享实体</b>（非"用户×活动"标量状态）</td><td>寻宝 / 拼团 / 一番赏</td><td>宝箱实例表 / 团表 / 箱表</td><td>宝箱=带独立状态机的持有容器；团=多用户共享实体</td></tr>
+        <tr><td><b>特殊查询</b>（通用索引做不了）</td><td>寻宝 / 排行 / 秒杀</td><td>Redis GEO / ZSET / 预减 key</td><td>半径搜索、实时排名、高并发预减——多为 Redis 结构而非 DB 表</td></tr>
+      </tbody>
+    </table></div>
+    <p>签到/邀请/砍价/抽奖/发券/满减全部能用三张通用账户 + 配置表组合出来——这是引擎敢叫"引擎"的原因。反面教材：旧寻宝 <code>startTaskParam</code> 设计成 JSON 实存裸数字（<code>parseInviteRequired</code> 的 try-catch 是事故现场），所以配置列拒绝 JSON 大字段，维度即表。</p>
+    <h3>装配：配置流与状态流分离</h3>
+    <p>活动发布/编辑/下架时把配置组装成运行态对象（概率区间表、资格参数、任务定义）写入 Redis，变更发 <b>MQ 事件驱动重装</b>（秒级生效）；运行中库存/次数等状态变化只改 Redis 计数不回装。装配期做概率和校验（权重和必须 = 1,000,000，"谢谢参与"补足）。</p>
+  </section>
+
+  <!-- ==================== 六、一致性 ==================== -->
+  <section>
+    <h2><span class="no">第六章 · 一致性</span>双通道 + 幂等键 + 补偿三段</h2>
+    <h3>双通道按玩法路由：决策 SPI 声明一致性级别</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>通道</th><th>决策</th><th>机制</th><th>适用量级</th></tr></thead>
+      <tbody>
+        <tr><td><b>同步事务通道</b></td><td>MustHit / Weighted / PRD</td><td>DB 条件更新扣库存 + 流水 insert + 账户扣减，同一事务</td><td>营销常规（日均万级）</td></tr>
+        <tr><td><b>异步通道</b></td><td>FirstCome</td><td>Redis Lua 预减 → MQ 异步落库 → DB 条件更新兜底</td><td>秒杀/红包雨洪峰</td></tr>
+      </tbody>
+    </table></div>
+    <p>两条通道的<b>共同最终防线都是 DB 条件更新</b>——"Redis 可用于削峰和用户体验锁，但不是最终一致性依据"（coupon-refactor spec 已定原则的引擎化泛化）。引擎不是给所有玩法套同一套一致性，而是让玩法按量级自选通道。</p>
+    <h3>幂等键与补偿</h3>
+    <ul>
+      <li><b>幂等键</b>：<code>activityId + userId + bizKey</code> 唯一约束（抽奖 bizKey=第 N 次序号；行为事件 bizKey=behaviorKey；手动领取 bizKey=clientRequestId）——重复请求、MQ 重投、客户端重试全被一个索引挡住。</li>
+      <li><b>补偿三段</b>：①同事务回滚解决"扣了库存没写成流水"；②MQ 通知失败走本地消息表重投（嘉立创三表组件经验）；③超时未使用权益定时释放（coupon 锁券释放同款）。</li>
+      <li><b>对账</b>：定时任务重算"发放计数 vs 流水"，差异告警。</li>
+      <li><b>次数语义</b>：参与即扣（业内双维度实证：参与次数与中奖上限是两个独立配置），未中不退走兜底奖；系统异常同事务回滚自然退还。</li>
+    </ul>
+  </section>
+
+  <!-- ==================== 七、寻宝 2.0 ==================== -->
+  <section>
+    <h2><span class="no">第七章 · 寻宝 2.0</span>归位映射 + 缺陷审计三档</h2>
+    <p class="lead">旧版"不太好"的专业表述：<b>不是代码烂，是概念没显式化</b>——任务、决策、库存、发奖旧代码里全有，但散在 Service 血肉里纠缠。2.0 = 识别概念骨架，归位进管线。</p>
+    <h3>归位映射表（业务规则全保留，重新归位）</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>旧代码（现状）</th><th>归位到</th></tr></thead>
+      <tbody>
+        <tr><td><code>TreasureCheckinService.checkin</code>（距离/拍照校验）</td><td>②a 任务进度节点（ClaimTaskStrategy 保留为任务校验策略）</td></tr>
+        <tr><td><code>TreasureOpenService</code> + OpenTaskStrategy（邀请N人开箱）</td><td>②a（邀请数存 act_task_progress）</td></tr>
+        <tr><td>碎片持有/合成（独立碎片表）</td><td>②a（act_task_progress + item_key，<b>旧碎片表废弃</b>）</td></tr>
+        <tr><td>remaining_limit 配额扣减</td><td>③ 规则树库存节点</td></tr>
+        <tr><td>ActivityRewardService.issueReward + RewardIssueStrategy</td><td>④ 发奖中心（三个 Issuer 的直接前身）</td></tr>
+        <tr><td>CPF 实名验证</td><td>① 资格链新节点</td></tr>
+        <tr><td>防作弊四层（验签/防重放/距离/频次）</td><td>① 风控节点 + ③ 风控节点</td></tr>
+        <tr><td>GEO 附近查询（nearby/listAllPoints）</td><td><b>不进管线</b>——活动发现层，管线从点击开始</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>缺陷审计 14 项 · 三档分层（六 Service 全实读，带代码证据）</h3>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>档位</th><th>缺陷</th><th>修复机制</th></tr></thead>
+      <tbody>
+        <tr><td rowspan="6"><b>① 归位即修</b><br>（引擎机制天然覆盖）</td><td>活动状态机双轨（存储+惰性两套真相）</td><td>时间状态派生不存储（coupon spec 同款）</td></tr>
+        <tr><td>宝箱无过期任务，永远挂 WAITING</td><td>引擎级过期任务（券域已有同款 Job）</td></tr>
+        <tr><td>GEO 缓存只在发布时重建，幽灵点位</td><td>事件驱动增量重建（第五章装配）</td></tr>
+        <tr><td>全链路零事件外发，下游接不进</td><td>④发奖中心 MQ 事件</td></tr>
+        <tr><td>活动配置寄生短信参数表，每次查库</td><td>引擎配置域 + 装配缓存</td></tr>
+        <tr><td>每日边界用 JVM 默认时区（巴西错 3h）</td><td>统一 America/Sao_Paulo 业务时区</td></tr>
+        <tr><td rowspan="2"><b>② 2.0 新增</b><br>（算法切片背书）</td><td>开箱零随机性（rewardId 确定性绑定）</td><td>掉落概率表 + PRD 保底（第四章）</td></tr>
+        <tr><td>无活动级预算控制</td><td><code>act_budget</code> 字段 + 发放前校验</td></tr>
+        <tr><td rowspan="6"><b>③ 已知问题·演进方向</b><br>（不承诺修，复盘弹药）</td><td colspan="2">锁粒度（用户×宝箱）与校验维度（用户×点位）不匹配</td></tr>
+        <tr><td colspan="2">碎片需求量双真相源（会员行定格值 vs config 当前值）</td></tr>
+        <tr><td colspan="2">GEODIST 探针方案残留主干（排障临时代码未清理）</td></tr>
+        <tr><td colspan="2">风控只按 memberId 计数，未登录/换号可绕过（缺 IP+设备指纹）</td></tr>
+        <tr><td colspan="2">CPF 验证空壳（预留扩展位 + 巴西服务商调研口径）</td></tr>
+        <tr><td colspan="2">参与漏斗无回流（曝光→打卡→领取→开启→合成→核销）</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout gold">
+      <div class="ttl">重构动机叙事（最真实版）</div>
+      "同一个工程师在券域做对了（状态派生/过期任务/业务时区/配置域），在寻宝没来得及做"——14 项缺陷里 6 项在 coupon-refactor 里已经用正确姿势做过一遍，这就是重构动机的证据链。
+    </div>
+  </section>
+
+  <!-- ==================== 八、已知问题与演进 ==================== -->
+  <section>
+    <h2><span class="no">第八章 · 边界</span>已知问题与演进方向</h2>
+    <p class="lead">初级工程师吹自己做的多完美；资深工程师说"我知道哪还没做好、为什么、打算怎么排"。</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>已知问题</th><th>演进方向</th><th>为什么不现在做</th></tr></thead>
+      <tbody>
+        <tr><td>风控单维度（memberId）</td><td>IP + 设备指纹 + 规则引擎化</td><td>上线后按真实攻击数据排期，不凭空设计</td></tr>
+        <tr><td>邀请裂变只一级</td><td>裂变层级奖励 + 渠道追踪</td><td>等产品验证一级裂变的转化</td></tr>
+        <tr><td>无数据看板</td><td>发放事件接入数仓，漏斗报表</td><td>事件外发已就位（2.0），看板是下游的事</td></tr>
+        <tr><td>CPF 合规断头路</td><td>对接巴西 CPF 验证服务商（预留接口）</td><td>实物大奖未上线，合规环节随之未启动</td></tr>
+        <tr><td>预算只有校验没有熔断</td><td>预算水位告警 + 自动下架</td><td>先跑一个活动看花费曲线</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ==================== 九、代码切片 ==================== -->
+  <section>
+    <h2><span class="no">第九章 · 切片</span>代码实战：code/activity-engine/</h2>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>优先级</th><th>内容</th><th>预算</th><th>砍单逻辑</th></tr></thead>
+      <tbody>
+        <tr><td>P0</td><td>加权区间查表（O1/OLogN + 阈值切换）</td><td>3h</td><td>不可砍——抽奖决策主力</td></tr>
+        <tr><td>P0</td><td>PRD + 硬保底（C 值二分反解）</td><td>3h</td><td>不可砍——寻宝稀有碎片优化叙事核心</td></tr>
+        <tr><td>P1</td><td>红包二倍均值</td><td>1.5h</td><td>时间不够先砍——最简单、无项目锚点</td></tr>
+        <tr><td>P2</td><td>秒杀 Lua 预减片段（已就位）</td><td>1.5h</td><td>降级为片段——秒杀是架构不是算法</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>切片 #2（算法日之后）</b>：抽奖最小闭环管线——资格链 2 节点 → 决策 → 规则树 2 节点 → 1 个 issuer，把算法嵌进真实管线，对照 big-market <code>performRaffle</code> 逐行讲演进。孤立的算法和"引擎里的算法"是两个物种。</p>
+    <div class="callout red">
+      <div class="ttl">诚实红线（简历与面试口径）</div>
+      简历动词限<b>"设计 / 验证"</b>："识别营销活动共性，设计统一活动引擎方案并完成抽奖内核与决策算法库的代码验证"。不写"落地/上线完整活动引擎平台"。切片零公司代码，可挂个人 GitHub。
+    </div>
+  </section>
+
+  <div class="lesson-nav">
+    <a href="../index.html">← 返回首页</a>
+    <a class="primary" href="0004-redis-follow-up-chains.html">第 4 课 · Redis 追问链 →</a>
+  </div>
+
+</div>
+</body>
+</html>
