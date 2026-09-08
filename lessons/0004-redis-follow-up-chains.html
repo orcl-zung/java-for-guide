@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 4 课 · Redis 追问链</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js"></script>
+<script src="../assets/nav.js"></script>
+</head>
+<body>
+<div class="page">
+
+  <div class="kicker">Java Offer 突围战 · 第 4 课 · 核心专题</div>
+  <h1>Redis 追问链</h1>
+  <p class="subtitle">六条链，每条 = 一层答案 + 预判的二三层追问。Redis 是你实战锚点最密的一科（红包雨分布式锁 / 预扣库存 / 缓存改造）——这课的任务是把野路子校准成方法论。</p>
+  <div class="meta-badges">
+    <span class="badge red">实战密度最高的一科</span>
+    <span class="badge">9/8 - 9/9 · 两天（MySQL 锁篇超期顺延）</span>
+    <span class="badge">市场权重 ★★★（必考 + 必结合项目）</span>
+    <span class="badge gold">方法：追问链自测 → 卡点提问</span>
+  </div>
+
+  <hr class="rule">
+
+  <!-- ==================== 一、怎么用 ==================== -->
+  <section>
+    <h2><span class="no">第一部分 · 方法</span>这课怎么用</h2>
+    <p class="lead">打法同 MySQL 课，但更进一步——<b>你的 Redis 实战比八股强，所以顺序反过来：先讲你的实战，再用链补齐理论断层</b>。被问任何一条链，标准开场是"我们红包雨/库存场景就是这么做的"，然后往理论挂。</p>
+    <div class="flow">
+      <div class="step"><b>① 盖住答案讲 30 秒</b>出声讲，卡壳的那层标记。</div>
+      <div class="step"><b>② 对答案补断层</b>你大概率一层都能讲，断层在二三层追问。</div>
+      <div class="step"><b>③ 实战锚点出声练</b>每条链末尾的 .you 段是你要背到脱口而出的。</div>
+      <div class="step hot"><b>④ 六勾过关</b>讲满三层的打勾，六勾齐了 Redis 这科收官。</div>
+    </div>
+  </section>
+
+  <!-- ==================== 二、六条追问链 ==================== -->
+  <section>
+    <h2><span class="no">第二部分 · 正课</span>六条追问链</h2>
+    <p class="lead">出题逻辑：面试官拿到你简历上的"Redis 缓存改造 / 分布式锁 / 预扣库存"，会沿这六条链往下拷。</p>
+
+    <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 1 · Redis 为什么快？单线程为什么反而快？</span></summary>
+      <p class="q-hook"><b>一层：</b>四个原因一口气说完——纯内存操作（纳秒级）+ 单线程无锁竞争、无上下文切换 + IO 多路复用（epoll，一个线程看管所有连接）+ 高效数据结构（SDS/跳表/listpack）。</p>
+      <p class="q-hook"><b>追问①：单线程为什么不是瓶颈？</b><br>Redis 的瓶颈在<b>网络 IO 和内存带宽，不在 CPU</b>；单线程免掉了锁竞争和线程切换的开销，反而把内存操作的速度优势吃满。</p>
+      <p class="q-hook"><b>追问②：6.0 为什么又引入多线程？</b><br>多线程只用在<b>网络读写</b>（IO 线程组并行收包/发包），<b>命令执行仍然是单线程</b>——所以无锁设计全部保留，不存在多线程写数据的一致性问题。别答成"6.0 变多线程了"，要说清线程用在了哪。</p>
+      <p class="q-hook"><b>追问③：单线程的坑是什么？</b><br>一条慢命令堵死全服务：<code>keys *</code>、大 key 的 hgetall/smembers、bigkey 的 del。生产对策：禁 keys 用 <code>scan</code>；大 key 删除用 <code>unlink</code>（异步）；监控 slowlog。</p>
+      <p class="q-hook"><span class="you">你的锚点：被问"你们 Redis 出过什么问题"时，慢命令 + 大 key 是最自然的故障叙事入口（接链 2 追问③）。</span></p>
+    </details>
+
+    <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 2 · 数据结构：string/hash/zset 底层是什么？场景怎么选？</span></summary>
+      <p class="q-hook"><b>一层：</b>五件套场景先顺溜——string：计数器、缓存对象（JSON）、分布式锁；hash：对象部分字段频繁改（比 string+JSON 省内存、可单字段改）；list：简单队列；set：去重、交集（共同好友）；zset：排行榜、延迟队列（score=执行时间戳）。</p>
+      <p class="q-hook"><b>追问①：底层结构？</b><br>SDS：O(1) 取长度、二进制安全、预分配减少扩容（对比 C 字符串三宗罪）；hash：listpack（7.0 前 ziplist）→ 阈值后转 hashtable；zset：元素少用 listpack，多了用 <b>skiplist + hashtable</b>（跳表管范围、哈希管单查）。</p>
+      <p class="q-hook"><b>追问②：zset 为什么用跳表不用红黑树？</b><br>三板：范围查询跳表是链表顺序遍历、红黑树要中序遍历；实现简单得多；插入删除不需要旋转平衡。加分回答：跳表层级靠随机，期望 O(logN)。</p>
+      <p class="q-hook"><b>追问③：大 key 和热 key 怎么处理？</b><br>大 key：阻塞单线程（删/读都慢）、内存倾斜（集群里某个节点爆）、迁移慢——拆 key（大 hash 拆成 N 段）、unlink 异步删、能不用大集合就不用。热 key：单节点被打爆——本地缓存（Caffeine）兜一层、热 key 拆多份加随机后缀、读写分离分摊读。</p>
+      <p class="q-hook"><span class="you">你的锚点：营销平台的用户积分/标签缓存就是 hash 选型的现成例子——"为什么用 hash 不用 string 存 JSON：字段级更新 + 省内存"。</span></p>
+    </details>
+
+    <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 3 · 穿透 / 击穿 / 雪崩 + 缓存一致性怎么保证？</span></summary>
+      <p class="q-hook"><b>一层（三兄弟必须一口气顺溜讲完）：</b><b>穿透</b>＝查根本不存在的数据，缓存永远 miss，请求全打到 DB → 布隆过滤器拦 / 空值缓存（短 TTL）；<b>击穿</b>＝一个热点 key 过期瞬间，并发全回源 → 互斥锁（只放一个请求回源）/ 逻辑过期（不真过期，异步刷新）；<b>雪崩</b>＝大面积 key 同时过期或 Redis 宕机 → 随机 TTL 打散 + 多级缓存 + 限流降级兜底。</p>
+      <p class="q-hook"><b>追问①：缓存一致性（Cache Aside 旁路缓存）：</b>读——先查缓存，miss 回源 DB 再写缓存；写——<b>先写 DB，再删缓存</b>。两个"为什么是删不是更新"：懒加载避免无效计算（写了不一定有人读）；更新缓存在并发下会双写不一致（两个写线程交叉更新出旧值）。</p>
+      <p class="q-hook"><b>追问②：先写库还是先删缓存？窗口都在哪？</b><br>先删缓存再写库：删完还没写库，另一个线程读 miss 回源拿到<b>旧值</b>写进缓存 → 长时间脏数据。先写库再删缓存：窗口极小（读 miss 回源恰好发生在写库前、删缓存后），但仍存在 → 所以引出<b>延迟双删</b>（写库后隔几百 ms 再删一次）或 <b>binlog 订阅（canal）异步失效</b>兜底。</p>
+      <p class="q-hook"><b>追问③：能保证强一致吗？</b><br>不能，也别保证——缓存的定位就是最终一致。强一致诉求的数据（库存、余额）不要走缓存，走 DB 行锁/乐观锁。这句一出，面试官知道你真权衡过。</p>
+      <p class="q-hook"><span class="you">你的锚点：营销平台缓存改造——"我们热点配置读走缓存、写走后延迟双删，因为对时效性要求不高，用复杂度换性能"。</span></p>
+    </details>
+
+    <details class="q-item f2">
+      <summary><span class="stars">★★☆</span> <span class="q-text">链 4 · 持久化 + 高可用：RDB/AOF、主从、哨兵、集群？</span></summary>
+      <p class="q-hook"><b>一层：</b>RDB＝定时快照，恢复快但丢整个窗口；AOF＝命令追加日志，everysec 最多丢 1 秒；4.0 起混合持久化＝RDB 头 + AOF 增量，鱼和熊掌。高可用三级：主从复制 → 哨兵（监控+自动故障转移）→ 集群（16384 槽分片，gossip 通信）。</p>
+      <p class="q-hook"><b>追问①：AOF 刷盘策略与 rewrite？</b><br>always/everysec/no 三档——和 MySQL <code>innodb_flush_log_at_trx_commit</code> 0/1/2 是同一个"安全 vs 性能"权衡（勾连第 2 课链 6 阅读指南）。rewrite＝把冗余命令压成最小命令集（set a 100 次只留最后一次），fork 子进程做、不阻塞主线程。</p>
+      <p class="q-hook"><b>追问②：主从复制细节 + 脑裂？</b><br>全量（RDB 快照 + 缓冲命令）vs 增量（repl_backlog 环形缓冲区）。脑裂：主库假死，哨兵升从为新主，旧主复活后客户端还往旧主写 → 数据双份。缓解：min-replicas-to-write（旧主写不进从库就拒写）。</p>
+      <p class="q-hook"><b>追问③：集群为什么是 16384 个槽？</b><br>槽位信息靠心跳包广播：65536 个槽的 bitmap 要 8KB/心跳，太浪费；16384 只要 2KB；且集群节点一般不过千，16384 够分。</p>
+      <p class="q-hook"><span class="you">你的锚点：充电宝出海的 Redis 是哨兵还是集群、为什么这么选——想不起来今晚就去查，这是"你们架构怎么搭的"必答题。</span></p>
+    </details>
+
+    <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 5 · 分布式锁怎么实现？Redisson 原理？</span></summary>
+      <p class="q-hook"><b>一层：</b><code>SET key value NX EX</code> 原子抢锁（NX 不存在才设 + EX 过期，一条命令原子——别拆成 setnx + expire 两条）；value 存唯一标识（UUID/线程 ID），释放用 Lua 脚本"比对再删"（防误删别人的锁）。</p>
+      <p class="q-hook"><b>追问①：锁过期了业务还没跑完？</b><br>Redisson 看门狗：默认锁 30s，后台线程每 10s（1/3）续期，业务活着锁就在；Redisson 加锁失败默认自旋重试 + Lua 保原子。可重入靠 hash 结构（field=线程，value=重入次数）。</p>
+      <p class="q-hook"><b>追问②：主从切换丢锁？</b><br>锁写主库还没同步到从库，主库挂了、从库升主 → 锁没了，第二个人又拿到同一把锁 → RedLock（多数派节点都加成功才算成功）→ 但 RedLock 有争议：Martin Kleppmann vs antirez 之争——时钟跳变、GC 停顿下 RedLock 也不绝对安全，根治要 fencing token（单调递增令牌，下游拒绝旧令牌）。<b>说出这场争论直接加分。</b></p>
+      <p class="q-hook"><b>追问③：什么时候不该用分布式锁？</b><br>能用 DB 唯一约束/乐观锁兜底的场景别上锁——你的四次扣费就是这么干的：防重表唯一约束兜底，比锁简单还可靠。分布式锁治"互斥执行"，不包"数据正确性"。</p>
+      <p class="q-hook"><span class="you">你的锚点（双份）：红包雨防重复发放 + 充电宝单柜单用户下单——"为什么选 Redisson 不手写 setnx：看门狗续期 + 可重入 + 现成的 Lua 释放"。</span></p>
+    </details>
+
+    <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 6 · 场景题：秒杀/红包雨的库存怎么设计？（系统设计专项预演）</span></summary>
+      <p class="q-hook"><b>一层（三板斧主线）：</b>前端静态化 + CDN 挡读流量 → <b>Redis Lua 预扣库存</b>（原子扣减，扛住洪峰）→ MQ 异步下单削峰 → DB <code>stock &gt; 0</code> 条件更新兜底。讲清一句：<b>DB 不能碰洪峰流量</b>，流量在 Redis 层就要消化掉。</p>
+      <p class="q-hook"><b>追问①：为什么 Lua？</b><br>Redis 单线程执行，脚本整体原子——"查库存 + 扣减"若拆成两条命令，中间会被人插队（check-then-act 的 Redis 版，勾连第 2 课链 4 幻读事故形态）。</p>
+      <p class="q-hook"><b>追问②：Redis 扣了、DB 没写成怎么办？</b><br>MQ 消费失败重试 + 死信队列兜底；定时对账任务核 Redis 与 DB 库存；超卖最终防线是 DB 的条件更新（<code>update ... where stock &gt; 0</code>，靠行锁串行化最后一道）。</p>
+      <p class="q-hook"><b>追问③（流量大 10 倍）：</b>库存拆段（100 个 key 各存 1/100，扣完再合）、本地缓存读、限流令牌桶、降级（卖完直接返回，不再回源）。</p>
+      <p class="q-hook"><span class="you">你的锚点：红包雨就是秒杀同构——把"红包余量"当库存讲，三板斧直接套，这是你系统设计专项（9/19-20）的第一块积木。</span></p>
+    </details>
+  </section>
+
+  <!-- ==================== 三、结合项目 ==================== -->
+  <section>
+    <h2><span class="no">第三部分 · 结合项目</span>面试官一定会把 Redis 往你的项目上引</h2>
+    <p class="lead">Redis 是你三条引线最密的一科，提前焊死：</p>
+    <ul>
+      <li><b>充电宝红包雨</b>→ 防重复发放（Redisson 锁）+ 余量预扣 → 挂链 5、链 6。</li>
+      <li><b>单柜单用户下单</b>→ 分布式锁选型（为什么 Redisson 不手写）→ 挂链 5 追问①②。</li>
+      <li><b>营销平台缓存改造</b>→ 穿透/击穿/雪崩 + 延迟双删 → 挂链 3。</li>
+      <li><b>四次扣费幂等</b>→ "为什么用唯一约束不用分布式锁" → 挂链 5 追问③（跨科勾连 MySQL 链 5）。</li>
+    </ul>
+    <div class="callout green">
+      <span class="ttl">主动权的打法</span>
+      讲完任何一条链的标准答案，补一句带项目的话——"我们红包雨当时就是这么防超发的"。<b>把话题引进自己主场，面试官就不用费心找偏题拷你了。</b>
+    </div>
+  </section>
+
+  <!-- ==================== 四、过关 ==================== -->
+  <section>
+    <h2><span class="no">第四部分 · 过关</span>六条链，你能扛住几层？</h2>
+    <p class="lead">每条链出声讲满三层（一层答案 + 两层追问 + 实战锚点）就打勾。六勾齐了，Redis 收官，转并发（勾连 MVCC↔COW 对照表的另一半）。</p>
+    <div id="checks"></div>
+    <h3 style="margin-top:16px" id="checkSummary">0 / 6</h3>
+    <div id="passBox" style="display:none" class="callout green">
+      <span class="ttl">过关</span>
+      六条链全部三层讲顺。去第 1 课把 Redis 自评改上去，然后开并发专题。
+    </div>
+    <div class="callout">
+      <span class="ttl">任何一层讲不顺，直接问我</span>
+      比如"RedLock 到底安不安全"——在 Claude Code 里打出来，我给你拆到讲顺为止。
+    </div>
+  </section>
+
+  <div class="lesson-nav no-print">
+    <a class="primary" href="../reference/0001-high-frequency-topics.html">📋 对照速查手册 · 模块五 Redis →</a>
+    <a href="0002-mysql-follow-up-chains.html">← 第 2 课 · MySQL 追问链</a>
+    <a href="../index.html">🏠 课程主页</a>
+  </div>
+
+  <footer class="site">
+    <span>Java Offer 突围战 · 第 4 课 / Redis 追问链</span>
+    <span>9/8 - 9/9 · 2026</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var CHAINS = [
+    { id: "fast",    name: "链 1 · 为什么快（单线程 / 多路复用 / 6.0 多线程边界）" },
+    { id: "ds",      name: "链 2 · 数据结构（SDS / 跳表 / 大 key 热 key）" },
+    { id: "cache",   name: "链 3 · 穿透击穿雪崩 + 缓存一致性（旁路 / 延迟双删）" },
+    { id: "ha",      name: "链 4 · 持久化与高可用（RDB/AOF / 哨兵 / 集群槽）" },
+    { id: "lock",    name: "链 5 · 分布式锁（Redisson 看门狗 / RedLock 之争）" },
+    { id: "seckill", name: "链 6 · 秒杀预扣场景（Lua 原子 / 三板斧 / 拆段）" }
+  ];
+  var KEY = "java-offer-redis-chains-v1";
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+
+  var box = document.getElementById("checks");
+  CHAINS.forEach(function (c) {
+    var row = document.createElement("div");
+    row.className = "rate-row";
+    var checked = saved[c.id] ? " checked" : "";
+    row.innerHTML =
+      '<div class="r-name">' + c.name + '</div>' +
+      '<div class="dots"><label><input type="checkbox" data-id="' + c.id + '"' + checked + '><span>✓</span></label></div>';
+    box.appendChild(row);
+  });
+
+  function compute() {
+    var done = 0;
+    var state = {};
+    box.querySelectorAll("input[type=checkbox]").forEach(function (cb) {
+      state[cb.getAttribute("data-id")] = cb.checked;
+      if (cb.checked) done++;
+    });
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    document.getElementById("checkSummary").textContent =
+      done + " / 6" + (done > 0 && done < 6 ? " —— 还差 " + (6 - done) + " 条，今晚先攻标记的" : "");
+    document.getElementById("passBox").style.display = done === 6 ? "" : "none";
+  }
+  box.addEventListener("change", compute);
+  compute();
+})();
+</script>
+</body>
+</html>

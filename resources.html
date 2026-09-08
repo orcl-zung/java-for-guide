@@ -50,8 +50,11 @@
         <div class="d" style="margin-top:6px">
           锁篇（05）逐篇判定（2026-09-07，读序 ②→⑤→⑥→①三节→③，详见第 2 课"链 5 阅读指南"）：<br>
           · 必读：<a href="https://xiaolincoding.com/mysql/lock/how_to_lock.html" target="_blank">是怎么加锁的</a>（两原则两优化案例推演）｜<a href="https://xiaolincoding.com/mysql/lock/deadlock.html" target="_blank">死锁了怎么办</a>（隐式锁转换+排查方法论）<br>
-          · 快读：<a href="https://xiaolincoding.com/mysql/lock/show_lock.html" target="_blank">字节死锁面试题</a>（模拟考）｜<a href="https://xiaolincoding.com/mysql/lock/lock_index.html" target="_blank">update 没加索引锁全表？</a>（锁全表 ≠ 表锁）<br>
-          · 选读三节：<a href="https://xiaolincoding.com/mysql/lock/mysql_lock.html" target="_blank">有哪些锁</a>——只读全局锁 / MDL / 意向锁；可跳：删除导致的幻读（框架现场推）
+          · 快读：<a href="https://xiaolincoding.com/mysql/lock/show_lock.html" target="_blank">字节死锁面试题</a>（模拟考）｜<a href="https://xiaolincoding.com/mysql/lock/update_index.html" target="_blank">update 没加索引锁全表？</a>（锁全表 ≠ 表锁）<br>
+          · 选读三节：<a href="https://xiaolincoding.com/mysql/lock/mysql_lock.html" target="_blank">有哪些锁</a>——只读全局锁 / MDL / 意向锁；可跳：<a href="https://xiaolincoding.com/mysql/lock/lock_phantom.html" target="_blank">删除导致的幻读</a>（框架现场推）
+        </div>
+        <div class="d" style="margin-top:6px">
+          日志/内存篇判定（2026-09-07）：精读 <a href="https://www.xiaolincoding.com/mysql/log/how_update.html" target="_blank">undo/redo/binlog</a> 增量三小节（WAL+环形写 / 物理 vs 逻辑日志 / 刷盘参数 0/1/2 + sync_binlog）｜<a href="https://www.xiaolincoding.com/mysql/buffer_pool/buffer_pool.html" target="_blank">Buffer Pool</a> 精读两块（改进版 LRU、change buffer）；架构篇已通关＝地基①②⑥
         </div>
       </div>
       <a class="card" href="https://jums.gitbook.io/mysql-shi-zhan-45-jiang" target="_blank">

@@ -192,8 +192,8 @@ t8  D: begin; UPDATE id=3 → 分配 104；SELECT id=1
         <tr><th>篇目</th><th>判定</th><th>读法与理由</th></tr>
         <tr><td>① <a href="https://xiaolincoding.com/mysql/lock/mysql_lock.html" target="_blank">MySQL 有哪些锁？</a></td><td><b>选读三节</b></td><td>总览型。行级锁 / AUTO-INC / 间隙锁部分<b>跳过</b>（已被链 5 补充 + 答疑覆盖且更深）。只读增量三节：<b>全局锁</b>（FTWRL 全库只读 vs <code>mysqldump --single-transaction</code> 开事务靠 ReadView 备份——接链 4 MVCC）、<b>MDL 元数据锁</b>（见下方专段）、<b>意向锁</b>（表级 IS/IX 存在的理由：不用遍历全表就能判断有无行锁）</td></tr>
         <tr><td>② <a href="https://xiaolincoding.com/mysql/lock/how_to_lock.html" target="_blank">MySQL 是怎么加锁的？</a></td><td><b>必读 ★★★</b></td><td>链 5 主战场。两原则两优化 chanjarster 文给的是浓缩规则，这篇是<b>带图的案例推演</b>（唯一索引 / 非唯一索引 × 等值 / 范围逐个推）。被拷"加锁规则"要当场推得出来，不是背</td></tr>
-        <tr><td>③ <a href="https://xiaolincoding.com/mysql/lock/lock_index.html" target="_blank">update 没加索引会锁全表吗？</a></td><td>快读 10 分钟</td><td>答案已有（链 5 追问①）。读实验细节校准口径：锁全表 = 所有行 next-key + 全间隙；主动说出<b>"锁全表 ≠ 表锁"</b>这个区分</td></tr>
-        <tr><td>④ <a href="https://xiaolincoding.com/mysql/lock/phantom_read.html" target="_blank">记录锁+间隙锁能防止删除导致的幻读吗？</a></td><td>可跳</td><td>边界应用题，框架已齐（快照读靠 MVCC、当前读靠 next-key）。遇到追问用框架现场推</td></tr>
+        <tr><td>③ <a href="https://xiaolincoding.com/mysql/lock/update_index.html" target="_blank">update 没加索引会锁全表吗？</a></td><td>快读 10 分钟</td><td>答案已有（链 5 追问①）。读实验细节校准口径：锁全表 = 所有行 next-key + 全间隙；主动说出<b>"锁全表 ≠ 表锁"</b>这个区分</td></tr>
+        <tr><td>④ <a href="https://xiaolincoding.com/mysql/lock/lock_phantom.html" target="_blank">记录锁+间隙锁能防止删除导致的幻读吗？</a></td><td>可跳</td><td>边界应用题，框架已齐（快照读靠 MVCC、当前读靠 next-key）。遇到追问用框架现场推</td></tr>
         <tr><td>⑤ <a href="https://xiaolincoding.com/mysql/lock/deadlock.html" target="_blank">MySQL 死锁了，怎么办？</a></td><td><b>必读 ★★★</b></td><td>把锁表死锁实战校准成方法论：insert 的<b>隐式锁→显式锁转换</b>、<code>show engine innodb status</code> 读日志、<code>data_locks</code> 表。与已入档的爱可生案例互证</td></tr>
         <tr><td>⑥ <a href="https://xiaolincoding.com/mysql/lock/show_lock.html" target="_blank">字节面试：加了什么锁，导致死锁的？</a></td><td>快读当模拟考</td><td>面试真题复盘。读完 ②⑤ 后自测：先自己推加锁过程再对答案——推不出来就是 ② 没吃透</td></tr>
       </table>
@@ -227,6 +227,44 @@ t8  D: begin; UPDATE id=3 → 分配 104；SELECT id=1
       <p class="q-hook"><b>弹药卡② · 主从复制</b>：mode 2 ⟺ ROW binlog，见上——"大厂为什么全 ROW"故事的另一半。</p>
       <p class="q-hook"><b>弹药卡③ · 分布式 ID（9/19-20 系统设计专项主力，接链 6 追问②"全局 ID"）：</b>分库后单库 auto-inc 直接失效（两个库会发出相同的号）→ 选型三连：<b>UUID</b>——无序，当主键插入会频繁页分裂、伤 B+ 树；<b>雪花</b>——依赖机器时钟，有时钟回拨问题；<b>号段模式</b>（美团 Leaf-segment）——每次去 DB 把 max_id += step（如 1000）领一段，应用内存里慢慢发、发完再领。<b>号段的本质 = 把 AUTO-INC 的"短临界区 mutex 分配计数器"思想放大搬到应用层做批量预取</b>——理解了 AUTO-INC 为什么 mutex 化，号段就是同一思想换了个位置。</p>
       <p class="q-hook"><span class="you">30 秒口径："AUTO-INC 锁本身低频，记三层：语句级表锁（不等事务提交）→ 5.1.22 mutex 化只护计数器分配 → 三档按行数可预知性分流，bulk 退回表锁是因为交错分配会让 statement 复制主从不一致，所以 mode 2 必须配 ROW binlog。它值钱在三处弹药：自增空洞（回滚不回退，连续性换并发度）、ROW binlog 的另一半理由、号段模式的设计原型——分库分表问全局 ID 时直接把这套端出去。"</span></p>
+    </details>
+
+    <details class="q-item f3">
+      <summary><span class="stars">★★★</span> <span class="q-text">链 5 补充② · 加锁规则记不住？上"推演流水线"（四步 + 速查表 + 死锁日志三步读法）</span></summary>
+      <p class="q-hook"><b>小林两篇必读（怎么加锁 / 死锁怎么办）晦涩的根因：规则陈述 → 案例罗列，中间缺"可执行的推演流程"。</b>规则背下来不会用，案例就只能死记。这层补上：拿到任何一条加锁读/写 SQL，机械过四步——</p>
+      <pre>第 0 步  走哪个索引？等值还是范围？（锁加在索引上不是表上；没索引 → 直接"锁全表"收场）
+第 1 步  扫描区间是什么？按 next-key 前开后闭 (a,b] 逐段全锁上（原则2：扫到哪锁到哪）
+第 2 步  查退化：① 唯一索引+等值+命中 → 缩成记录锁
+                ② 等值向右扫到"第一个不满足的值" → 那段缩成间隙锁（去掉记录本身）
+第 3 步  回表了吗？（非覆盖 + FOR UPDATE/UPDATE/DELETE）→ 主键上补一把记录锁</pre>
+      <p class="q-hook"><b>退化不用背，一句心法：每次退化都是"有东西保证了这里不会再变，所以敢锁小一点"</b>——唯一索引等值命中：唯一性保证没有第二个相同值 → 不用防插入 → 记录锁够；等值扫到不满足的值：那个值不等于目标、改它不影响我的答案 → 只防插入 → 间隙锁够。</p>
+      <p class="q-hook"><b>流水线示范（表：主键 id、普通索引 c；数据 0/5/10/15/20/25）：</b>① <code>id=7 for update</code>（唯一等值未命中）→ 扫到第一个 &gt;7 的值 10，(5,10] 上 next-key → 10 不满足等值退化 → <b>间隙锁 (5,10)</b>：插 id=8 被挡，改 id=5/10 没事。② <code>c=5 for update</code>（非唯一等值命中）→ 命中段 (0,5] next-key；<b>因为不唯一、5 可能还有下一个</b>，右扫到第一个 ≠5 的值 10，再锁 (5,10] → 退化为间隙 (5,10)；select * 回表 → 主键 id=5 补记录锁。结果 = <b>c 索引 (0,5] next-key + (5,10) 间隙 + 主键 id=5 记录锁</b>。为什么锁两段：新的 c=5 可能从 5 的前面或后面插入（索引按 (c,id) 排），两边都得防。</p>
+      <p class="q-hook"><b>六格速查表：</b></p>
+      <table>
+        <tr><th>索引 × 形态</th><th>最终锁</th><th>一句话为什么</th></tr>
+        <tr><td>无索引，任何形态</td><td>全行 next-key + 全间隙 = 锁全表</td><td>没索引可锁，全表扫全表锁</td></tr>
+        <tr><td>唯一索引 · 等值命中</td><td>记录锁</td><td>唯一性保证无第二值，不用防插</td></tr>
+        <tr><td>唯一索引 · 等值未命中</td><td>所在间隙的间隙锁</td><td>只有一个"不存在"要守住</td></tr>
+        <tr><td>非唯一索引 · 等值</td><td>命中段 next-key + 右侧一段间隙 + 回表记录锁</td><td>同值可能从前后两个方向插入</td></tr>
+        <tr><td>范围查询</td><td>next-key 逐段锁到第一个不满足的值</td><td>范围没有唯一性可借力，不退化（旧版本多锁一段的 bug，8.0.26 修复）</td></tr>
+      </table>
+      <p class="q-hook"><b>死锁篇读法（依赖加锁推演，所以放这里）：</b>读 <code>LATEST DETECTED DEADLOCK</code> 固定三步——① 每个事务看 <code>HOLDS</code>（持有什么）和 <code>WAITING FOR</code>（在等什么）两行；② 列清单：T1 持 A 等 B、T2 持 B 等 A；③ 画得出环 = 死锁，环上的锁类型就是病因。<b>经典形态只有两种</b>：形态一 GAP × 插入意向锁（双方各持同一间隙锁——兼容所以都拿到了——各自 insert 互堵成环，爱可生案例）；形态二 唯一键并发 insert（重复检查先加 S 锁，各持 S 等对方 X 成环）。顺带一个晦涩点：<b>隐式锁</b>——insert 的新行先靠 trx_id 隐藏列"暗锁"，不加显式锁，别人要冲突访问时才转换——纯性能优化。</p>
+      <p class="q-hook"><span class="you">自测口径 + 重读策略：加锁篇每个案例<b>先遮答案用四步自己推</b>再对答案，推错处就是规则没懂处；死锁篇只看"加锁过程推导"部分，用速查表逐步验证；字节面试题当期末考。能给任何一条 SQL 推出最终锁并说清每步的"为什么敢锁小"，这关就算过。</span></p>
+    </details>
+
+    <details class="q-item f2">
+      <summary><span class="stars">📖</span> <span class="q-text">链 6 阅读指南 · 小林日志篇 / 架构篇怎么读（日志篇精读增量 3 小节，40 分钟；架构篇已通关）</span></summary>
+      <p class="q-hook">先核销存量：<b>架构篇《MySQL 的架构是怎样的》已通关</b>——它就是地基①②⑥的来源（2026-09-01 沉淀），忘了看地基区比重读原文快；<b>基础篇《一行记录是怎么存储的》可跳</b>（行格式低频，真被问用"页 + 变长字段"常识推）。剩下只有日志篇一篇要读：<a href="https://www.xiaolincoding.com/mysql/log/how_update.html" target="_blank">undo log、redo log、binlog 有什么用？</a>（🔥 篇）。存量已厚：地基②⑥ + 链 6 + RC+ROW——<b>已懂的别重读</b>，增量判定如下：</p>
+      <table>
+        <tr><th>小节</th><th>判定</th><th>理由</th></tr>
+        <tr><td>undo log 作用 / 版本链 / purge</td><td><b>跳过</b></td><td>链 4 补充③ 比这篇讲得深</td></tr>
+        <tr><td>binlog 三种格式（statement/row/mixed）</td><td>快读</td><td>row 的意义已懂（RC+ROW、AUTO-INC mode 2），对个名词</td></tr>
+        <tr><td>两阶段提交过程</td><td>快读验证</td><td>口径已有（下方链 6 追问①），拿原文校准一遍</td></tr>
+        <tr><td><b>redo 为什么先写日志（WAL）+ 环形写入 + checkpoint</b></td><td><b>精读</b></td><td>中频追问："redo 写满了怎么办"、"为什么不直接刷数据页"</td></tr>
+        <tr><td><b>redo 物理日志 vs binlog 逻辑日志</b></td><td><b>精读</b></td><td>加分项：一句话区分"某页某偏移改成什么" vs "语句/行变更"</td></tr>
+        <tr><td><b>innodb_flush_log_at_trx_commit 0/1/2 + sync_binlog</b></td><td><b>精读</b></td><td>高频运维向追问："怎么保证不丢数据"、"为什么有的业务允许丢 1 秒"——安全 vs 性能的权衡话术，场景题直接用</td></tr>
+      </table>
+      <p class="q-hook"><span class="you">读完自测：不看资料能讲清"提交时到底写了什么、按什么参数刷、崩了怎么恢复"三件事，日志篇就算拿下。</span></p>
     </details>
 
     <details class="q-item f2">
@@ -400,6 +438,10 @@ t8  D: begin; UPDATE id=3 → 分配 104；SELECT id=1
       ① <b>redo 回放</b>：把 redo log 里所有修改全部重做进数据页——<b>包括没提交事务的半成品，也一并重做</b>（回放不区分提交与否）；② <b>undo 回滚</b>：找出崩溃时未提交的事务，用 undo log 逐个擦掉。防追问：undo 页本身也是数据页，它的修改同样先记 redo——<b>undo log 的持久化也是 redo 保证的</b>（WAL 覆盖所有页修改）。
     </div>
     <p><b>两个"为什么"防追问：</b>① 为什么不用 OS 文件缓存、非要自建 buffer pool？进程内缓存可以定制策略（LRU、加锁、change buffer），OS 缓存做不到——所以 InnoDB 用直接 I/O 绕过 OS 缓存，避免双份缓存；② buffer pool 的 LRU 不是纯 LRU：新页插在 <b>5/8 处（midpoint）</b>，全表扫描冲进来的页进不了热区头部——防的就是一次大扫描把热点页全挤出去。</p>
+    <div class="callout gold">
+      <span class="ttl">延伸阅读 · 小林内存篇<a href="https://www.xiaolincoding.com/mysql/buffer_pool/buffer_pool.html" target="_blank">《揭开 Buffer Pool 的面纱》</a>读法（2026-09-07 判定，约 40 分钟）</span>
+      地基⑥ 已含 16KB 页 + midpoint 的种子，原文增量四块：<b>① free list / flush list 页管理——理解即可，看懂图就过；② 改进版 LRU 精读</b>——young/old 分区（5/8 与 3/8）解两个问题：<b>预读失效</b>（预读进 BP 却没人用的页放 old 区头部等淘汰）与 <b>Buffer Pool 污染</b>（全表扫描把热数据挤出去 → 进 young 区加时间门槛 <code>innodb_old_blocks_time</code>）——面试题"MySQL 为什么不用标准 LRU"的标准答案；场景弹药：全表扫描的代价不只是 IO，还有 BP 污染；<b>③ change buffer（写缓冲）精读</b>——非唯一二级索引的写优化（写时不读页、先记 change buffer 事后 merge）；经典追问"<b>为什么唯一索引不能用 change buffer</b>"：唯一性检查必须读真实页，缓冲立刻失去意义；适用场景 = 写多读少 + 非唯一索引；<b>④ 自适应哈希索引 AHI——一句话带过</b>，知道存在即可。
+    </div>
   </section>
 
   <!-- ==================== 四、面试官会把 MySQL 往你项目引 ==================== -->

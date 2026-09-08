@@ -15,6 +15,9 @@
       { n: "0002", t: "MySQL 追问链", h: "lessons/0002-mysql-follow-up-chains.html" },
       { n: "0003", t: "简历改版实战", h: "lessons/0003-resume-rework.html" }
     ]},
+    { title: "W2 · 核心专题", items: [
+      { n: "0004", t: "Redis 追问链", h: "lessons/0004-redis-follow-up-chains.html" }
+    ]},
     { title: "参考手册", items: [
       { n: "", t: "高频考点速查", h: "reference/0001-high-frequency-topics.html" },
       { n: "", t: "项目追问应答手册", h: "reference/0002-project-question-bank.html" },
