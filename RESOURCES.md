@@ -80,6 +80,10 @@
   - PRD 伪随机（保底/垫刀）：
     - [从 Dota2 的伪随机谈开 - Gamer Cat](https://samsonchen1989.github.io/post/random/)：P(N)=C×N 公式、C 值二分求解的完整代码（PfromC/CfromP）、C 值对照表（25%→C≈8.5%、保底 12 次）——PRD 第一参考。
     - [Liquipedia: Random Distribution](https://liquipedia.net/dota2/Random_Distribution)：Dota2 官方机制定义，PRD 的原始出处。
+  - 次数语义（参与权 vs 中奖上限双维度模型依据，2026-09-08 检索）：
+    - [活动拓客宝商家操作手册 - 看云](https://www.kancloud.cn/chinasoft/hdtkb/3196769)：SaaS 抽奖平台商家配置实证——"抽奖次数（每人每天/每人总）"与"中奖次数上限"是两个独立配置项。
+    - [小傅哥：大营销抽奖系统 DDD 建模 - 博客园](https://www.cnblogs.com/xiaofuge/p/18176391)：big-market 作者亲述次数账户建模（参与额度账户总/日/月，partake 下单即扣）。
+    - [有赞：抽奖活动规则怎么设计才合规又好玩？](https://www.youzan.com/cms/article/77156.html)：产品侧规则设计与合规口径。
   - 拼手气红包：
     - [微信抢红包深度解析：从算法原理到高并发工程实现 - 腾讯云](https://cloud.tencent.com/developer/article/2599348)：二倍均值法规则（[0.01, 剩余人均×2] 均匀随机）、期望锚定人均值、与线段切分法对比、"分"为单位整数计算。
     - [红包算法的秘密：从"手气王"到"手气垫底"的数学游戏 - 掘金](https://juejin.cn/post/7509737145584173068)：二倍均值法的期望/方差推导。
