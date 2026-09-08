@@ -1,3 +1,6 @@
 .DS_Store
 .claude/
 docs/
+target/
+.idea/
+*.iml
