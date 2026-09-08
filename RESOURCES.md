@@ -23,8 +23,10 @@
     - [MySQL 死锁了，怎么办？](https://xiaolincoding.com/mysql/lock/deadlock.html)：**必读**——隐式锁→显式锁转换、show engine innodb status、data_locks；与爱可生死锁案例互证。
     - [字节面试：加了什么锁，导致死锁的？](https://xiaolincoding.com/mysql/lock/show_lock.html)：快读当模拟考——先自推加锁过程再对答案。
     - [MySQL 有哪些锁？](https://xiaolincoding.com/mysql/lock/mysql_lock.html)：只读三节——全局锁（FTWRL vs mysqldump --single-transaction）、MDL（写锁排队堵死全表 CRUD 的事故链，"长事务万恶之源"第二现场）、意向锁；行级锁/AUTO-INC 部分已被课页覆盖，跳过。
-    - [update 没加索引会锁全表吗？](https://xiaolincoding.com/mysql/lock/lock_index.html)：快读 10 分钟校准口径——锁全表 = 全行 next-key + 全间隙，"锁全表 ≠ 表锁"。
-    - [记录锁+间隙锁能防止删除导致的幻读吗？](https://xiaolincoding.com/mysql/lock/phantom_read.html)：可跳——边界应用题，用"快照读靠 MVCC、当前读靠 next-key"框架现场推。
+    - [update 没加索引会锁全表吗？](https://xiaolincoding.com/mysql/lock/update_index.html)：快读 10 分钟校准口径——锁全表 = 全行 next-key + 全间隙，"锁全表 ≠ 表锁"。
+    - [记录锁+间隙锁能防止删除导致的幻读吗？](https://xiaolincoding.com/mysql/lock/lock_phantom.html)：可跳——边界应用题，用"快照读靠 MVCC、当前读靠 next-key"框架现场推。
+  - [MySQL 日志：undo log、redo log、binlog 有什么用？](https://www.xiaolincoding.com/mysql/log/how_update.html)（日志篇唯一篇，🔥）：存量已厚（地基②⑥+链 6），精读增量三小节——redo WAL+环形写+checkpoint / redo 物理日志 vs binlog 逻辑日志 / innodb_flush_log_at_trx_commit 0-2 + sync_binlog（安全 vs 性能权衡话术）；undo 部分跳过（链 4 补充③更深）（2026-09-07 判定，读法详见第 2 课"链 6 阅读指南"）。
+  - [揭开 Buffer Pool 的面纱](https://www.xiaolincoding.com/mysql/buffer_pool/buffer_pool.html)（内存篇唯一篇）：精读两块——改进版 LRU（young/old 分区解预读失效 + Buffer Pool 污染，"MySQL 为什么不用标准 LRU"的标准答案）与 change buffer（唯一索引为什么不能用的机制：唯一性检查必须读真实页）；free/flush list 理解即可、AHI 一句话带过（2026-09-07 判定，读法详见地基⑥延伸阅读）。
 - [美团技术团队：MySQL 索引原理及慢查询优化](https://tech.meituan.com/2014/06/30/mysql-index.html)
   2014 年常青文。磁盘 IO 与预读（"页"概念的原文版）、树高公式 h=㏒(m+1)N（链 1 容量计算的原版；逐符号拆解已沉淀为第 2 课地基④，2026-09-01）、建索引五大原则（最左前缀"范围之后全断"的底层拆解已沉淀为第 2 课地基⑤，2026-09-01）、带 explain 执行计划的真实慢查询案例——直接喂养链 3（EXPLAIN 四看法 + stage_poi 低区分度案例复盘已沉淀为第 2 课"链 3 补充"，2026-09-01）（2026-08-28 验证可访问）。
 - MySQL 索引优化实战阅读包（2026-09-01 检索命中验证；配套应答手册"索引优化"题的场景认领清单 A-D，认领哪个场景读哪篇）：
@@ -70,6 +72,21 @@
     Spring AI 2.0 核心概念、Spring AI vs LangChain4j 选型。
   - [paicoding：Spring AI 面试题预测](https://paicoding.com/springai-interview-questions)
     JD 最常问的 Spring AI 题目：统一模型调用 / RAG / Function Calling 与 Spring 生态集成。
+
+- 营销活动算法阅读包（2026-09-08 检索命中验证；活动引擎设计稿的算法层依据，决策 SPI 选型来源）：
+  - 抽奖概率：
+    - [使用别名算法（Alias Method）实现抽奖 - VipSoft](https://www.cnblogs.com/vipsoft/p/18924580)：Java 完整实现——初始化 O(N) 构建 Prob/Alias 两表、采样 O(1)；高频大奖池场景的终极答案，理解"为什么不选它"比会写更重要。
+    - [加权随机事件的二分查找 - chengzhaoxi](https://chengzhaoxi.xyz/7be6c115.html)：CDF 累积区间 + 二分，big-market OLogNAlgorithm 的同构方案。
+  - PRD 伪随机（保底/垫刀）：
+    - [从 Dota2 的伪随机谈开 - Gamer Cat](https://samsonchen1989.github.io/post/random/)：P(N)=C×N 公式、C 值二分求解的完整代码（PfromC/CfromP）、C 值对照表（25%→C≈8.5%、保底 12 次）——PRD 第一参考。
+    - [Liquipedia: Random Distribution](https://liquipedia.net/dota2/Random_Distribution)：Dota2 官方机制定义，PRD 的原始出处。
+  - 拼手气红包：
+    - [微信抢红包深度解析：从算法原理到高并发工程实现 - 腾讯云](https://cloud.tencent.com/developer/article/2599348)：二倍均值法规则（[0.01, 剩余人均×2] 均匀随机）、期望锚定人均值、与线段切分法对比、"分"为单位整数计算。
+    - [红包算法的秘密：从"手气王"到"手气垫底"的数学游戏 - 掘金](https://juejin.cn/post/7509737145584173068)：二倍均值法的期望/方差推导。
+  - 秒杀库存：
+    - [秒杀通用解决方案（阿里/美团/腾讯方案对比）- magicliang](https://magicliang.github.io/2021/03/10/%E7%A7%92%E6%9D%80%E9%80%9A%E7%94%A8%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/index.html)：AliSQL 内核排队（单行 8 万 TPS）vs 美团 Redis+MQ 双通道 vs 通用分层漏斗——大厂方案对比第一参考。
+    - [高并发秒杀系统实战（Redis+Lua 防超卖）- 阿里云](https://developer.aliyun.com/article/1667899)：DECR 原子预扣 + 失败回补、为什么不用 WATCH+MULTI、分段库存 userId%N 路由。
+    - [库存系统如何避免超卖和少卖？- 掘金](https://juejin.cn/post/7496345865231368203)：少卖问题（超时未支付回补 + 幂等）——只讲超卖不讲少卖是面试常见短板。
 
 ## Market（2026 行情数据 · 2026-09-03 检索）
 
