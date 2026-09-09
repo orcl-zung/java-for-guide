@@ -14,7 +14,7 @@
 
   <div class="kicker">Java Offer 突围战 · 第 4 课 · 核心专题</div>
   <h1>Redis 追问链</h1>
-  <p class="subtitle">六条链，每条 = 一层答案 + 预判的二三层追问。Redis 是你实战锚点最密的一科（红包雨分布式锁 / 预扣库存 / 缓存改造）——这课的任务是把野路子校准成方法论。</p>
+  <p class="subtitle">六条链，每条 = 一层答案 + 预判的二三层追问。Redis 是你实战锚点最密的一科（锁注解 / 延迟队列 / 多级缓存 / 多结构实战）——这课的任务是把野路子校准成方法论。<span class="you">9/9 锚点已按定型简历重焊：红包雨/营销平台叙事全部下线，锚点换成简历原话。</span></p>
   <div class="meta-badges">
     <span class="badge red">实战密度最高的一科</span>
     <span class="badge">9/8 - 9/9 · 两天（MySQL 锁篇超期顺延）</span>
@@ -27,7 +27,7 @@
   <!-- ==================== 一、怎么用 ==================== -->
   <section>
     <h2><span class="no">第一部分 · 方法</span>这课怎么用</h2>
-    <p class="lead">打法同 MySQL 课，但更进一步——<b>你的 Redis 实战比八股强，所以顺序反过来：先讲你的实战，再用链补齐理论断层</b>。被问任何一条链，标准开场是"我们红包雨/库存场景就是这么做的"，然后往理论挂。</p>
+    <p class="lead">打法同 MySQL 课，但更进一步——<b>你的 Redis 实战比八股强，所以顺序反过来：先讲你的实战，再用链补齐理论断层</b>。被问任何一条链，标准开场是"我们广告计费就是行锁 + Redisson 双保险"/"话费那边 Hash、List、Set 都在用"，然后往理论挂。</p>
     <div class="flow">
       <div class="step"><b>① 盖住答案讲 30 秒</b>出声讲，卡壳的那层标记。</div>
       <div class="step"><b>② 对答案补断层</b>你大概率一层都能讲，断层在二三层追问。</div>
@@ -39,7 +39,7 @@
   <!-- ==================== 二、六条追问链 ==================== -->
   <section>
     <h2><span class="no">第二部分 · 正课</span>六条追问链</h2>
-    <p class="lead">出题逻辑：面试官拿到你简历上的"Redis 缓存改造 / 分布式锁 / 预扣库存"，会沿这六条链往下拷。</p>
+    <p class="lead">出题逻辑：面试官拿到你简历上的"分布式锁注解 / 延迟队列 / 多级缓存 / 滑动窗口限流"，会沿这六条链往下拷。</p>
 
     <details class="q-item f3">
       <summary><span class="stars">★★★</span> <span class="q-text">链 1 · Redis 为什么快？单线程为什么反而快？</span></summary>
@@ -56,7 +56,8 @@
       <p class="q-hook"><b>追问①：底层结构？</b><br>SDS：O(1) 取长度、二进制安全、预分配减少扩容（对比 C 字符串三宗罪）；hash：listpack（7.0 前 ziplist）→ 阈值后转 hashtable；zset：元素少用 listpack，多了用 <b>skiplist + hashtable</b>（跳表管范围、哈希管单查）。</p>
       <p class="q-hook"><b>追问②：zset 为什么用跳表不用红黑树？</b><br>三板：范围查询跳表是链表顺序遍历、红黑树要中序遍历；实现简单得多；插入删除不需要旋转平衡。加分回答：跳表层级靠随机，期望 O(logN)。</p>
       <p class="q-hook"><b>追问③：大 key 和热 key 怎么处理？</b><br>大 key：阻塞单线程（删/读都慢）、内存倾斜（集群里某个节点爆）、迁移慢——拆 key（大 hash 拆成 N 段）、unlink 异步删、能不用大集合就不用。热 key：单节点被打爆——本地缓存（Caffeine）兜一层、热 key 拆多份加随机后缀、读写分离分摊读。</p>
-      <p class="q-hook"><span class="you">你的锚点：营销平台的用户积分/标签缓存就是 hash 选型的现成例子——"为什么用 hash 不用 string 存 JSON：字段级更新 + 省内存"。</span></p>
+      <p class="q-hook"><b>追问④：zset 在你手里还干过什么？——延迟队列 + 滑动窗口限流（你技能清单写了，必被拷）</b><br><b>延迟队列</b>：score = 触发时间戳，<code>zrangebyscore</code> 捞到期的任务；Redisson 延迟队列底层同构（zset 排队 + list 就绪 + 定时搬运），开箱即用。<b>必带选型对比</b>——你 MQ 侧明明写了 TTL + 死信：固定时长的延迟兜底走 MQ 省事，但 TTL 队列"到点必死"，不能随时取消、不能动态改时间；订单超时这类"可能提前取消"的延迟任务走 Redisson（<code>zrem</code> 即取消）。<br><b>滑动窗口限流</b>：<code>zadd</code> 时间戳入窗 → <code>zremrangebyscore</code> 清窗外 → <code>zcard</code> 计数，超阈值就拒——三条命令打成一个 Lua 保原子。对比固定计数器的临界突刺：窗口滑起来，边界瞬间就没有双倍流量问题。</p>
+      <p class="q-hook"><span class="you">你的锚点（话费三结构连发）：简历原话就是场景题答案——<b>Hash 存系统参数</b>（字段级改，比 string+JSON 省内存）、<b>List 管限时支付凭证</b>（FIFO，旧凭证先淘汰）、<b>Set 防订单重复</b>（sadd 判重）。被问"你用过哪些结构"就把这三连甩出去，每个都带场景。追问④两个锚在充电宝：Redisson 延迟队列框架 + 网关滑动窗口限流。</span></p>
     </details>
 
     <details class="q-item f3">
@@ -65,7 +66,7 @@
       <p class="q-hook"><b>追问①：缓存一致性（Cache Aside 旁路缓存）：</b>读——先查缓存，miss 回源 DB 再写缓存；写——<b>先写 DB，再删缓存</b>。两个"为什么是删不是更新"：懒加载避免无效计算（写了不一定有人读）；更新缓存在并发下会双写不一致（两个写线程交叉更新出旧值）。</p>
       <p class="q-hook"><b>追问②：先写库还是先删缓存？窗口都在哪？</b><br>先删缓存再写库：删完还没写库，另一个线程读 miss 回源拿到<b>旧值</b>写进缓存 → 长时间脏数据。先写库再删缓存：窗口极小（读 miss 回源恰好发生在写库前、删缓存后），但仍存在 → 所以引出<b>延迟双删</b>（写库后隔几百 ms 再删一次）或 <b>binlog 订阅（canal）异步失效</b>兜底。</p>
       <p class="q-hook"><b>追问③：能保证强一致吗？</b><br>不能，也别保证——缓存的定位就是最终一致。强一致诉求的数据（库存、余额）不要走缓存，走 DB 行锁/乐观锁。这句一出，面试官知道你真权衡过。</p>
-      <p class="q-hook"><span class="you">你的锚点：营销平台缓存改造——"我们热点配置读走缓存、写走后延迟双删，因为对时效性要求不高，用复杂度换性能"。</span></p>
+      <p class="q-hook"><span class="you">你的锚点：充电宝的 Caffeine + Redis 多级缓存（按堆内存自适应上限）——一级 Caffeine 挡热 key（勾连链 2 追问③），二级 Redis，miss 回源 DB；写侧先写库再删 Redis，Caffeine 靠短 TTL 自然过期兜底，接受秒级不一致。<b>口径提醒</b>：延迟双删你只答原理，别 claim 项目里用了——简历没写，被追问就说"评估过，我们时效要求不高，短 TTL 已够"。</span></p>
     </details>
 
     <details class="q-item f2">
@@ -82,17 +83,17 @@
       <p class="q-hook"><b>一层：</b><code>SET key value NX EX</code> 原子抢锁（NX 不存在才设 + EX 过期，一条命令原子——别拆成 setnx + expire 两条）；value 存唯一标识（UUID/线程 ID），释放用 Lua 脚本"比对再删"（防误删别人的锁）。</p>
       <p class="q-hook"><b>追问①：锁过期了业务还没跑完？</b><br>Redisson 看门狗：默认锁 30s，后台线程每 10s（1/3）续期，业务活着锁就在；Redisson 加锁失败默认自旋重试 + Lua 保原子。可重入靠 hash 结构（field=线程，value=重入次数）。</p>
       <p class="q-hook"><b>追问②：主从切换丢锁？</b><br>锁写主库还没同步到从库，主库挂了、从库升主 → 锁没了，第二个人又拿到同一把锁 → RedLock（多数派节点都加成功才算成功）→ 但 RedLock 有争议：Martin Kleppmann vs antirez 之争——时钟跳变、GC 停顿下 RedLock 也不绝对安全，根治要 fencing token（单调递增令牌，下游拒绝旧令牌）。<b>说出这场争论直接加分。</b></p>
-      <p class="q-hook"><b>追问③：什么时候不该用分布式锁？</b><br>能用 DB 唯一约束/乐观锁兜底的场景别上锁——你的四次扣费就是这么干的：防重表唯一约束兜底，比锁简单还可靠。分布式锁治"互斥执行"，不包"数据正确性"。</p>
-      <p class="q-hook"><span class="you">你的锚点（双份）：红包雨防重复发放 + 充电宝单柜单用户下单——"为什么选 Redisson 不手写 setnx：看门狗续期 + 可重入 + 现成的 Lua 释放"。</span></p>
+      <p class="q-hook"><b>追问③：什么时候不该用分布式锁？</b><br>能用 DB 唯一约束/条件更新兜底的场景别上锁——你充电宝 webhook 的简历原话就是"<b>DB CAS 更新而非分布式锁防重扣费</b>"：重复回调天然在 CAS 上撞墙，比锁简单还可靠。分布式锁治"互斥执行"，不包"数据正确性"。</p>
+      <p class="q-hook"><span class="you">你的锚点（双份，注意项目归属）：①<b>货柜项目</b>——Redisson 锁限制同一货柜并发下单，"为什么选 Redisson 不手写 setnx：看门狗续期 + 可重入 + 现成的 Lua 释放"；②<b>充电宝广告计费</b>——"FOR UPDATE 行锁 + Redisson 分布式锁双保险"：Redisson 在入口挡跨实例并发，行锁是数据正确性的最后防线，两道各管各的。加分补一句：锁在充电宝已沉淀成 <b>SpEL key 注解</b>，业务方法零侵入。</span></p>
     </details>
 
     <details class="q-item f3">
-      <summary><span class="stars">★★★</span> <span class="q-text">链 6 · 场景题：秒杀/红包雨的库存怎么设计？（系统设计专项预演）</span></summary>
+      <summary><span class="stars">★★★</span> <span class="q-text">链 6 · 场景题：秒杀/限量发放的库存怎么设计？（系统设计专项预演）</span></summary>
       <p class="q-hook"><b>一层（三板斧主线）：</b>前端静态化 + CDN 挡读流量 → <b>Redis Lua 预扣库存</b>（原子扣减，扛住洪峰）→ MQ 异步下单削峰 → DB <code>stock &gt; 0</code> 条件更新兜底。讲清一句：<b>DB 不能碰洪峰流量</b>，流量在 Redis 层就要消化掉。</p>
       <p class="q-hook"><b>追问①：为什么 Lua？</b><br>Redis 单线程执行，脚本整体原子——"查库存 + 扣减"若拆成两条命令，中间会被人插队（check-then-act 的 Redis 版，勾连第 2 课链 4 幻读事故形态）。</p>
       <p class="q-hook"><b>追问②：Redis 扣了、DB 没写成怎么办？</b><br>MQ 消费失败重试 + 死信队列兜底；定时对账任务核 Redis 与 DB 库存；超卖最终防线是 DB 的条件更新（<code>update ... where stock &gt; 0</code>，靠行锁串行化最后一道）。</p>
       <p class="q-hook"><b>追问③（流量大 10 倍）：</b>库存拆段（100 个 key 各存 1/100，扣完再合）、本地缓存读、限流令牌桶、降级（卖完直接返回，不再回源）。</p>
-      <p class="q-hook"><span class="you">你的锚点：红包雨就是秒杀同构——把"红包余量"当库存讲，三板斧直接套，这是你系统设计专项（9/19-20）的第一块积木。</span></p>
+      <p class="q-hook"><span class="you">你的锚点（用审计+设计稿口吻，别用主导口吻——简历里寻宝是你的审计对象）：活动引擎的"<b>先到先得</b>"就是秒杀同构。话术："我审计寻宝全链路时定位过发放链路的 14 项缺陷，引擎归位方案里 FirstCome 走 Redis Lua 预减 → MQ 异步落库 → DB 条件更新兜底，红包余量就是库存"——这套第 5 课设计稿写着，code/activity-engine 里有你亲手写的 Lua 片段，讲得有底气。这是你系统设计专项（9/19-20）的第一块积木。</span></p>
     </details>
   </section>
 
@@ -101,14 +102,17 @@
     <h2><span class="no">第三部分 · 结合项目</span>面试官一定会把 Redis 往你的项目上引</h2>
     <p class="lead">Redis 是你三条引线最密的一科，提前焊死：</p>
     <ul>
-      <li><b>充电宝红包雨</b>→ 防重复发放（Redisson 锁）+ 余量预扣 → 挂链 5、链 6。</li>
-      <li><b>单柜单用户下单</b>→ 分布式锁选型（为什么 Redisson 不手写）→ 挂链 5 追问①②。</li>
-      <li><b>营销平台缓存改造</b>→ 穿透/击穿/雪崩 + 延迟双删 → 挂链 3。</li>
-      <li><b>四次扣费幂等</b>→ "为什么用唯一约束不用分布式锁" → 挂链 5 追问③（跨科勾连 MySQL 链 5）。</li>
+      <li><b>货柜·同一货柜并发下单</b>→ Redisson 锁选型（为什么不手写 setnx）→ 挂链 5 追问①②。</li>
+      <li><b>充电宝·广告计费双保险</b>→ FOR UPDATE 行锁 + Redisson 分工（入口挡并发 / 行锁保正确性）→ 挂链 5，顺带勾连链 3 追问③"强一致不走缓存走 DB"。</li>
+      <li><b>充电宝·webhook 防重扣费</b>→ "为什么 DB CAS 不用分布式锁" → 挂链 5 追问③（跨科勾连 MySQL 链 5 幂等）。</li>
+      <li><b>话费·Redis 多结构实战</b>→ Hash 系统参数 / List 限时凭证 FIFO / Set 防重 → 挂链 2 场景选型。</li>
+      <li><b>充电宝·多级缓存</b>→ Caffeine + Redis 一致性（一级短 TTL + 二级写后删除）→ 挂链 3。</li>
+      <li><b>充电宝·延迟队列 / 滑动窗口限流</b>→ zset 实现 + "为什么不用 MQ TTL+死信" → 挂链 2 追问④。</li>
+      <li><b>充电宝·设备归属路由</b>→ "为什么否决 MQ 广播 / Redis Stream"（Stream 语义：消费者组 + pending ACK，做路由表是大材小用且语义不符）→ 挂链 2 场景选型 + 链 4（实例宕机后归属怎么失效转移）。</li>
     </ul>
     <div class="callout green">
       <span class="ttl">主动权的打法</span>
-      讲完任何一条链的标准答案，补一句带项目的话——"我们红包雨当时就是这么防超发的"。<b>把话题引进自己主场，面试官就不用费心找偏题拷你了。</b>
+      讲完任何一条链的标准答案，补一句带项目的话——"我们广告计费当时就是行锁 + Redisson 双保险"。<b>把话题引进自己主场，面试官就不用费心找偏题拷你了。</b>
     </div>
   </section>
 
@@ -144,11 +148,11 @@
 (function () {
   var CHAINS = [
     { id: "fast",    name: "链 1 · 为什么快（单线程 / 多路复用 / 6.0 多线程边界）" },
-    { id: "ds",      name: "链 2 · 数据结构（SDS / 跳表 / 大 key 热 key）" },
+    { id: "ds",      name: "链 2 · 数据结构（SDS / 跳表 / zset 双杀：延迟队列·滑动窗口 / 大 key 热 key）" },
     { id: "cache",   name: "链 3 · 穿透击穿雪崩 + 缓存一致性（旁路 / 延迟双删）" },
     { id: "ha",      name: "链 4 · 持久化与高可用（RDB/AOF / 哨兵 / 集群槽）" },
     { id: "lock",    name: "链 5 · 分布式锁（Redisson 看门狗 / RedLock 之争）" },
-    { id: "seckill", name: "链 6 · 秒杀预扣场景（Lua 原子 / 三板斧 / 拆段）" }
+    { id: "seckill", name: "链 6 · 限量发放场景（Lua 原子 / 三板斧 / 拆段）" }
   ];
   var KEY = "java-offer-redis-chains-v1";
   var saved = {};

@@ -117,7 +117,7 @@
       <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">缓存与数据库一致性怎么保证？</span></div>
         <p class="q-hook">Cache Aside（先更库再删缓存）+ 为什么是删不是改 → 不一致窗口 → 延迟双删 → 终极方案订阅 binlog（Canal）异步删。<span class="you">你有实战：Hash 存系统参数、List 存支付凭证、Set 防重</span></p></div>
       <div class="q-item f3"><div class="q-line"><span class="stars">★★★</span><span class="q-text">分布式锁怎么实现？Redisson 原理？</span></div>
-        <p class="q-hook">SET NX EX + 唯一值 + Lua 释放 → 过期续期问题 → Redisson 看门狗 → 主从切换锁丢失 → RedLock 及其争议（Martin Kleppmann vs antirez 之争，说出这个直接加分）。<span class="you">你有实战：Redisson 锁防重复发放/单柜单用户下单</span></p></div>
+        <p class="q-hook">SET NX EX + 唯一值 + Lua 释放 → 过期续期问题 → Redisson 看门狗 → 主从切换锁丢失 → RedLock 及其争议（Martin Kleppmann vs antirez 之争，说出这个直接加分）。<span class="you">你有实战：货柜"同一货柜并发下单"Redisson 锁 + 充电宝广告计费"行锁+Redisson 双保险"、SpEL key 锁注解</span></p></div>
       <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">核心数据结构与使用场景？</span></div>
         <p class="q-hook">底层编码：ziplist/listpack、skiplist（ZSet 为什么用跳表不是红黑树）、intset。场景：点赞/排行榜/签到/购物车/延迟队列。</p></div>
       <div class="q-item f2"><div class="q-line"><span class="stars">★★☆</span><span class="q-text">持久化与高可用？</span></div>
