@@ -15,6 +15,7 @@ PAGES = [
     ("0002 · MySQL 追问链", "lessons/0002-mysql-follow-up-chains.html"),
     ("0003 · 简历改版实战", "lessons/0003-resume-rework.html"),
     ("0004 · Redis 追问链", "lessons/0004-redis-follow-up-chains.html"),
+    ("0005 · 活动引擎设计", "lessons/0005-activity-engine-design.html"),
     ("高频考点速查", "reference/0001-high-frequency-topics.html"),
     ("项目追问应答手册", "reference/0002-project-question-bank.html"),
     ("高信任资源库", "resources.html"),
