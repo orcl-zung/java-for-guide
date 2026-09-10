@@ -83,6 +83,21 @@
   → ③ 规则树       库存校验 → 兜底奖 → 风控拦截
   → ④ 统一发奖中心  AwardIssuer SPI + 幂等流水</pre>
 
+    <h3>两套"五"的关系：公式是配置空间，管线是运行时内核</h3>
+    <p>第二章的五维公式与本章的五节点管线不是同一个"五"的两种写法：<b>公式回答"一个玩法是什么"（声明式配置空间），管线回答"一次参与怎么执行"（命令式运行时内核）</b>。维度逐个落点：</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>五维公式（静态配置）</th><th>五节点管线（动态执行）</th></tr></thead>
+      <tbody>
+        <tr><td>触发方式</td><td>管线<b>入口</b>（同步 API / MQ 双入口）——不是节点</td></tr>
+        <tr><td>任务进度</td><td>②a 任务进度节点</td></tr>
+        <tr><td>决策模式</td><td>②b 决策 SPI</td></tr>
+        <tr><td>权益类型</td><td>④ 发奖中心（每种权益一个 AwardIssuer 实现）</td></tr>
+        <tr><td>约束 · 人群/频控/次数</td><td>① 资格链</td></tr>
+        <tr><td>约束 · 库存/预算</td><td>③ 规则树</td></tr>
+      </tbody>
+    </table></div>
+    <p>两处"不整齐"正是设计点。<b>约束拆两半</b>：人群/频控是便宜的读，尽早短路（被挡的请求不配消耗下游算力）；库存/预算必须等 ②b 选出具体奖品后才能扣——得先知道扣哪个奖品的库存，兜底奖也只能长在决策之后。<b>触发没有节点</b>：它决定谁调用管线、要不要同步等结果，发生在管线开始之前（触发方式决定返回时效，不是反过来）。一句话收口：<b>公式管组合自由（维度正交随便乘），管线管执行收敛（顺序、幂等、成本定序只有一份）——N 个玩法 = N 行配置，全流进同一条管线，笛卡尔积不产生代码爆炸。</b></p>
+
     <h3>① 资格链：成本升序 + 短路，两公理定序</h3>
     <div class="tbl-wrap"><table>
       <thead><tr><th>#</th><th>节点</th><th>数据源</th><th>成本</th></tr></thead>
@@ -101,7 +116,7 @@
     <div class="tbl-wrap"><table>
       <thead><tr><th>语义</th><th>玩法实例</th><th>存储</th></tr></thead>
       <tbody>
-        <tr><td><code>counter</code></td><td>邀请 N 人 / 消费 N 次</td><td><code>act_task_progress</code> 单行计数</td></tr>
+        <tr><td><code>counter</code></td><td>邀请 N 人 / 消费 N 次</td><td><code>activity_progress</code> 单行计数</td></tr>
         <tr><td><code>collection</code></td><td>集卡 / 碎片（每碎片一行）</td><td>+ <code>item_key</code> 维度</td></tr>
         <tr><td><code>streak</code></td><td>连续签到（断签重置策略入参）</td><td>current_streak + last_date</td></tr>
       </tbody>
@@ -143,7 +158,7 @@
 C 由标称概率二分反解（对照表：25%→C≈8.5%→保底12次；15%→3.2%→32；50%→30%→4）
 期望与真随机相同，方差收窄——消灭欧皇连中与酋长连空
 硬保底是 PRD 的自然推论：N = ⌈1/C⌉ 时 P = 1 必中
-N 存 act_task_progress（五维模型自洽点）</pre>
+N 存 activity_progress（五维模型自洽点）</pre>
     <p>落地场景：寻宝稀有碎片掉落。"真随机对用户体验是灾难"——这是把 PRD 引进引擎的业务理由，不是炫技。</p>
 
     <h3>4.3 二倍均值法（拼手气红包，P1）</h3>
@@ -167,13 +182,17 @@ CDN 静态化 → 网关限流/答题 → 令牌桶 → Redis Lua 预减 → MQ 
   <!-- ==================== 五、数据模型 ==================== -->
   <section>
     <h2><span class="no">第五章 · 存储</span>主表 + 五维配置表 + 私有存储判据</h2>
-    <pre>act_activity        主表：类型/起止/状态机(派生)/trigger_type/decision_type
-act_activity_task   任务配置(1对N)：任务类型/进度语义/目标值/参数
-act_award           奖品定义(1对N)：权益类型/库存/权重(百万分比)/保底
-act_award_issue     发奖流水：唯一键(activityId, userId, bizKey) ← 幂等防线
-act_account_count   次数账户：总/日/月参与额度（①资格链尾节点）
-act_task_progress   进度账户：counter/collection(item_key)/streak（②a + PRD 的 N）
-act_participate_record 参与流水：未中奖也落库（审计/风控/漏斗）</pre>
+    <pre>── 配置层（运营写，装配缓存读）──
+activity            主表：类型/起止/状态机(派生)/trigger_type/decision_type
+activity_task       任务配置(1对N)：任务类型/进度语义/目标值/参数
+activity_award      奖品定义(1对N)：权益类型/库存/权重(百万分比)/保底
+── 流水层（append-only，唯一键幂等）──
+activity_award_record        发奖流水：唯一键(activityId, userId, bizKey) ← 幂等防线
+activity_participation_record 参与流水：未中奖也落库（审计/风控/漏斗）
+── 账户层（用户×活动累计态，条件更新）──
+activity_account    次数账户：总/日/月参与额度（①资格链尾节点）
+activity_progress   进度账户：counter/collection(item_key)/streak（②a + PRD 的 N）</pre>
+    <p>完整 DDL（字段级注释 + 条件更新/懒重置 SQL + 索引依据）：<code>code/activity-engine/src/main/resources/db/schema.sql</code>。命名规约：弃 <code>act_</code> 缩写（Java 生态 <code>ACT_*</code> 是 Activiti 工作流保留前缀，撞认知），全单词 <code>activity_</code> + 三层语法——配置层裸名词 / 账户层 <code>_account</code>·<code>_progress</code> / 流水层统一 <code>_record</code> 后缀，看表名知层。</p>
     <h3>私有存储判据：默认零新表，两种例外</h3>
     <div class="tbl-wrap"><table>
       <thead><tr><th>例外</th><th>玩法</th><th>私有存储</th><th>原因</th></tr></thead>
@@ -217,8 +236,8 @@ act_participate_record 参与流水：未中奖也落库（审计/风控/漏斗�
       <thead><tr><th>旧代码（现状）</th><th>归位到</th></tr></thead>
       <tbody>
         <tr><td><code>TreasureCheckinService.checkin</code>（距离/拍照校验）</td><td>②a 任务进度节点（ClaimTaskStrategy 保留为任务校验策略）</td></tr>
-        <tr><td><code>TreasureOpenService</code> + OpenTaskStrategy（邀请N人开箱）</td><td>②a（邀请数存 act_task_progress）</td></tr>
-        <tr><td>碎片持有/合成（独立碎片表）</td><td>②a（act_task_progress + item_key，<b>旧碎片表废弃</b>）</td></tr>
+        <tr><td><code>TreasureOpenService</code> + OpenTaskStrategy（邀请N人开箱）</td><td>②a（邀请数存 activity_progress）</td></tr>
+        <tr><td>碎片持有/合成（独立碎片表）</td><td>②a（activity_progress + item_key，<b>旧碎片表废弃</b>）</td></tr>
         <tr><td>remaining_limit 配额扣减</td><td>③ 规则树库存节点</td></tr>
         <tr><td>ActivityRewardService.issueReward + RewardIssueStrategy</td><td>④ 发奖中心（三个 Issuer 的直接前身）</td></tr>
         <tr><td>CPF 实名验证</td><td>① 资格链新节点</td></tr>
@@ -238,7 +257,7 @@ act_participate_record 参与流水：未中奖也落库（审计/风控/漏斗�
         <tr><td>活动配置寄生短信参数表，每次查库</td><td>引擎配置域 + 装配缓存</td></tr>
         <tr><td>每日边界用 JVM 默认时区（巴西错 3h）</td><td>统一 America/Sao_Paulo 业务时区</td></tr>
         <tr><td rowspan="2"><b>② 2.0 新增</b><br>（算法切片背书）</td><td>开箱零随机性（rewardId 确定性绑定）</td><td>掉落概率表 + PRD 保底（第四章）</td></tr>
-        <tr><td>无活动级预算控制</td><td><code>act_budget</code> 字段 + 发放前校验</td></tr>
+        <tr><td>无活动级预算控制</td><td><code>activity.budget_total/budget_used</code> 字段 + 发放前校验</td></tr>
         <tr><td rowspan="6"><b>③ 已知问题·演进方向</b><br>（不承诺修，复盘弹药）</td><td colspan="2">锁粒度（用户×宝箱）与校验维度（用户×点位）不匹配</td></tr>
         <tr><td colspan="2">碎片需求量双真相源（会员行定格值 vs config 当前值）</td></tr>
         <tr><td colspan="2">GEODIST 探针方案残留主干（排障临时代码未清理）</td></tr>

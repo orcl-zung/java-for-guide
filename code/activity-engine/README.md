@@ -33,6 +33,9 @@ src/main/java/com/activity/engine/
     prd/                  P0 PRD 伪随机 + 硬保底
     luckymoney/           P1 二倍均值红包
   seckill/                P2 库存预减 Lua 片段
+src/main/resources/
+  db/schema.sql           存储设计 DDL（第五章落地：7 表 + 条件更新/懒重置 SQL 注释）
+  seckill/pre_deduct.lua  P2 Lua 脚本本体
 src/test/java/.../
   DistributionAssert      统计测试工具（已就绪）
   *Test                   验收契约（@Disabled，实现一个点亮一个）
