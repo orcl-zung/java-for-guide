@@ -5,6 +5,7 @@
 - **优先级**：大厂技术博客（事故复盘 + 权衡，如美团/阿里/京东云）> 体系化参考（JavaGuide / 小林 / 45 讲，原理透彻）> 个人水文（只作线索，不作教材）。
 - **国内外一视同仁**（学员英文可读）：国外一手源同等优先——官方文档（MySQL Reference Manual）、Use The Index, Luke（索引圣经）、DDIA、Netflix/Uber/Meta 工程博客等；场景设计题优先"实战案例 + 权衡复盘"型中外长文。
 - **及格线**：能支撑三层追问（是什么 / 为什么这样设计 / 什么边界会失效）。进包前做正文级抽查（代码格式、实验与原理深度），不达标当场换源；替换条目注明淘汰原因与日期（首例：2026-09-03 腾讯云 2706948 → JavaGuide 隐式转换专文；同日第二批：京东云深分页 3201 → 得物实验版、阿里云幻读 1311044 → chanjarster、掘金间隙锁 → 爱可生死锁案例；JavaGuide GitHub 仓库卡删除——正文与站点完全重复）。
+- **溯源原文**（2026-09-10 学员抓包后立规）：阿里云/腾讯云"开发者社区"是 UGC 转载平台、非官方技术博客——命中此类页面先找"原文链接/转载自"标记，有原文一律溯回原文入册并注明换链（首例：Redis 6.0 多线程 阿里云 760847 → 博客园 gz666666 12901507）；无转载标记且作者即发布者的（如 Liziba 830956、yeeevip 腾讯云 2393347）可直用。
 
 ## Knowledge
 
@@ -12,8 +13,8 @@
   国内最系统的 Java 面试知识库。用于：八股主线的骨架——Java 基础/并发/JVM/MySQL/Redis/MQ/分布式/微服务/系统设计各专题的第一入口。
 - [JavaGuide：Java 后端学习路线（2026 最新版）](https://javaguide.cn/roadmap/java-roadmap.html)
   2026 版已加入 AI 应用开发板块。用于：核对知识覆盖面、安排专题学习顺序。
-- [小林 coding — 图解 MySQL / 图解网络](https://xiaolincoding.com/)
-  图解系列，B+ 树/索引/事务/锁/网络原理讲解质量极高。用于：MySQL 与计算机网络专题的第一参考。
+- [小林 coding — 图解 MySQL / 图解网络 / 图解 Redis](https://xiaolincoding.com/)
+  图解系列，B+ 树/索引/事务/锁/网络原理讲解质量极高。用于：MySQL、计算机网络与 Redis 专题的第一参考。
   - [为什么 MySQL 采用 B+ 树作为索引？](https://xiaolincoding.com/mysql/index/why_index_chose_bpuls_tree.html)：二分 → 二叉查找树 → AVL/红黑树 → B 树 → B+ 树的动图推导链，与第 2 课链 1 推理链一一对应（2026-08-28 验证可访问）。
   - [MySQL 架构是怎样的？](https://www.xiaolincoding.com/mysql/architecture/mysql_architecture.html)：自底向上拼出 Server 层 + InnoDB（内存：buffer pool/change buffer/自适应哈希/redo log buffer；磁盘：ibd/undo/redo）全景图——"buffer pool 属于引擎层"问题的出处，对应第 2 课地基①②；buffer pool 三问 + undo/redo 因果链已沉淀为地基⑥（用户提供，2026-09-01 验证可访问）。
   - [事务隔离级别是怎么实现的？](https://www.xiaolincoding.com/mysql/transaction/mvcc.html)：隐藏列 / undo log 版本链 / ReadView 四字段 / 可见性判断规则，全图解——链 4 追问① 的第一图解参考；trx_id 懒分配 + 可见性三段切割 + 四事务时序推演已沉淀为链 4 补充③（2026-09-03，学员亲证：机制图解比类比好懂）。
@@ -27,6 +28,31 @@
     - [记录锁+间隙锁能防止删除导致的幻读吗？](https://xiaolincoding.com/mysql/lock/lock_phantom.html)：可跳——边界应用题，用"快照读靠 MVCC、当前读靠 next-key"框架现场推。
   - [MySQL 日志：undo log、redo log、binlog 有什么用？](https://www.xiaolincoding.com/mysql/log/how_update.html)（日志篇唯一篇，🔥）：存量已厚（地基②⑥+链 6），精读增量三小节——redo WAL+环形写+checkpoint / redo 物理日志 vs binlog 逻辑日志 / innodb_flush_log_at_trx_commit 0-2 + sync_binlog（安全 vs 性能权衡话术）；undo 部分跳过（链 4 补充③更深）（2026-09-07 判定，读法详见第 2 课"链 6 阅读指南"）。
   - [揭开 Buffer Pool 的面纱](https://www.xiaolincoding.com/mysql/buffer_pool/buffer_pool.html)（内存篇唯一篇）：精读两块——改进版 LRU（young/old 分区解预读失效 + Buffer Pool 污染，"MySQL 为什么不用标准 LRU"的标准答案）与 change buffer（唯一索引为什么不能用的机制：唯一性检查必须读真实页）；free/flush list 理解即可、AHI 一句话带过（2026-09-07 判定，读法详见地基⑥延伸阅读）。
+- Redis 追问链阅读包（2026-09-09 检索命中并逐篇正文级验证——代码格式/原理深度/边界论证按选源约定及格线抽查，全过；配套第 4 课六条追问链，读序、判定与自测口径以课页"链 X 阅读指南"为准）：
+  - 链 1 · 为什么快：
+    - [Redis 6.0 多线程重磅发布 - gz666666·博客园（原文）](https://www.cnblogs.com/gz666666/p/12901507.html)：**必读**——瓶颈在网络 IO 与内存带宽不在 CPU；6.0 IO 线程组 RR 分发只做 socket 读写与协议解析、命令执行仍单线程；io-threads 配置（4 核建议 2~3、不超 8）。链 1 追问② 的标准答案出处（2026-09-10 溯源换链：阿里云开发者社区 760847 系用户转载版——UGC 平台非官方出品，按选源约定溯回原文，两版内容逐段核对一致）。
+    - [Redis 过期删除策略和内存淘汰策略有什么区别？ - 小林](https://xiaolincoding.com/redis/module/strategy.html)：选读——惰性+定期（hz10 / 每次 20 个 / 25% 阈值 / 25ms 上限）、8 种淘汰策略、近似 LRU 随机采样、LFU 24bit 拆 16bit 时间戳 + 8bit 对数计数。
+  - 链 2 · 数据结构：
+    - [Redis 数据结构 - 小林](https://xiaolincoding.com/redis/data_struct/data_struct.html)：**必读**——SDS 三优势、跳表 25% 随机层级 + antirez 为什么不用平衡树、渐进式 rehash、listpack 取代 ziplist。
+    - [Redis 常见数据类型和应用场景 - 小林](https://xiaolincoding.com/redis/data_struct/command.html)：快读——String 三编码 int/embstr/raw、List 消息队列三需求、Stream 消费组 XPENDING/XACK、"Redis 作 MQ 两个短板"（第 4 课第三部分"否决 Redis Stream"引线的弹药出处）。
+    - [深度干货｜一文详解 Redis 中 BigKey、HotKey 的发现与处理 - 知乎·阿里云瑶池](https://zhuanlan.zhihu.com/p/405337501)：选读前 2/3——定义/危害/发现（--bigkeys、memory usage、hotkeys 需 LFU、rdb-tools；debug object 的坑）/处理（拆分、UNLINK、热 key 多副本、读写分离）；Tair 产品段跳过。
+    - [Redisson 源码（二）延迟队列 RDelayedQueue 的使用及原理分析 - 腾讯云](https://cloud.tencent.com/developer/article/2393347)：**必读**——四数据结构（timeout zset + order list + channel + 目标 list）、QueueTransferTask 搬运 Lua、BLPOP 消费；简历"Redisson 延迟队列"的底层答案（替换原候选知乎 343811173——正文被风控截断无法完成正文级验证，2026-09-09 淘汰）。
+    - [Redis 之 zset 实现滑动窗口限流 - 阿里云](https://developer.aliyun.com/article/830956)：选读——固定窗口边界双倍流量问题、pipeline 与 Lua 两种 Java 实现、同毫秒 value 被 zset 去重导致计数偏少的边界彩蛋。
+  - 链 3 · 穿透/击穿/雪崩 + 缓存一致性：
+    - [什么是缓存雪崩、击穿、穿透？ - 小林](https://xiaolincoding.com/redis/cluster/cache_problem.html)：**必读**——布隆过滤器误判方向（只误判存在）、互斥锁、后台异步更新、随机 TTL + 熔断限流。
+    - [数据库和缓存如何保证一致性？ - 小林](https://xiaolincoding.com/redis/architecture/mysql_redis_consistency.html)：**必读**——双更并发交叉、先删后更 vs 先更后删窗口对比、延迟双删"睡眠多久是玄学"、MQ 重试、Canal + 删成功才 ACK。
+  - 链 4 · 持久化与高可用（★★☆ 链，控制投入）：
+    - [AOF 持久化是怎么实现的？ - 小林](https://xiaolincoding.com/redis/storage/aof.html)：**必读**——always/everysec/no = fsync 时机 + BIO 线程、rewrite fork+COW+AOF 重写缓冲区、7.0 MP-AOF。
+    - [主从复制是怎么实现的？ - 小林](https://xiaolincoding.com/redis/cluster/master_slave_replication.html)：**必读**——psync runID/offset、全量三阶段、replication buffer vs repl_backlog_buffer 环形 + 估算公式；文末面试题段覆盖脑裂 + min-slaves-to-write/min-slaves-max-lag。
+    - [RDB 快照是怎么实现的？ - 小林](https://xiaolincoding.com/redis/storage/rdb.html)：快读——save/bgsave、COW 极端 2 倍内存、4.0 混合持久化。
+    - [为什么要有哨兵？ - 小林](https://xiaolincoding.com/redis/cluster/sentinel.html)：快读——主观/客观下线、quorum = N/2+1 奇数理由、leader 选举、选主三轮（优先级/复制进度/runID）。
+    - [为什么要有 Redis Cluster 集群？ - 小林](https://xiaolincoding.com/redis/cluster/cluster.html)：选读两段——16384 槽 antirez 原话（2KB vs 8KB 心跳 bitmap + 节点不过千）、MOVED vs ASK+ASKING；Gossip 细节与槽迁移流程可跳。
+  - 链 5 · 分布式锁：
+    - [多节点争抢资源，Redis 分布式锁是怎么实现的？ - 小林](https://xiaolincoding.com/redis/module/setnx.html)：**必读**——锁四问题演进（争抢/僵尸锁/锁过期/单点）→ SET NX EX 原子 + 唯一 value + Lua 比对释放 + 看门狗 + RedLock 多数派。
+    - [如何保证 Redis 分布式锁的高可用和高性能？ - 小林](https://xiaolincoding.com/redis/cluster/redlock.html)：**必读**——重试幂等 GET 校验 UUID 三情况、过期 P999 + 缓冲、续约失败保守中断 vs 激进、有效时间 = 过期 − 加锁耗时、Singleflight/本地锁交接批判。
+    - [How to do distributed locking - Martin Kleppmann（英文）](https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html)：**必读**——RedLock 之争一手原文：时钟跳变 + GC 停顿失效时序图、fencing token 单调递增令牌。
+    - [Is Redlock safe? - antirez（英文）](https://antirez.com/news/101)：快读——反方逐条反驳，分歧核心在时钟模型假设。
+  - 链 6 · 秒杀库存：用下方"营销活动算法阅读包 · 秒杀库存"三篇（2026-09-08 已验证），读序与判定见课页链 6 阅读指南。
 - [美团技术团队：MySQL 索引原理及慢查询优化](https://tech.meituan.com/2014/06/30/mysql-index.html)
   2014 年常青文。磁盘 IO 与预读（"页"概念的原文版）、树高公式 h=㏒(m+1)N（链 1 容量计算的原版；逐符号拆解已沉淀为第 2 课地基④，2026-09-01）、建索引五大原则（最左前缀"范围之后全断"的底层拆解已沉淀为第 2 课地基⑤，2026-09-01）、带 explain 执行计划的真实慢查询案例——直接喂养链 3（EXPLAIN 四看法 + stage_poi 低区分度案例复盘已沉淀为第 2 课"链 3 补充"，2026-09-01）（2026-08-28 验证可访问）。
 - MySQL 索引优化实战阅读包（2026-09-01 检索命中验证；配套应答手册"索引优化"题的场景认领清单 A-D，认领哪个场景读哪篇）：

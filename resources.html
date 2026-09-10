@@ -17,7 +17,7 @@
   <p class="subtitle">RESOURCES.md 的网页版。所有外链按"主参考 → 专题阅读包 → 社区 → 缺口"组织，每条标注<b>用途</b>与<b>验证日期</b>。用法：认领哪个场景读哪篇，别囤。</p>
   <div class="meta-badges">
     <span class="badge gold">主参考：JavaGuide</span>
-    <span class="badge blue">阅读包 × 3（索引 / 事务 MVCC / AI）</span>
+    <span class="badge blue">阅读包 × 4（索引 / 事务 MVCC / AI / Redis）</span>
     <span class="badge green">最近更新 2026-09-03</span>
   </div>
 
@@ -159,9 +159,128 @@
     </div>
   </section>
 
-  <!-- ==================== 三、AI 工程化阅读包 ==================== -->
+  <!-- ==================== 三、Redis 追问链阅读包 ==================== -->
   <section>
-    <h2><span class="no">三</span>AI 工程化阅读包 <span class="badge blue" style="vertical-align:middle">2026-09-01 检索验证</span></h2>
+    <h2><span class="no">三</span>Redis 追问链阅读包 <span class="badge blue" style="vertical-align:middle">2026-09-09 全部正文级验证</span></h2>
+    <p class="lead">配套第 4 课六条追问链——<b>读序、判定与自测口径以课页"链 X 阅读指南"为准</b>。进包前逐篇按选源约定及格线抽查（代码格式 / 原理深度 / 边界论证），全过。</p>
+
+    <h3>① 链 1 · 为什么快（单线程 / 6.0 多线程）</h3>
+    <div class="cards">
+      <a class="card" href="https://www.cnblogs.com/gz666666/p/12901507.html" target="_blank">
+        <div class="n">必读 · 链 1 追问② 出处 · 原文</div>
+        <div class="t">Redis 6.0 多线程重磅发布（gz666666 · 博客园）</div>
+        <div class="d">瓶颈在网络 IO 与内存带宽不在 CPU；IO 线程组 RR 分发只做 socket 读写与协议解析、命令执行仍单线程；io-threads 配置。阿里云社区 760847 系转载，2026-09-10 溯源换回原文。</div>
+      </a>
+      <a class="card" href="https://xiaolincoding.com/redis/module/strategy.html" target="_blank">
+        <div class="n">选读 · 附加弹药</div>
+        <div class="t">Redis 过期删除策略和内存淘汰策略有什么区别？（小林）</div>
+        <div class="d">惰性+定期（hz10 / 20 个 / 25% 阈值 / 25ms 上限）、8 种淘汰、近似 LRU 采样、LFU 24bit 计数衰减。</div>
+      </a>
+    </div>
+
+    <h3>② 链 2 · 数据结构（含 zset 双杀：延迟队列 / 滑动窗口）</h3>
+    <div class="cards">
+      <a class="card" href="https://xiaolincoding.com/redis/data_struct/data_struct.html" target="_blank">
+        <div class="n">必读 · 链 2 地基</div>
+        <div class="t">Redis 数据结构（小林）</div>
+        <div class="d">SDS 三优势、跳表 25% 随机层级 + antirez 为什么不用平衡树、渐进式 rehash、listpack 取代 ziplist。</div>
+      </a>
+      <a class="card" href="https://xiaolincoding.com/redis/data_struct/command.html" target="_blank">
+        <div class="n">快读 · 场景弹药</div>
+        <div class="t">Redis 常见数据类型和应用场景（小林）</div>
+        <div class="d">String 三编码、List 消息队列三需求、Stream XPENDING/XACK、"Redis 作 MQ 两个短板"——第 4 课"否决 Redis Stream"引线弹药出处。</div>
+      </a>
+      <a class="card" href="https://zhuanlan.zhihu.com/p/405337501" target="_blank">
+        <div class="n">选读前 2/3 · 大 key 热 key</div>
+        <div class="t">深度干货｜一文详解 Redis 中 BigKey、HotKey 的发现与处理（知乎·阿里云瑶池）</div>
+        <div class="d">定义/危害/发现（--bigkeys、hotkeys 需 LFU、rdb-tools）/处理（拆分、UNLINK、热 key 多副本）；Tair 产品段跳过。</div>
+      </a>
+      <a class="card" href="https://cloud.tencent.com/developer/article/2393347" target="_blank">
+        <div class="n">必读 · Redisson 延迟队列源码</div>
+        <div class="t">Redisson 源码（二）延迟队列 RDelayedQueue 的使用及原理分析（腾讯云）</div>
+        <div class="d">四数据结构（timeout zset + order list + channel + 目标 list）、QueueTransferTask 搬运 Lua、BLPOP 消费。替换原候选知乎 343811173（正文被风控截断无法验证，2026-09-09 淘汰）。</div>
+      </a>
+      <a class="card" href="https://developer.aliyun.com/article/830956" target="_blank">
+        <div class="n">选读 · 滑动窗口限流</div>
+        <div class="t">Redis 之 zset 实现滑动窗口限流（阿里云）</div>
+        <div class="d">固定窗口边界双倍问题、pipeline 与 Lua 两种 Java 实现、同毫秒 value 被 zset 去重计数偏少的边界彩蛋。</div>
+      </a>
+    </div>
+
+    <h3>③ 链 3 · 穿透 / 击穿 / 雪崩 + 缓存一致性</h3>
+    <div class="cards">
+      <a class="card" href="https://xiaolincoding.com/redis/cluster/cache_problem.html" target="_blank">
+        <div class="n">必读</div>
+        <div class="t">什么是缓存雪崩、击穿、穿透？（小林）</div>
+        <div class="d">布隆过滤器误判方向（只误判存在）、互斥锁、后台异步更新、随机 TTL + 熔断限流。</div>
+      </a>
+      <a class="card" href="https://xiaolincoding.com/redis/architecture/mysql_redis_consistency.html" target="_blank">
+        <div class="n">必读 · 一致性主战场</div>
+        <div class="t">数据库和缓存如何保证一致性？（小林）</div>
+        <div class="d">双更并发交叉、先删后更 vs 先更后删窗口对比、延迟双删"睡眠玄学"、MQ 重试、Canal + 删成功才 ACK。</div>
+      </a>
+    </div>
+
+    <h3>④ 链 4 · 持久化与高可用（★★☆ 链，控制投入）</h3>
+    <div class="cards">
+      <a class="card" href="https://xiaolincoding.com/redis/storage/aof.html" target="_blank">
+        <div class="n">必读 · 追问①</div>
+        <div class="t">AOF 持久化是怎么实现的？（小林）</div>
+        <div class="d">always/everysec/no = fsync 时机 + BIO 线程、rewrite fork+COW+AOF 重写缓冲区、7.0 MP-AOF。</div>
+      </a>
+      <a class="card" href="https://xiaolincoding.com/redis/cluster/master_slave_replication.html" target="_blank">
+        <div class="n">必读 · 追问②</div>
+        <div class="t">主从复制是怎么实现的？（小林）</div>
+        <div class="d">psync runID/offset、replication buffer vs repl_backlog 环形 + 估算公式；文末面试题段覆盖脑裂 + min-slaves-to-write。</div>
+      </a>
+      <a class="card" href="https://xiaolincoding.com/redis/storage/rdb.html" target="_blank">
+        <div class="n">快读</div>
+        <div class="t">RDB 快照是怎么实现的？（小林）</div>
+        <div class="d">save/bgsave、COW 极端 2 倍内存、4.0 混合持久化。</div>
+      </a>
+      <a class="card" href="https://xiaolincoding.com/redis/cluster/sentinel.html" target="_blank">
+        <div class="n">快读</div>
+        <div class="t">为什么要有哨兵？（小林）</div>
+        <div class="d">主观/客观下线、quorum = N/2+1 奇数理由、leader 选举、选主三轮（优先级/复制进度/runID）。</div>
+      </a>
+      <a class="card" href="https://xiaolincoding.com/redis/cluster/cluster.html" target="_blank">
+        <div class="n">选读两段 · 追问③出处</div>
+        <div class="t">为什么要有 Redis Cluster 集群？（小林）</div>
+        <div class="d">16384 槽 antirez 原话（2KB vs 8KB 心跳 bitmap + 节点不过千）、MOVED vs ASK+ASKING；Gossip 细节可跳。</div>
+      </a>
+    </div>
+
+    <h3>⑤ 链 5 · 分布式锁（含 RedLock 之争原文）</h3>
+    <div class="cards">
+      <a class="card" href="https://xiaolincoding.com/redis/module/setnx.html" target="_blank">
+        <div class="n">必读 · 主战场</div>
+        <div class="t">多节点争抢资源，Redis 分布式锁是怎么实现的？（小林）</div>
+        <div class="d">锁四问题演进（争抢/僵尸锁/锁过期/单点）→ SET NX EX 原子 + 唯一 value + Lua 比对释放 + 看门狗 + RedLock 多数派。</div>
+      </a>
+      <a class="card" href="https://xiaolincoding.com/redis/cluster/redlock.html" target="_blank">
+        <div class="n">必读 · 追问弹药库</div>
+        <div class="t">如何保证 Redis 分布式锁的高可用和高性能？（小林）</div>
+        <div class="d">重试幂等 GET 校验 UUID 三情况、过期 P999 + 缓冲、续约失败保守 vs 激进、有效时间 = 过期 − 加锁耗时、Singleflight 批判。</div>
+      </a>
+      <a class="card" href="https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html" target="_blank">
+        <div class="n">必读 · 英文一手原文</div>
+        <div class="t">How to do distributed locking（Martin Kleppmann）</div>
+        <div class="d">RedLock 之争源头：时钟跳变 + GC 停顿失效时序图、fencing token 单调递增令牌。</div>
+      </a>
+      <a class="card" href="https://antirez.com/news/101" target="_blank">
+        <div class="n">快读 · 英文反方</div>
+        <div class="t">Is Redlock safe?（antirez）</div>
+        <div class="d">Redis 作者逐条反驳，分歧核心在时钟模型假设。</div>
+      </a>
+    </div>
+
+    <h3>⑥ 链 6 · 秒杀库存</h3>
+    <p class="lead">用 RESOURCES.md"营销活动算法阅读包 · 秒杀库存"三篇（magicliang 大厂方案对比 / 阿里云 Redis+Lua / 掘金超卖少卖，2026-09-08 已验证），读序与判定见第 4 课"链 6 阅读指南"。</p>
+  </section>
+
+  <!-- ==================== 四、AI 工程化阅读包 ==================== -->
+  <section>
+    <h2><span class="no">四</span>AI 工程化阅读包 <span class="badge blue" style="vertical-align:middle">2026-09-01 检索验证</span></h2>
     <p class="lead">AI 速成课（9/11）的骨架输入，简历技能第 8 条的两层依据。</p>
     <div class="cards">
       <a class="card" href="https://javaguide.cn/ai/" target="_blank">
@@ -202,9 +321,9 @@
     </div>
   </section>
 
-  <!-- ==================== 四、面经 / 趋势 / 本机文档 ==================== -->
+  <!-- ==================== 五、面经 / 趋势 / 本机文档 ==================== -->
   <section>
-    <h2><span class="no">四</span>面经 · 趋势 · 本机文档</h2>
+    <h2><span class="no">五</span>面经 · 趋势 · 本机文档</h2>
     <div class="cards">
       <a class="card" href="https://www.nowcoder.com/discuss/864594486704291840" target="_blank">
         <div class="n">面试官视角</div>
@@ -239,9 +358,9 @@
     </div>
   </section>
 
-  <!-- ==================== 五、社区 ==================== -->
+  <!-- ==================== 六、社区 ==================== -->
   <section>
-    <h2><span class="no">五</span>社区（Wisdom）</h2>
+    <h2><span class="no">六</span>社区（Wisdom）</h2>
     <div class="cards">
       <a class="card" href="https://www.nowcoder.com/" target="_blank">
         <div class="t">牛客网面经区</div>
@@ -258,9 +377,9 @@
     </div>
   </section>
 
-  <!-- ==================== 六、缺口 ==================== -->
+  <!-- ==================== 七、缺口 ==================== -->
   <section>
-    <h2><span class="no">六</span>缺口清单（Gaps）</h2>
+    <h2><span class="no">七</span>缺口清单（Gaps）</h2>
     <div class="callout green">
       <span class="ttl">✅ 已补上（2026-09-01）</span>
       <del>"AI 工程化 + Java 后端"缺少系统性教程</del>——已补：JavaGuide AI 知识体系 + AIGuide + 小林 74 题，见第三节阅读包；Spring AI 官方文档待速成课时按需补。
@@ -284,7 +403,7 @@
 
   <footer class="site">
     <span>Java Offer 突围战 · 高信任资源库</span>
-    <span>源文件 RESOURCES.md · 更新 2026-09-01</span>
+    <span>源文件 RESOURCES.md · 更新 2026-09-09</span>
   </footer>
 </main>
 </body>
