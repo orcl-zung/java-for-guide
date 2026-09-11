@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.activity.engine.infra.mapper.AccountMapper">
+
+    <!--
+      单语句原子扣减（拒绝先查后改）。
+      日/月懒重置：day_key/month_key 与当前不符即视同归零，不跑定时任务。
+      v1 配额语义：total_quota=0 不限（限量由 Redis 频控扛）；quota&gt;0 强卡（邀请模式）。
+      返回 1=扣成功；0=配额耗尽或账户不存在。
+    -->
+    <update id="deduct">
+        UPDATE activity_account
+           SET total_used = total_used + 1,
+               day_used   = IF(day_key = #{dayKey}, day_used + 1, 1),
+               month_used = IF(month_key = #{monthKey}, month_used + 1, 1),
+               day_key = #{dayKey},
+               month_key = #{monthKey}
+         WHERE activity_id = #{activityId}
+           AND user_id = #{userId}
+           AND (total_quota = 0 OR total_used &lt; total_quota)
+    </update>
+
+    <!-- 开户：首次参与落行；唯一键冲突由调用方重试 deduct 吸收 -->
+    <insert id="openAccount">
+        INSERT INTO activity_account
+            (activity_id, user_id, total_quota, total_used, day_used, day_key, month_used, month_key)
+        VALUES
+            (#{activityId}, #{userId}, 0, 1, 1, #{dayKey}, 1, #{monthKey})
+    </insert>
+
+</mapper>

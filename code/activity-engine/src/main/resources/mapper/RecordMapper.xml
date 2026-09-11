@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.activity.engine.infra.mapper.RecordMapper">
+
+    <resultMap id="participationRow" type="com.activity.engine.infra.model.ParticipationRow">
+        <result property="result" column="result"/>
+        <result property="rejectNode" column="reject_node"/>
+    </resultMap>
+
+    <!-- 参与流水占号：初始 PENDING，管线末端翻转终态。唯一键撞键=重放 -->
+    <insert id="insertParticipation">
+        INSERT INTO activity_participation_record
+            (activity_id, user_id, biz_key, trigger_channel, result, reject_node)
+        VALUES
+            (#{activityId}, #{userId}, #{bizKey}, #{channel}, 'PENDING', '')
+    </insert>
+
+    <select id="findParticipation" resultMap="participationRow">
+        SELECT result, reject_node
+          FROM activity_participation_record
+         WHERE activity_id = #{activityId}
+           AND user_id = #{userId}
+           AND biz_key = #{bizKey}
+    </select>
+
+    <!-- 终态翻转按唯一键定位：不占号方不需要先查出 id -->
+    <update id="updateParticipationResult">
+        UPDATE activity_participation_record
+           SET result = #{result},
+               reject_node = #{rejectNode}
+         WHERE activity_id = #{activityId}
+           AND user_id = #{userId}
+           AND biz_key = #{bizKey}
+    </update>
+
+    <insert id="insertAwardRecord">
+        INSERT INTO activity_award_record
+            (activity_id, user_id, biz_key, award_id, benefit_type, issue_status)
+        VALUES
+            (#{activityId}, #{userId}, #{bizKey}, #{awardId}, #{benefitType}, 'SUCCESS')
+    </insert>
+
+    <select id="findAwardIdByBizKey" resultType="java.lang.Long">
+        SELECT award_id
+          FROM activity_award_record
+         WHERE activity_id = #{activityId}
+           AND user_id = #{userId}
+           AND biz_key = #{bizKey}
+    </select>
+
+</mapper>

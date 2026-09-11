@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.activity.engine.infra.mapper.ActivityMapper">
+
+    <!-- 显式属性映射：column → setter 属性按名绑定，与表列序/查询列序彻底解耦 -->
+    <resultMap id="activityRow" type="com.activity.engine.infra.model.ActivityRow">
+        <id property="id" column="id"/>
+        <result property="activityCode" column="activity_code"/>
+        <result property="activityName" column="activity_name"/>
+        <result property="activityType" column="activity_type"/>
+        <result property="triggerType" column="trigger_type"/>
+        <result property="eventType" column="event_type"/>
+        <result property="decisionType" column="decision_type"/>
+        <result property="crowdType" column="crowd_type"/>
+        <result property="freqDayLimit" column="freq_day_limit"/>
+        <result property="freqTotalLimit" column="freq_total_limit"/>
+        <result property="budgetTotal" column="budget_total"/>
+        <result property="budgetUsed" column="budget_used"/>
+        <result property="onOff" column="on_off"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+    </resultMap>
+
+    <select id="findById" resultMap="activityRow">
+        SELECT id, activity_code, activity_name, activity_type, trigger_type, event_type,
+               decision_type, crowd_type, freq_day_limit, freq_total_limit,
+               budget_total, budget_used, on_off, start_time, end_time
+          FROM activity
+         WHERE id = #{id}
+    </select>
+
+</mapper>

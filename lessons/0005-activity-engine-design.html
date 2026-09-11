@@ -174,7 +174,7 @@ CDN 静态化 → 网关限流/答题 → 令牌桶 → Redis Lua 预减 → MQ 
 纪律：Redis 只是削峰，最终一致性 = DB stock&gt;0 条件更新 + 超时未支付回补 + 定时对账</pre>
 
     <div class="callout green">
-      <div class="ttl">切片验收标准（code/activity-engine/，11 个 @Disabled 待点亮）</div>
+      <div class="ttl">切片验收标准（code/activity-engine/，11 个 @Disabled 已点亮 8，剩红包 3）</div>
       加权/PRD：10 万+ 次采样，频率误差 ≤ ±5%；PRD 加断最大连空 = 保底次数；红包：总额守恒分毫不差 + 各位置期望公平；PRD 多用户计数隔离。
     </div>
   </section>

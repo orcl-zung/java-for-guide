@@ -10,21 +10,41 @@ import java.util.List;
  * 适用：奖品多 / 精度高、O(1) 数组内存不可接受时。内存 = 奖品数。
  * <p>
  * 对照 big-market {@code OLogNAlgorithm}；参考：chengzhaoxi《加权随机事件的二分查找》（RESOURCES 已收）。
- * <p>
- * TODO(算法日 P0)：实现构建 + 二分查找。
  */
 public final class CdfLookupTable implements LookupTable {
 
+    /** 累积分布（右端点，升序）：第 i 项占区间 [cdf[i-1], cdf[i])。 */
+    private final int[] cdf;
+    private final long[] awardIds;
+
     public CdfLookupTable(List<AwardItem> pool) {
-        // TODO: 校验权重和 == AwardItem.SCALE
-        // TODO: 构建 cdf 累积数组 + awardIds 平行数组
-        throw new UnsupportedOperationException("算法日 P0 待实现：CDF 二分查表");
+        PoolValidator.requireFullScale(pool);
+        int n = pool.size();
+        cdf = new int[n];
+        awardIds = new long[n];
+        int cum = 0;
+        for (int i = 0; i < n; i++) {
+            cum += pool.get(i).getWeightMillionths();
+            cdf[i] = cum;
+            awardIds[i] = pool.get(i).getAwardId();
+        }
     }
 
     @Override
     public long pick(int roll) {
-        // TODO: 在 cdf 上二分找第一个 > roll 的位置（upper_bound 语义）
-        throw new UnsupportedOperationException("算法日 P0 待实现");
+        // upper_bound 语义：第一个 cdf[i] > roll 的位置。
+        // 零权重项 cdf 与前任持平（空区间），二分天然跳过。
+        int lo = 0;
+        int hi = cdf.length - 1;
+        while (lo < hi) {
+            int mid = (lo + hi) >>> 1;
+            if (cdf[mid] > roll) {
+                hi = mid;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        return awardIds[lo];
     }
 
     @Override

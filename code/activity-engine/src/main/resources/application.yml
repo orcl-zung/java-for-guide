@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: activity-engine
+  datasource:
+    # 本地默认对齐本机 docker mysql（13306→3306）；连别的实例用环境变量覆盖
+    url: ${ACTIVITY_DB_URL:jdbc:mysql://localhost:13306/activity_engine?useSSL=false&serverTimezone=UTC&characterEncoding=utf8}
+    username: ${ACTIVITY_DB_USER:root}
+    password: ${ACTIVITY_DB_PASSWORD:root}
+  data:
+    redis:
+      host: ${ACTIVITY_REDIS_HOST:localhost}
+      port: ${ACTIVITY_REDIS_PORT:6379}
+      password: ${ACTIVITY_REDIS_PASSWORD:123456}   # 本机 docker redis 开了认证
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml   # SQL 一律 XML，注解里不写
+  configuration:
+    map-underscore-to-camel-case: true   # 单列返回/未来的 resultType 场景兜底
+
+server:
+  port: ${SERVER_PORT:8088}   # 8080 已被本机 rocketmq 占用

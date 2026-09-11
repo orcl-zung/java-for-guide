@@ -12,8 +12,6 @@ import java.util.random.RandomGenerator;
  * roll < P(N) → 命中并重置计数；否则未中。
  * <p>
  * 本切片对单奖品判定（中/不中）；多奖品场景 = 先 PRD 判定大奖是否出，不出再走加权查表。
- * <p>
- * TODO(算法日 P0)：decide 主流程。
  */
 public final class PrdPityDecision implements DecisionStrategy {
 
@@ -36,11 +34,12 @@ public final class PrdPityDecision implements DecisionStrategy {
 
     @Override
     public long decide(DecisionContext ctx) {
-        // TODO:
-        // int n = counterStore.incrementAndGet(ctx.userId(), targetAwardId);
-        // double p = Math.min(1.0, c * n);
-        // if (random.nextDouble() < p) { counterStore.reset(...); return targetAwardId; }
-        // return MISS;
-        throw new UnsupportedOperationException("算法日 P0 待实现：PRD 判定");
+        int n = counterStore.incrementAndGet(ctx.getUserId(), targetAwardId);
+        double p = Math.min(1.0, c * n);
+        if (random.nextDouble() < p) {
+            counterStore.reset(ctx.getUserId(), targetAwardId);
+            return targetAwardId;
+        }
+        return MISS;
     }
 }

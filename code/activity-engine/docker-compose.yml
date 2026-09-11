@@ -1,0 +1,23 @@
+# 本地一键起依赖：MySQL 8.4（自动执行 schema.sql 建库建表）+ Redis 7
+# 用法：docker compose up -d
+# 已有本地实例就不用起对应服务，application.yml 默认值与本文件对齐（root/root）
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: activity-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: activity_engine
+      TZ: UTC
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+    volumes:
+      # 容器首次初始化时自动建表（数据卷已存在则不重跑）
+      - ./src/main/resources/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+
+  redis:
+    image: redis:7
+    container_name: activity-redis
+    ports:
+      - "6379:6379"

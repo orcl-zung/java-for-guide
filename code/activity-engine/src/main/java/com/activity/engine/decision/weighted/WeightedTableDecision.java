@@ -17,8 +17,6 @@ import java.util.random.RandomGenerator;
  * 营销抽奖的库存实时消耗会频繁触发概率归一化，区间查表改边界即可，Alias 得整体重排。
  * <p>
  * 库存联动：③规则树扣库存失败 → 该奖品区间置空 + 剩余权重归一化（重建本表）。
- * <p>
- * TODO(算法日 P0)：assemble 阈值切换 + decide 主流程。
  */
 public final class WeightedTableDecision implements DecisionStrategy {
 
@@ -33,17 +31,23 @@ public final class WeightedTableDecision implements DecisionStrategy {
         this.random = random;
     }
 
-    /**
-     * 装配：按奖品池规模选表。
-     * TODO(算法日 P0)：pool.size() <= ARRAY_THRESHOLD → ArrayLookupTable，否则 CdfLookupTable。
-     */
+    /** 装配：按奖品池规模选表（阈值切换在装配期一次完成，运行期无分支）。 */
     public static WeightedTableDecision assemble(List<AwardItem> pool, RandomGenerator random) {
-        throw new UnsupportedOperationException("算法日 P0 待实现：装配与阈值切换");
+        LookupTable table = pool.size() <= ARRAY_THRESHOLD
+                ? new ArrayLookupTable(pool)
+                : new CdfLookupTable(pool);
+        return new WeightedTableDecision(table, random);
     }
 
     @Override
     public long decide(DecisionContext ctx) {
-        // TODO: int roll = random.nextInt(table.scale()); return table.pick(roll);
-        throw new UnsupportedOperationException("算法日 P0 待实现");
+        // 一次决策只生成一个随机数——循环内重复生成会破坏概率分布（行业踩坑点）
+        int roll = random.nextInt(table.scale());
+        return table.pick(roll);
+    }
+
+    /** 测试探针：装配选了哪种表（阈值切换的验收口）。 */
+    LookupTable table() {
+        return table;
     }
 }

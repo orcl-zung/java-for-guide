@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.activity.engine.infra.mapper.AwardMapper">
+
+    <resultMap id="awardRow" type="com.activity.engine.infra.model.AwardRow">
+        <id property="id" column="id"/>
+        <result property="activityId" column="activity_id"/>
+        <result property="awardName" column="award_name"/>
+        <result property="benefitType" column="benefit_type"/>
+        <result property="benefitRefId" column="benefit_ref_id"/>
+        <result property="weightMillion" column="weight_million"/>
+        <result property="pityCMillion" column="pity_c_million"/>
+        <result property="stockTotal" column="stock_total"/>
+        <result property="stockRemaining" column="stock_remaining"/>
+        <result property="isFallback" column="is_fallback"/>
+    </resultMap>
+
+    <!-- ORDER BY id 保序：同一库两次装配产出同一张查找表 -->
+    <select id="listByActivity" resultMap="awardRow">
+        SELECT id, activity_id, award_name, benefit_type, benefit_ref_id,
+               weight_million, pity_c_million, stock_total, stock_remaining, is_fallback
+          FROM activity_award
+         WHERE activity_id = #{activityId}
+         ORDER BY id
+    </select>
+
+    <!-- 库存最终防线：条件更新（只在有限库存奖项上调用；stock_total=0 不限库存由代码侧跳过） -->
+    <update id="deductStock">
+        UPDATE activity_award
+           SET stock_remaining = stock_remaining - 1
+         WHERE id = #{awardId}
+           AND stock_total &gt; 0
+           AND stock_remaining &gt; 0
+    </update>
+
+</mapper>
